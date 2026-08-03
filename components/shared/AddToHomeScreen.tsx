@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const DISMISS_KEY = "fitos-a2hs-dismissed";
 const INSTALLED_KEY = "fitos-pwa-installed";
 
 export default function AddToHomeScreenPrompt() {
@@ -25,9 +24,8 @@ export default function AddToHomeScreenPrompt() {
 
   const shouldShowBanner = useCallback(() => {
     if (typeof window === "undefined") return false;
-    const dismissed = localStorage.getItem(DISMISS_KEY);
     const installed = localStorage.getItem(INSTALLED_KEY);
-    if (dismissed || installed) return false;
+    if (installed) return false;
     return true;
   }, []);
 
@@ -58,12 +56,15 @@ export default function AddToHomeScreenPrompt() {
 
     const handleAppInstalled = () => {
       localStorage.setItem(INSTALLED_KEY, "1");
-      setVisible(false);
       setDeferredPrompt(null);
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     window.addEventListener("appinstalled", handleAppInstalled);
+
+    if (shouldShowBanner()) {
+      setVisible(true);
+    }
 
     if (!deferredPrompt && runningOnIOS && shouldShowBanner()) {
       const safariOnly = /safari/.test(ua);
@@ -104,11 +105,6 @@ export default function AddToHomeScreenPrompt() {
     setDeferredPrompt(null);
   };
 
-  const handleDismiss = () => {
-    localStorage.setItem(DISMISS_KEY, String(Date.now()));
-    setVisible(false);
-  };
-
   if (!visible || isStandalone) return null;
 
   return (
@@ -124,14 +120,6 @@ export default function AddToHomeScreenPrompt() {
           <div className="relative rounded-3xl border border-border/70 bg-gradient-to-br from-primary/15 via-card to-blue-500/10 shadow-[0_18px_50px_-20px_rgba(0,0,0,0.45)] backdrop-blur-2xl p-4 overflow-hidden">
             <div className="orb-primary pointer-events-none absolute -top-16 -right-16 h-40 w-40 rounded-full blur-3xl" />
             <div className="orb-blue-soft pointer-events-none absolute -bottom-20 -left-10 h-40 w-40 rounded-full blur-3xl" />
-
-            <button
-              onClick={handleDismiss}
-              aria-label="Dismiss"
-              className="absolute top-2.5 right-2.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-background/80 text-muted-foreground hover:text-foreground hover:bg-background transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
 
             <div className="relative flex items-start gap-3 pr-8">
               <div className="relative flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/90 to-emerald-500 shadow-lg border border-primary/20">
@@ -159,14 +147,6 @@ export default function AddToHomeScreenPrompt() {
                   >
                     <Download className="w-3.5 h-3.5 mr-1.5" />
                     {isIOS ? "How to Install" : "Install App"}
-                  </Button>
-                  <Button
-                    onClick={handleDismiss}
-                    variant="ghost"
-                    size="sm"
-                    className="rounded-xl text-xs text-muted-foreground hover:text-foreground"
-                  >
-                    Later
                   </Button>
                 </div>
               </div>
@@ -250,10 +230,7 @@ export default function AddToHomeScreenPrompt() {
             </div>
 
             <Button
-              onClick={() => {
-                setIosHintOpen(false);
-                handleDismiss();
-              }}
+              onClick={() => setIosHintOpen(false)}
               className="w-full rounded-xl text-sm font-bold bg-primary hover:bg-primary/90"
             >
               Got it
