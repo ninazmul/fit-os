@@ -26,13 +26,13 @@ export function ThemeToggle() {
       onClick={() => setTheme(isDark ? "light" : "dark")}
       className="
         h-10 w-10 rounded-full
-        text-purple-900 
-        hover:bg-purple-100/50
-        hover:text-purple-700
+        text-emerald-900 
+        hover:bg-emerald-100/60
+        hover:text-emerald-700
         
-        dark:text-purple-200
-        dark:hover:bg-purple-900/30
-        dark:hover:text-purple-100
+        dark:text-blue-300
+        dark:hover:bg-blue-900/25
+        dark:hover:text-blue-200
         
         transition-all duration-300
       "

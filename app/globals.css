@@ -127,6 +127,51 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+/* Floating orbs — base + dark mode palette boost */
+.orb-emerald {
+  background-color: hsl(var(--brand-green) / 0.2);
+}
+.orb-emerald-soft {
+  background-color: hsl(var(--brand-green) / 0.15);
+}
+.orb-blue {
+  background-color: hsl(var(--brand-blue) / 0.2);
+}
+.orb-blue-soft {
+  background-color: hsl(var(--brand-blue) / 0.15);
+}
+.orb-orange {
+  background-color: hsl(var(--brand-orange) / 0.12);
+}
+.orb-primary {
+  background-color: hsl(var(--primary) / 0.2);
+}
+.orb-primary-soft {
+  background-color: hsl(var(--primary) / 0.15);
+}
+
+.dark .orb-emerald {
+  background-color: hsl(var(--brand-green) / 0.28);
+}
+.dark .orb-emerald-soft {
+  background-color: hsl(var(--brand-green) / 0.22);
+}
+.dark .orb-blue {
+  background-color: hsl(var(--brand-blue) / 0.28);
+}
+.dark .orb-blue-soft {
+  background-color: hsl(var(--brand-blue) / 0.22);
+}
+.dark .orb-orange {
+  background-color: hsl(var(--brand-orange) / 0.2);
+}
+.dark .orb-primary {
+  background-color: hsl(var(--primary) / 0.26);
+}
+.dark .orb-primary-soft {
+  background-color: hsl(var(--primary) / 0.2);
+}
+
 /* Progress ring styles */
 .progress-ring-track {
   stroke: hsl(var(--muted));
@@ -159,7 +204,11 @@ body {
   background: hsl(var(--muted-foreground) / 0.5);
 }
 
-/* ========================================== CLERK STYLES */
+.dark ::-webkit-scrollbar-thumb {
+  background: hsla(215, 20%, 60%, 0.35);
+}
+
+/* ========================================== CLERK STYLES (LIGHT BASE) */
 .cl-logoImage {
   height: 38px;
 }
@@ -198,8 +247,133 @@ body {
   background: transparent !important;
   padding: 1rem 1.25rem !important;
   overflow: visible !important;
+  color: hsl(var(--foreground)) !important;
 }
 
+.cl-headerTitle {
+  color: hsl(var(--foreground)) !important;
+}
+.cl-headerSubtitle,
+.cl-dividerText,
+.cl-footerActionText {
+  color: hsl(var(--muted-foreground)) !important;
+}
+.cl-formFieldLabel {
+  color: hsl(var(--foreground)) !important;
+}
+.cl-formFieldHintText,
+.cl-formFieldErrorText,
+.cl-internal-16as6g8,
+.cl-otpCodeFieldInfo__blur {
+  color: hsl(var(--muted-foreground)) !important;
+}
+.cl-formFieldInput {
+  background-color: hsl(var(--background)) !important;
+  border-color: hsl(var(--border)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+.cl-formFieldInput::placeholder {
+  color: hsl(var(--muted-foreground) / 0.85) !important;
+}
+.cl-formFieldInput:focus {
+  border-color: hsl(var(--ring)) !important;
+  box-shadow: 0 0 0 4px hsl(var(--ring) / 0.12) !important;
+}
+.cl-socialButtonsBlockButton {
+  background-color: hsl(var(--background)) !important;
+  border-color: hsl(var(--border)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+.cl-socialButtonsBlockButton:hover {
+  background-color: hsl(var(--accent)) !important;
+}
+.cl-dividerLine {
+  background-color: hsl(var(--border)) !important;
+}
+.cl-footerActionLink,
+.cl-formResendCodeLink,
+.cl-badge {
+  color: hsl(var(--primary)) !important;
+}
+.cl-footerActionLink:hover {
+  text-decoration-color: hsl(var(--primary)) !important;
+}
+.cl-formButtonPrimary {
+  background-color: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+}
+.cl-identityPreview {
+  background-color: hsl(var(--muted) / 0.5) !important;
+  border-color: hsl(var(--border)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+/* ========================================== CLERK STYLES (DARK) */
+.dark .cl-card {
+  background: transparent !important;
+}
+.dark .cl-headerTitle {
+  color: hsl(210 40% 96%) !important;
+}
+.dark .cl-headerSubtitle,
+.dark .cl-dividerText,
+.dark .cl-footerActionText {
+  color: hsl(215 20% 65%) !important;
+}
+.dark .cl-formFieldLabel {
+  color: hsl(210 30% 92%) !important;
+}
+.dark .cl-formFieldHintText {
+  color: hsl(215 20% 65%) !important;
+}
+.dark .cl-formFieldInput {
+  background-color: hsl(222 40% 11%) !important;
+  border-color: hsl(222 30% 20%) !important;
+  color: hsl(210 40% 96%) !important;
+}
+.dark .cl-formFieldInput::placeholder {
+  color: hsl(215 20% 55% / 0.9) !important;
+}
+.dark .cl-formFieldInput:focus {
+  border-color: hsl(152 58% 48%) !important;
+  box-shadow: 0 0 0 4px hsl(152 58% 48% / 0.18) !important;
+}
+.dark .cl-socialButtonsBlockButton {
+  background-color: hsl(222 40% 11%) !important;
+  border-color: hsl(222 30% 20%) !important;
+  color: hsl(210 40% 96%) !important;
+}
+.dark .cl-socialButtonsBlockButton:hover {
+  background-color: hsl(222 35% 15%) !important;
+}
+.dark .cl-dividerLine {
+  background-color: hsl(222 30% 22%) !important;
+}
+.dark .cl-footerActionLink,
+.dark .cl-formResendCodeLink,
+.dark .cl-badge {
+  color: hsl(152 58% 62%) !important;
+}
+.dark .cl-formButtonPrimary {
+  background-color: hsl(152 58% 48%) !important;
+  color: #ffffff !important;
+}
+.dark .cl-formButtonPrimary:hover {
+  background-color: hsl(152 58% 42%) !important;
+}
+.dark .cl-identityPreview {
+  background-color: hsl(222 40% 12%) !important;
+  border-color: hsl(222 30% 20%) !important;
+  color: hsl(210 40% 96%) !important;
+}
+.dark .cl-userButtonPopoverCard,
+.dark .cl-userButtonPopoverRootBox {
+  background-color: hsl(222 40% 11%) !important;
+  border-color: hsl(222 30% 20%) !important;
+  color: hsl(210 40% 96%) !important;
+}
+
+/* Mobile sizing overrides (light + dark) */
 @media (min-width: 640px) {
   .cl-card {
     padding: 2rem 2.5rem !important;
@@ -281,8 +455,21 @@ body {
   }
 }
 
+@keyframes fab-pulse-dark {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 hsl(152 58% 48% / 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 12px hsl(152 58% 48% / 0);
+  }
+}
+
 .fab-pulse {
   animation: fab-pulse 2s infinite;
+}
+.dark .fab-pulse {
+  animation-name: fab-pulse-dark;
 }
 
 /* Stat card gradient borders */
@@ -300,4 +487,30 @@ body {
 }
 .stat-card-pink {
   border-left: 4px solid hsl(330 80% 60%);
+}
+
+/* Recharts tooltip contrast */
+.recharts-default-tooltip {
+  background-color: var(--chart-tooltip-bg) !important;
+  border: 1px solid var(--chart-tooltip-border) !important;
+  color: hsl(var(--foreground)) !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 20px 45px -20px rgba(0, 0, 0, 0.35);
+}
+.recharts-tooltip-label {
+  color: hsl(var(--foreground)) !important;
+  font-weight: 600 !important;
+}
+.recharts-tooltip-item {
+  color: hsl(var(--muted-foreground)) !important;
+}
+.dark .recharts-text,
+.dark .recharts-cartesian-axis-tick-value {
+  fill: var(--chart-tick-color) !important;
+}
+.dark .recharts-cartesian-grid line {
+  stroke: hsl(222 30% 20%) !important;
+}
+.dark .recharts-legend-item-text {
+  color: hsl(215 20% 65%) !important;
 }

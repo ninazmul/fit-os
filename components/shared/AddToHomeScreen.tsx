@@ -122,8 +122,8 @@ export default function AddToHomeScreenPrompt() {
           className="fixed z-[90] bottom-[84px] left-3 right-3 md:hidden"
         >
           <div className="relative rounded-3xl border border-border/70 bg-gradient-to-br from-primary/15 via-card to-blue-500/10 shadow-[0_18px_50px_-20px_rgba(0,0,0,0.45)] backdrop-blur-2xl p-4 overflow-hidden">
-            <div className="pointer-events-none absolute -top-16 -right-16 h-40 w-40 rounded-full bg-primary/20 blur-3xl" />
-            <div className="pointer-events-none absolute -bottom-20 -left-10 h-40 w-40 rounded-full bg-blue-500/15 blur-3xl" />
+            <div className="orb-primary pointer-events-none absolute -top-16 -right-16 h-40 w-40 rounded-full blur-3xl" />
+            <div className="orb-blue-soft pointer-events-none absolute -bottom-20 -left-10 h-40 w-40 rounded-full blur-3xl" />
 
             <button
               onClick={handleDismiss}

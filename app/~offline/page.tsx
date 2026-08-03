@@ -13,8 +13,8 @@ export default function Offline() {
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-background px-4">
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute top-10 right-0 h-64 w-64 rounded-full bg-emerald-500/15 blur-3xl" />
-        <div className="absolute bottom-10 left-0 h-64 w-64 rounded-full bg-blue-500/15 blur-3xl" />
+        <div className="orb-emerald-soft absolute top-10 right-0 h-64 w-64 rounded-full blur-3xl" />
+        <div className="orb-blue-soft absolute bottom-10 left-0 h-64 w-64 rounded-full blur-3xl" />
       </div>
 
       <div className="relative w-full max-w-md">
