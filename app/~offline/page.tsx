@@ -25,7 +25,7 @@ export default function Offline() {
                 src="/assets/images/logo.png"
                 alt="FitOs Logo"
                 fill
-                className="object-contain"
+                className="object-contain dark:bg-white"
               />
             </div>
             <div className="flex flex-col leading-tight">

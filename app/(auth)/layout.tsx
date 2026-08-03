@@ -56,7 +56,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                     src="/assets/images/logo.png"
                     alt="FitOs Logo"
                     fill
-                    className="object-contain"
+                    className="object-contain dark:bg-white"
                     priority
                   />
                 </div>
@@ -125,7 +125,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                     src="/assets/images/logo.png"
                     alt="FitOs Logo"
                     fill
-                    className="object-contain"
+                    className="object-contain dark:bg-white"
                     priority
                   />
                 </div>
