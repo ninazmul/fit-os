@@ -31,6 +31,7 @@ import {
   Bar,
 } from "recharts";
 import toast from "react-hot-toast";
+import AdUnit from "@/components/shared/AdUnit";
 
 export default function ProgressPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -209,6 +210,9 @@ export default function ProgressPage() {
           variant="orange"
         />
       </div>
+
+      {/* Mid-page Ad */}
+      <AdUnit size="auto" label="Sponsored" maxWidth="970px" />
 
       {/* Tabs */}
       <Tabs defaultValue="weight" className="space-y-4">
@@ -420,6 +424,9 @@ export default function ProgressPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Footer Ad Slot */}
+      <AdUnit size="auto" maxWidth="970px" />
     </div>
   );
 }

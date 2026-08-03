@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,11 +14,17 @@ import { useRouter } from "next/navigation";
 interface OnboardingModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onCompleted?: () => void | Promise<void>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   initialData?: any;
 }
 
-export default function OnboardingModal({ open, onOpenChange, initialData }: OnboardingModalProps) {
+export default function OnboardingModal({
+  open,
+  onOpenChange,
+  onCompleted,
+  initialData,
+}: OnboardingModalProps) {
   const [step, setStep] = useState<1 | 2>(1);
   const [name, setName] = useState(initialData?.name || "");
   const [gender, setGender] = useState<Gender>(initialData?.gender || "male");
@@ -40,6 +46,27 @@ export default function OnboardingModal({ open, onOpenChange, initialData }: Onb
 
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    if (!open || !initialData) return;
+
+    setStep(1);
+    setName(initialData.name || "");
+    setGender(initialData.gender || "male");
+    setAge(initialData.age || 25);
+    setHeight(initialData.height || 170);
+    setCurrentWeight(initialData.currentWeight || 70);
+    setTargetWeight(initialData.targetWeight || 65);
+    setActivityLevel(initialData.activityLevel || "moderate");
+    setGoal(initialData.goal || "lose_weight");
+    setWorkoutDaysPerWeek(initialData.workoutDaysPerWeek || 4);
+    setDailyCaloriesGoal(initialData.dailyCaloriesGoal || 2000);
+    setDailyProteinGoal(initialData.dailyProteinGoal || 150);
+    setDailyFatGoal(initialData.dailyFatGoal || 60);
+    setDailyCarbGoal(initialData.dailyCarbGoal || 200);
+    setDailyFiberGoal(initialData.dailyFiberGoal || 30);
+    setWaterGoalMl(initialData.waterGoalMl || 3000);
+  }, [open, initialData]);
 
   const handleNextToTargets = async () => {
     if (!name.trim()) {
@@ -90,6 +117,7 @@ export default function OnboardingModal({ open, onOpenChange, initialData }: Onb
 
       toast.success("Profile saved! Welcome to FitOS 💪");
       onOpenChange(false);
+      await onCompleted?.();
       router.refresh();
     } catch {
       toast.error("Failed to save profile");

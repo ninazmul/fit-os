@@ -1,10 +1,20 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { getMealLogsForDate, logMeal, deleteMealLog } from "@/lib/actions/meal.actions";
+import {
+  getMealLogsForDate,
+  logMeal,
+  deleteMealLog,
+} from "@/lib/actions/meal.actions";
 import { getFoods, createCustomFood } from "@/lib/actions/food.actions";
 import { getUserProfile } from "@/lib/actions/profile.actions";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +34,7 @@ import {
 import type { MealType, IFood, IMealItem, FoodCategory } from "@/types/fitness";
 import toast from "react-hot-toast";
 import { format, addDays, subDays } from "date-fns";
+import AdUnit from "@/components/shared/AdUnit";
 
 const mealTypes: { type: MealType; label: string; icon: typeof Sun }[] = [
   { type: "breakfast", label: "Breakfast", icon: Sun },
@@ -187,8 +198,12 @@ export default function DietPage() {
       {/* Date Navigation & Title */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Diet & Nutrition Tracker 🥗</h1>
-          <p className="text-xs text-muted-foreground">Log meals, Bangladeshi dishes, and track macros</p>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Diet & Nutrition Tracker 🥗
+          </h1>
+          <p className="text-xs text-muted-foreground">
+            Log meals, Bangladeshi dishes, and track macros
+          </p>
         </div>
 
         {/* Date Selector Pill */}
@@ -224,15 +239,24 @@ export default function DietPage() {
               <Flame className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground font-medium">Total Consumed</p>
-              <h2 className="text-2xl font-bold">{Math.round(dailyCalories)} <span className="text-sm font-normal text-muted-foreground">/ {calGoal} kcal</span></h2>
+              <p className="text-xs text-muted-foreground font-medium">
+                Total Consumed
+              </p>
+              <h2 className="text-2xl font-bold">
+                {Math.round(dailyCalories)}{" "}
+                <span className="text-sm font-normal text-muted-foreground">
+                  / {calGoal} kcal
+                </span>
+              </h2>
             </div>
           </div>
 
           <div className="flex items-center gap-4 text-xs font-semibold">
             <div className="text-right">
               <p className="text-muted-foreground">Remaining</p>
-              <p className={`text-base font-bold ${calGoal - dailyCalories < 0 ? "text-red-500" : "text-emerald-600 dark:text-emerald-400"}`}>
+              <p
+                className={`text-base font-bold ${calGoal - dailyCalories < 0 ? "text-red-500" : "text-emerald-600 dark:text-emerald-400"}`}
+              >
                 {Math.max(0, calGoal - dailyCalories)} kcal
               </p>
             </div>
@@ -243,45 +267,84 @@ export default function DietPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-border/40 text-xs">
           <div className="space-y-1">
             <div className="flex justify-between">
-              <span className="font-semibold text-emerald-600 dark:text-emerald-400">Protein</span>
-              <span className="text-muted-foreground">{Math.round(dailyProtein)}g / {proteinGoal}g</span>
+              <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                Protein
+              </span>
+              <span className="text-muted-foreground">
+                {Math.round(dailyProtein)}g / {proteinGoal}g
+              </span>
             </div>
             <div className="w-full bg-muted h-2 rounded-full overflow-hidden">
-              <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${Math.min(100, (dailyProtein / proteinGoal) * 100)}%` }} />
+              <div
+                className="bg-emerald-500 h-full rounded-full"
+                style={{
+                  width: `${Math.min(100, (dailyProtein / proteinGoal) * 100)}%`,
+                }}
+              />
             </div>
           </div>
 
           <div className="space-y-1">
             <div className="flex justify-between">
-              <span className="font-semibold text-blue-600 dark:text-blue-400">Carbs</span>
-              <span className="text-muted-foreground">{Math.round(dailyCarbs)}g / {carbGoal}g</span>
+              <span className="font-semibold text-blue-600 dark:text-blue-400">
+                Carbs
+              </span>
+              <span className="text-muted-foreground">
+                {Math.round(dailyCarbs)}g / {carbGoal}g
+              </span>
             </div>
             <div className="w-full bg-muted h-2 rounded-full overflow-hidden">
-              <div className="bg-blue-500 h-full rounded-full" style={{ width: `${Math.min(100, (dailyCarbs / carbGoal) * 100)}%` }} />
+              <div
+                className="bg-blue-500 h-full rounded-full"
+                style={{
+                  width: `${Math.min(100, (dailyCarbs / carbGoal) * 100)}%`,
+                }}
+              />
             </div>
           </div>
 
           <div className="space-y-1">
             <div className="flex justify-between">
-              <span className="font-semibold text-purple-600 dark:text-purple-400">Fat</span>
-              <span className="text-muted-foreground">{Math.round(dailyFat)}g / {fatGoal}g</span>
+              <span className="font-semibold text-purple-600 dark:text-purple-400">
+                Fat
+              </span>
+              <span className="text-muted-foreground">
+                {Math.round(dailyFat)}g / {fatGoal}g
+              </span>
             </div>
             <div className="w-full bg-muted h-2 rounded-full overflow-hidden">
-              <div className="bg-purple-500 h-full rounded-full" style={{ width: `${Math.min(100, (dailyFat / fatGoal) * 100)}%` }} />
+              <div
+                className="bg-purple-500 h-full rounded-full"
+                style={{
+                  width: `${Math.min(100, (dailyFat / fatGoal) * 100)}%`,
+                }}
+              />
             </div>
           </div>
 
           <div className="space-y-1">
             <div className="flex justify-between">
-              <span className="font-semibold text-amber-600 dark:text-amber-400">Fiber</span>
-              <span className="text-muted-foreground">{Math.round(dailyFiber)}g / {fiberGoal}g</span>
+              <span className="font-semibold text-amber-600 dark:text-amber-400">
+                Fiber
+              </span>
+              <span className="text-muted-foreground">
+                {Math.round(dailyFiber)}g / {fiberGoal}g
+              </span>
             </div>
             <div className="w-full bg-muted h-2 rounded-full overflow-hidden">
-              <div className="bg-amber-500 h-full rounded-full" style={{ width: `${Math.min(100, (dailyFiber / fiberGoal) * 100)}%` }} />
+              <div
+                className="bg-amber-500 h-full rounded-full"
+                style={{
+                  width: `${Math.min(100, (dailyFiber / fiberGoal) * 100)}%`,
+                }}
+              />
             </div>
           </div>
         </div>
       </div>
+
+      {/* Mid-page Ad */}
+      <AdUnit size="auto" label="Sponsored" maxWidth="970px" />
 
       {/* Meal Types Sections */}
       <div className="space-y-4">
@@ -290,7 +353,10 @@ export default function DietPage() {
           const Icon = mType.icon;
 
           return (
-            <div key={mType.type} className="glass-card p-5 rounded-3xl border border-border/50 space-y-3">
+            <div
+              key={mType.type}
+              className="glass-card p-5 rounded-3xl border border-border/50 space-y-3"
+            >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
@@ -299,7 +365,9 @@ export default function DietPage() {
                   <div>
                     <h3 className="text-base font-bold">{mType.label}</h3>
                     <p className="text-xs text-muted-foreground">
-                      {loggedMeal ? `${loggedMeal.totalCalories} kcal` : "0 kcal logged"}
+                      {loggedMeal
+                        ? `${loggedMeal.totalCalories} kcal`
+                        : "0 kcal logged"}
                     </p>
                   </div>
                 </div>
@@ -329,7 +397,8 @@ export default function DietPage() {
                       <div>
                         <p className="font-semibold text-sm">{item.name}</p>
                         <p className="text-muted-foreground text-[11px]">
-                          {item.quantity} &times; {item.serving} &middot; P: {item.protein}g | C: {item.carbs}g | F: {item.fat}g
+                          {item.quantity} &times; {item.serving} &middot; P:{" "}
+                          {item.protein}g | C: {item.carbs}g | F: {item.fat}g
                         </p>
                       </div>
                       <div className="flex items-center gap-3">
@@ -413,12 +482,17 @@ export default function DietPage() {
                     )}
                   </p>
                   <p className="text-muted-foreground text-[11px]">
-                    {food.servingSize} &middot; P:{food.protein}g | C:{food.carbs}g | F:{food.fat}g
+                    {food.servingSize} &middot; P:{food.protein}g | C:
+                    {food.carbs}g | F:{food.fat}g
                   </p>
                 </div>
                 <div className="text-right">
-                  <span className="font-bold text-sm text-primary">{food.calories}</span>
-                  <span className="text-[10px] text-muted-foreground block">kcal</span>
+                  <span className="font-bold text-sm text-primary">
+                    {food.calories}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground block">
+                    kcal
+                  </span>
                 </div>
               </div>
             ))}
@@ -439,7 +513,10 @@ export default function DietPage() {
                 />
               </div>
 
-              <Button onClick={handleAddFoodToMeal} className="rounded-xl bg-primary hover:bg-primary/90 text-xs font-bold">
+              <Button
+                onClick={handleAddFoodToMeal}
+                className="rounded-xl bg-primary hover:bg-primary/90 text-xs font-bold"
+              >
                 Add {Math.round(selectedFood.calories * quantity)} kcal &rarr;
               </Button>
             </div>
@@ -451,7 +528,9 @@ export default function DietPage() {
       <Dialog open={customFoodModalOpen} onOpenChange={setCustomFoodModalOpen}>
         <DialogContent className="sm:max-w-md rounded-2xl p-6 space-y-4">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold">Create Custom Food 🍳</DialogTitle>
+            <DialogTitle className="text-lg font-bold">
+              Create Custom Food 🍳
+            </DialogTitle>
           </DialogHeader>
 
           <form onSubmit={handleCreateCustomFood} className="space-y-3 text-xs">
@@ -529,12 +608,18 @@ export default function DietPage() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full rounded-xl mt-3 bg-primary hover:bg-primary/90 font-bold">
+            <Button
+              type="submit"
+              className="w-full rounded-xl mt-3 bg-primary hover:bg-primary/90 font-bold"
+            >
               Save Custom Food
             </Button>
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Footer Ad Slot */}
+      <AdUnit size="auto" maxWidth="970px" />
     </div>
   );
 }

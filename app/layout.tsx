@@ -1,9 +1,14 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import Script from "next/script";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ThemeProvider } from "@/components/shared/ThemeProvider";
 
 import "./globals.css";
+
+const ADSENSE_CLIENT_ID = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID;
+const ENABLE_ADSENSE =
+  process.env.NODE_ENV === "production" && !!ADSENSE_CLIENT_ID;
 
 const inter = Inter({
   subsets: ["latin"],
@@ -127,6 +132,17 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning>
+        <head>
+          {ENABLE_ADSENSE && (
+            <Script
+              id="adsense-auto-ads"
+              async
+              strategy="afterInteractive"
+              crossOrigin="anonymous"
+              src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT_ID}`}
+            />
+          )}
+        </head>
         <body className={`${inter.variable} font-sans antialiased`}>
           <ThemeProvider
             attribute="class"

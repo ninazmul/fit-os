@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import type { WorkoutType, IWorkoutExercise } from "@/types/fitness";
 import toast from "react-hot-toast";
+import AdUnit from "@/components/shared/AdUnit";
 
 const workoutTypes: { type: WorkoutType; label: string }[] = [
   { type: "push", label: "Push Day (Chest, Shoulders, Triceps)" },
@@ -175,6 +176,9 @@ export default function WorkoutPage() {
           variant="purple"
         />
       </div>
+
+      {/* Mid-page Ad */}
+      <AdUnit size="auto" label="Sponsored" maxWidth="970px" />
 
       {/* PR Cards Carousel / Grid */}
       {Object.keys(prs).length > 0 && (
@@ -409,6 +413,9 @@ export default function WorkoutPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Footer Ad Slot */}
+      <AdUnit size="auto" maxWidth="970px" />
     </div>
   );
 }

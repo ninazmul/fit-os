@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,12 +15,14 @@ interface QuickActionModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   defaultAction?: "meal" | "weight" | "water" | "workout";
+  onCompleted?: () => void | Promise<void>;
 }
 
 export default function QuickActionModal({
   open,
   onOpenChange,
   defaultAction = "water",
+  onCompleted,
 }: QuickActionModalProps) {
   const [activeTab, setActiveTab] = useState<"meal" | "weight" | "water" | "workout">(defaultAction);
   const [waterAmount, setWaterAmount] = useState<number>(250);
@@ -29,6 +31,12 @@ export default function QuickActionModal({
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  useEffect(() => {
+    if (open) {
+      setActiveTab(defaultAction);
+    }
+  }, [defaultAction, open]);
+
   const handleLogWater = async (amount: number) => {
     try {
       setLoading(true);
@@ -36,6 +44,7 @@ export default function QuickActionModal({
       await addWater(today, amount);
       toast.success(`Logged ${amount}ml of water! 💧`);
       onOpenChange(false);
+      await onCompleted?.();
       router.refresh();
     } catch {
       toast.error("Failed to log water");
@@ -61,6 +70,9 @@ export default function QuickActionModal({
       });
       toast.success(`Logged ${weightVal} kg! ⚖️`);
       onOpenChange(false);
+      setWeightVal("");
+      setWeightNotes("");
+      await onCompleted?.();
       router.refresh();
     } catch {
       toast.error("Failed to log weight");

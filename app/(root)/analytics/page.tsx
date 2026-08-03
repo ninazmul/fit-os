@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { generateInsights } from "@/lib/actions/insights.actions";
 import { getUserProfile } from "@/lib/actions/profile.actions";
 import { Button } from "@/components/ui/button";
+import AdUnit from "@/components/shared/AdUnit";
 import {
   Sparkles,
   CheckCircle2,
@@ -64,6 +65,9 @@ export default function AnalyticsPage() {
         </h1>
         <p className="text-xs text-muted-foreground">Personalized health intelligence evaluated from your recent activity logs</p>
       </div>
+
+      {/* Mid-page Ad */}
+      <AdUnit size="auto" label="Sponsored" maxWidth="970px" />
 
       {/* AI Recommendations List */}
       <div className="space-y-3">
@@ -132,6 +136,9 @@ export default function AnalyticsPage() {
           </div>
         </div>
       </div>
+
+      {/* Footer Ad Slot */}
+      <AdUnit size="auto" maxWidth="970px" />
     </div>
   );
 }

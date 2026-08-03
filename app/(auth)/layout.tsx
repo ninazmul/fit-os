@@ -34,14 +34,14 @@ const featureHighlights = [
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-background px-2 py-2 sm:px-4 sm:py-4 lg:px-8">
+    <div className="relative flex min-h-[100dvh] w-full items-start justify-center overflow-y-auto overflow-x-hidden bg-background px-2 py-2 sm:px-4 sm:py-4 sm:items-center lg:px-8">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="orb-emerald absolute -top-24 right-[-5rem] h-72 w-72 rounded-full blur-3xl sm:right-[-2rem] sm:h-80 sm:w-80" />
         <div className="orb-blue absolute -bottom-20 left-[-5rem] h-80 w-80 rounded-full blur-3xl sm:left-[-2rem]" />
         <div className="orb-orange absolute top-1/3 left-1/2 h-60 w-60 -translate-x-1/2 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative isolate mx-auto flex w-full max-w-6xl flex-col overflow-visible rounded-3xl border border-border/60 bg-card/70 shadow-[0_30px_80px_-28px_rgba(0,0,0,0.45)] backdrop-blur-2xl lg:min-h-[680px] lg:flex-row lg:overflow-hidden">
+      <div className="relative isolate mx-auto my-auto flex w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-border/60 bg-card/70 shadow-[0_30px_80px_-28px_rgba(0,0,0,0.45)] backdrop-blur-2xl lg:min-h-[680px] lg:flex-row">
         <aside className="relative hidden lg:flex lg:w-1/2 flex-col items-center justify-center border-r border-border/60 p-10">
           <div className="pointer-events-none absolute inset-0">
             <div className="orb-primary absolute -right-16 -top-16 h-56 w-56 rounded-full blur-3xl" />
@@ -116,7 +116,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           </div>
         </aside>
 
-        <main className="relative flex w-full flex-1 flex-col items-center justify-center overflow-y-auto p-3 sm:p-5 md:p-8">
+        <main className="relative flex w-full flex-1 flex-col items-stretch justify-start overflow-y-auto p-3 sm:p-5 md:justify-center md:p-8">
           <div className="flex w-full flex-col items-center lg:hidden">
             <div className="mb-5 w-full flex-shrink-0 flex flex-col items-center">
               <div className="mb-3 flex items-center gap-2.5">
@@ -148,7 +148,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               </p>
             </div>
 
-            <div className="mx-auto w-full min-w-0 max-w-sm flex-shrink-0">
+            <div className="mx-auto w-full min-w-0 max-w-sm flex-shrink-0 overflow-y-auto">
               {children}
             </div>
           </div>
