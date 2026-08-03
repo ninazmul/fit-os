@@ -1,0 +1,123 @@
+"use server";
+
+import { connectToDatabase } from "@/lib/database";
+import WeightLog from "@/lib/database/models/weight-log.model";
+import UserProfile from "@/lib/database/models/user-profile.model";
+import { currentUser } from "@clerk/nextjs/server";
+import { revalidatePath } from "next/cache";
+import { weightLogSchema, type WeightLogFormValues } from "@/validations/fitness";
+
+export async function logWeight(formData: WeightLogFormValues) {
+  await connectToDatabase();
+  const user = await currentUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const validated = weightLogSchema.parse(formData);
+
+  const weight = await WeightLog.findOneAndUpdate(
+    { clerkId: user.id, date: validated.date },
+    { ...validated, clerkId: user.id },
+    { new: true, upsert: true }
+  );
+
+  // Also update current weight on profile
+  await UserProfile.findOneAndUpdate(
+    { clerkId: user.id },
+    { currentWeight: validated.weight }
+  );
+
+  revalidatePath("/");
+  revalidatePath("/progress");
+  return JSON.parse(JSON.stringify(weight));
+}
+
+export async function getWeightHistory(days: number = 30) {
+  await connectToDatabase();
+  const user = await currentUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - days);
+  const startStr = startDate.toISOString().split("T")[0];
+
+  const logs = await WeightLog.find({
+    clerkId: user.id,
+    date: { $gte: startStr },
+  }).sort({ date: 1 });
+
+  return JSON.parse(JSON.stringify(logs));
+}
+
+export async function getWeightStats() {
+  await connectToDatabase();
+  const user = await currentUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const allLogs = await WeightLog.find({ clerkId: user.id }).sort({ date: -1 });
+  if (allLogs.length === 0) return null;
+
+  const today = new Date().toISOString().split("T")[0];
+  const todayLog = allLogs.find((l) => l.date === today);
+
+  // Last 7 days
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const sevenStr = sevenDaysAgo.toISOString().split("T")[0];
+  const weekLogs = allLogs.filter((l) => l.date >= sevenStr);
+  const weekAvg =
+    weekLogs.length > 0
+      ? Math.round(
+          (weekLogs.reduce((s, l) => s + l.weight, 0) / weekLogs.length) * 10
+        ) / 10
+      : null;
+
+  // Last 30 days
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const thirtyStr = thirtyDaysAgo.toISOString().split("T")[0];
+  const monthLogs = allLogs.filter((l) => l.date >= thirtyStr);
+  const monthAvg =
+    monthLogs.length > 0
+      ? Math.round(
+          (monthLogs.reduce((s, l) => s + l.weight, 0) / monthLogs.length) * 10
+        ) / 10
+      : null;
+
+  // Weekly change
+  const latestWeight = allLogs[0].weight;
+  const weekOldLog = allLogs.find((l) => l.date <= sevenStr);
+  const weeklyChange = weekOldLog
+    ? Math.round((latestWeight - weekOldLog.weight) * 10) / 10
+    : null;
+
+  // Monthly change
+  const monthOldLog = allLogs.find((l) => l.date <= thirtyStr);
+  const monthlyChange = monthOldLog
+    ? Math.round((latestWeight - monthOldLog.weight) * 10) / 10
+    : null;
+
+  // BMI
+  const profile = await UserProfile.findOne({ clerkId: user.id });
+  const heightM = profile ? profile.height / 100 : 1.7;
+  const bmi = Math.round((latestWeight / (heightM * heightM)) * 10) / 10;
+
+  return {
+    todayWeight: todayLog?.weight ?? latestWeight,
+    weekAvg,
+    monthAvg,
+    weeklyChange,
+    monthlyChange,
+    bmi,
+    totalEntries: allLogs.length,
+  };
+}
+
+export async function deleteWeightLog(logId: string) {
+  await connectToDatabase();
+  const user = await currentUser();
+  if (!user) throw new Error("Unauthorized");
+
+  await WeightLog.findOneAndDelete({ _id: logId, clerkId: user.id });
+  revalidatePath("/");
+  revalidatePath("/progress");
+}

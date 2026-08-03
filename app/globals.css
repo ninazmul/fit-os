@@ -1,0 +1,303 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 20% 98%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 152 58% 42%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 152 30% 94%;
+    --accent-foreground: 152 58% 30%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 152 58% 42%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 152 58% 42%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 152 20% 95%;
+    --sidebar-accent-foreground: 152 40% 25%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 152 58% 42%;
+
+    /* Fitness brand colors */
+    --brand-green: 152 58% 42%;
+    --brand-blue: 217 91% 60%;
+    --brand-orange: 25 95% 53%;
+    --brand-purple: 263 70% 58%;
+    --brand-pink: 330 80% 60%;
+    --chart-tooltip-bg: #ffffff;
+    --chart-tooltip-border: #e2e8f0;
+    --chart-tick-color: #64748b;
+  }
+
+  .dark {
+    --background: 222 47% 6%;
+    --foreground: 210 40% 96%;
+
+    --card: 222 40% 9%;
+    --card-foreground: 210 40% 96%;
+
+    --popover: 222 40% 9%;
+    --popover-foreground: 210 40% 96%;
+
+    --primary: 152 58% 48%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 222 30% 14%;
+    --secondary-foreground: 210 40% 96%;
+
+    --muted: 222 30% 14%;
+    --muted-foreground: 215 20% 60%;
+
+    --accent: 152 25% 14%;
+    --accent-foreground: 152 58% 65%;
+
+    --destructive: 0 62.8% 50.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 222 30% 16%;
+    --input: 222 30% 16%;
+    --ring: 152 58% 48%;
+
+    --sidebar-background: 222 47% 5%;
+    --sidebar-foreground: 210 30% 80%;
+    --sidebar-primary: 152 58% 48%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 222 35% 11%;
+    --sidebar-accent-foreground: 210 30% 90%;
+    --sidebar-border: 222 30% 15%;
+    --sidebar-ring: 152 58% 48%;
+
+    /* Charts (dark) */
+    --chart-tooltip-bg: #12141f;
+    --chart-tooltip-border: #1e2438;
+    --chart-tick-color: #94a3b8;
+  }
+}
+
+* {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: "Inter", sans-serif;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Glass morphism card */
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.dark .glass-card {
+  background: rgba(15, 18, 30, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Progress ring styles */
+.progress-ring-track {
+  stroke: hsl(var(--muted));
+}
+
+.progress-ring-fill {
+  transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Bottom nav safe area */
+.bottom-nav-spacer {
+  height: calc(72px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* ========================================== CLERK STYLES */
+.cl-logoImage {
+  height: 38px;
+}
+
+.cl-userButtonBox {
+  flex-direction: row-reverse;
+}
+
+.cl-userButtonOuterIdentifier {
+  font-size: 16px;
+}
+
+.cl-userButtonPopoverCard {
+  right: 4px !important;
+}
+
+.cl-formButtonPrimary:hover,
+.cl-formButtonPrimary:focus,
+.cl-formButtonPrimary:active {
+  background-color: hsl(152 58% 38%);
+}
+
+.cl-rootBox,
+.cl-signIn-root,
+.cl-signUp-root,
+.cl-userProfile-root {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.cl-card {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-shadow: none !important;
+  border: none !important;
+  background: transparent !important;
+  padding: 1rem 1.25rem !important;
+  overflow: visible !important;
+}
+
+@media (min-width: 640px) {
+  .cl-card {
+    padding: 2rem 2.5rem !important;
+  }
+}
+
+.cl-internal-1dauvpw,
+.cl-internal-1hp5nqm,
+.cl-internal-k3ivhu {
+  display: none !important;
+}
+
+@media (max-width: 640px) {
+  .cl-headerTitle {
+    font-size: 1.25rem !important;
+    line-height: 1.75rem !important;
+  }
+
+  .cl-headerSubtitle {
+    font-size: 0.8125rem !important;
+  }
+
+  .cl-main {
+    padding: 1rem 0 0 0 !important;
+  }
+
+  .cl-formFieldRow {
+    gap: 0.5rem !important;
+  }
+
+  .cl-footer {
+    padding: 1rem 0 0 0 !important;
+  }
+
+  .cl-footerAction {
+    gap: 0.25rem !important;
+    font-size: 0.8125rem !important;
+    flex-wrap: wrap !important;
+  }
+
+  .cl-divider {
+    margin: 1rem 0 !important;
+  }
+
+  .cl-socialButtonsBlockButton {
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.8125rem !important;
+    min-height: 2.5rem !important;
+  }
+
+  .cl-formFieldLabel {
+    font-size: 0.8125rem !important;
+  }
+
+  .cl-formFieldInput {
+    min-height: 2.5rem !important;
+    font-size: 0.875rem !important;
+  }
+
+  .cl-formButtonPrimary {
+    min-height: 2.5rem !important;
+    font-size: 0.875rem !important;
+  }
+
+  .cl-identityPreview {
+    padding: 0.5rem !important;
+    border-radius: 0.625rem !important;
+  }
+}
+
+/* Floating action button pulse */
+@keyframes fab-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 hsl(152 58% 42% / 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 12px hsl(152 58% 42% / 0);
+  }
+}
+
+.fab-pulse {
+  animation: fab-pulse 2s infinite;
+}
+
+/* Stat card gradient borders */
+.stat-card-green {
+  border-left: 4px solid hsl(152 58% 42%);
+}
+.stat-card-blue {
+  border-left: 4px solid hsl(217 91% 60%);
+}
+.stat-card-orange {
+  border-left: 4px solid hsl(25 95% 53%);
+}
+.stat-card-purple {
+  border-left: 4px solid hsl(263 70% 58%);
+}
+.stat-card-pink {
+  border-left: 4px solid hsl(330 80% 60%);
+}

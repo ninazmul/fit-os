@@ -1,0 +1,129 @@
+"use client";
+
+import Link from "next/link";
+import Image from "next/image";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
+import {
+  LayoutDashboard,
+  UtensilsCrossed,
+  Dumbbell,
+  TrendingUp,
+  User,
+  BarChart3,
+  Settings,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+
+const navGroups = [
+  {
+    label: "Main",
+    items: [
+      { href: "/", label: "Dashboard", icon: LayoutDashboard },
+      { href: "/diet", label: "Diet", icon: UtensilsCrossed },
+      { href: "/workout", label: "Workout", icon: Dumbbell },
+    ],
+  },
+  {
+    label: "Tracking",
+    items: [
+      { href: "/progress", label: "Progress", icon: TrendingUp },
+      { href: "/analytics", label: "Analytics", icon: BarChart3 },
+    ],
+  },
+  {
+    label: "Account",
+    items: [
+      { href: "/profile", label: "Profile", icon: User },
+      { href: "/settings", label: "Settings", icon: Settings },
+    ],
+  },
+];
+
+export default function DesktopSidebar() {
+  const pathname = usePathname();
+
+  return (
+    <aside className="hidden md:flex flex-col w-64 h-screen sticky top-0 border-r border-border bg-card/80 backdrop-blur-xl">
+      {/* Logo */}
+      <div className="flex items-center gap-3 px-6 py-5 border-b border-border">
+        <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-card overflow-hidden shadow-sm border border-border/60">
+          <Image
+            src="/assets/images/logo.png"
+            alt="FitOs Logo"
+            fill
+            className="object-contain"
+            priority
+          />
+        </div>
+        <div>
+          <h1 className="text-lg font-bold tracking-tight">FitOS</h1>
+          <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+            Fitness Tracker
+          </p>
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-6">
+        <AnimatePresence>
+          {navGroups.map((group) => (
+            <div key={group.label}>
+              <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest px-3 mb-2">
+                {group.label}
+              </p>
+              <div className="space-y-1">
+                {group.items.map((item) => {
+                  const isActive =
+                    item.href === "/"
+                      ? pathname === "/"
+                      : pathname.startsWith(item.href);
+                  const Icon = item.icon;
+
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all relative group",
+                        isActive
+                          ? "text-primary bg-primary/10"
+                          : "text-muted-foreground hover:text-foreground hover:bg-accent",
+                      )}
+                    >
+                      {isActive && (
+                        <motion.div
+                          layoutId="sidebarIndicator"
+                          className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-r-full"
+                          transition={{
+                            type: "spring",
+                            stiffness: 500,
+                            damping: 30,
+                          }}
+                        />
+                      )}
+                      <Icon
+                        className={cn(
+                          "w-[18px] h-[18px] flex-shrink-0",
+                          isActive && "text-primary",
+                        )}
+                      />
+                      <span>{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </AnimatePresence>
+      </nav>
+
+      {/* Footer */}
+      <div className="p-4 border-t border-border">
+        <p className="text-[11px] text-muted-foreground text-center">
+          FitOS v1.0 &middot; Stay Strong 💪
+        </p>
+      </div>
+    </aside>
+  );
+}
