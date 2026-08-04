@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { IBodyMeasurement } from "@/types/fitness";
+import AdUnit from "@/components/shared/AdUnit";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type HealthData = any;
@@ -438,6 +439,9 @@ export default function ProfilePage() {
         )}
       </div>
 
+      {/* Mid-page Ad */}
+      <AdUnit size="auto" label="Sponsored" maxWidth="970px" />
+
       {/* Latest Body Measurements */}
       <div className="glass-card p-5 rounded-3xl border border-border/50">
         <div className="flex items-center justify-between mb-4">
@@ -762,6 +766,9 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Footer Ad */}
+      <AdUnit size="auto" maxWidth="970px" />
     </div>
   );
 }

@@ -12,6 +12,7 @@ import {
   Download,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import AdUnit from "@/components/shared/AdUnit";
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
@@ -86,6 +87,9 @@ export default function SettingsPage() {
         </div>
       </div>
 
+      {/* Ad between sections */}
+      <AdUnit size="auto" label="Sponsored" maxWidth="728px" />
+
       {/* Unit Preferences */}
       <div className="glass-card p-6 rounded-3xl border border-border/50 space-y-4">
         <h2 className="text-base font-bold flex items-center gap-2">
@@ -124,6 +128,9 @@ export default function SettingsPage() {
           </Button>
         </div>
       </div>
+
+      {/* Footer Ad */}
+      <AdUnit size="auto" maxWidth="728px" />
     </div>
   );
 }

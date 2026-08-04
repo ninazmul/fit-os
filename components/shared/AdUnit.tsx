@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId } from "react";
+import { useEffect, useId, useRef } from "react";
 
 export type AdSize =
   | "auto"
@@ -20,7 +20,7 @@ type AdUnitProps = {
 };
 
 const SIZE_PRESETS: Record<AdSize, { w: number; h: number; format: string }> = {
-  auto: { w: 0, h: 0, format: "auto" },
+  auto: { w: 0, h: 0, format: "fluid" },
   banner: { w: 468, h: 60, format: "rectangle" },
   "large-banner": { w: 728, h: 90, format: "rectangle" },
   leaderboard: { w: 970, h: 90, format: "rectangle" },
@@ -51,13 +51,15 @@ export default function AdUnit({
   const effectiveClient = (ADSENSE_CLIENT_ID ?? "").trim();
   const preset = SIZE_PRESETS[size];
   const isResponsive = size === "auto";
+  const pushed = useRef(false);
 
   const shouldRender = !!effectiveClient && !!effectiveSlot && !IS_DEV;
 
   useEffect(() => {
-    if (!shouldRender) return;
+    if (!shouldRender || pushed.current) return;
     try {
       (window.adsbygoogle = window.adsbygoogle || []).push({});
+      pushed.current = true;
     } catch (err) {
       console.warn("AdSense unit failed to push:", err);
     }
@@ -116,11 +118,10 @@ export default function AdUnit({
             minHeight: isResponsive ? 90 : preset.h,
           }}
           data-ad-client={effectiveClient}
-          data-ad-slot={effectiveSlot || undefined}
-          data-ad-format={isResponsive ? "auto" : preset.format}
+          data-ad-slot={effectiveSlot}
+          data-ad-format={isResponsive ? "fluid" : preset.format}
           data-full-width-responsive={isResponsive ? "true" : undefined}
           data-ad-layout={isResponsive ? "in-article" : undefined}
-          data-matched-content-ui-type={undefined}
         />
       </div>
     </div>

@@ -15,6 +15,7 @@ import {
   Smartphone,
   BookOpen,
 } from "lucide-react";
+import AdUnit from "@/components/shared/AdUnit";
 
 const featureHighlights = [
   {
@@ -314,6 +315,11 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             })}
           </div>
         </section>
+
+        {/* Ad between sections */}
+        <div className="py-4">
+          <AdUnit size="auto" maxWidth="970px" />
+        </div>
 
         {/* FAQ */}
         <section className="py-10 border-t border-[#E9EBEC]">
