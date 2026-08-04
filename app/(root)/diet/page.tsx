@@ -5,6 +5,7 @@ import {
   getMealLogsForDate,
   logMeal,
   deleteMealLog,
+  removeMealItem,
 } from "@/lib/actions/meal.actions";
 import { getFoods, createCustomFood } from "@/lib/actions/food.actions";
 import { getUserProfile } from "@/lib/actions/profile.actions";
@@ -173,10 +174,20 @@ export default function DietPage() {
   const handleDeleteMeal = async (mealId: string) => {
     try {
       await deleteMealLog(mealId);
-      toast.success("Meal removed");
+      toast.success("Meal cleared");
       fetchData();
     } catch {
       toast.error("Failed to delete meal");
+    }
+  };
+
+  const handleRemoveItem = async (mealId: string, itemIndex: number) => {
+    try {
+      await removeMealItem(mealId, itemIndex);
+      toast.success("Item removed");
+      fetchData();
+    } catch {
+      toast.error("Failed to remove item");
     }
   };
 
@@ -366,23 +377,36 @@ export default function DietPage() {
                     <h3 className="text-base font-bold">{mType.label}</h3>
                     <p className="text-xs text-muted-foreground">
                       {loggedMeal
-                        ? `${loggedMeal.totalCalories} kcal`
+                        ? `${loggedMeal.items.length} item${loggedMeal.items.length !== 1 ? "s" : ""} · ${loggedMeal.totalCalories} kcal`
                         : "0 kcal logged"}
                     </p>
                   </div>
                 </div>
 
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    setActiveMealType(mType.type);
-                    setAddModalOpen(true);
-                  }}
-                  className="rounded-xl gap-1 text-xs bg-primary/10 text-primary hover:bg-primary/20"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Food
-                </Button>
+                <div className="flex items-center gap-2">
+                  {loggedMeal && loggedMeal.items.length > 0 && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleDeleteMeal(loggedMeal._id)}
+                      className="rounded-xl gap-1 text-xs text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      Clear
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setActiveMealType(mType.type);
+                      setAddModalOpen(true);
+                    }}
+                    className="rounded-xl gap-1 text-xs bg-primary/10 text-primary hover:bg-primary/20"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Food
+                  </Button>
+                </div>
               </div>
 
               {/* Items List */}
@@ -408,8 +432,9 @@ export default function DietPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleDeleteMeal(loggedMeal._id)}
+                          onClick={() => handleRemoveItem(loggedMeal._id, idx)}
                           className="h-7 w-7 text-muted-foreground hover:text-red-500 rounded-lg"
+                          title="Remove this item"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </Button>

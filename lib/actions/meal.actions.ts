@@ -5,6 +5,28 @@ import MealLog from "@/lib/database/models/meal-log.model";
 import { currentUser } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { mealLogSchema, type MealLogFormValues } from "@/validations/fitness";
+import type { IMealItem } from "@/types/fitness";
+
+function calcTotals(items: IMealItem[]) {
+  const totalCalories = items.reduce(
+    (sum, i) => sum + i.calories * i.quantity,
+    0,
+  );
+  const totalProtein = items.reduce(
+    (sum, i) => sum + i.protein * i.quantity,
+    0,
+  );
+  const totalCarbs = items.reduce((sum, i) => sum + i.carbs * i.quantity, 0);
+  const totalFat = items.reduce((sum, i) => sum + i.fat * i.quantity, 0);
+  const totalFiber = items.reduce((sum, i) => sum + i.fiber * i.quantity, 0);
+  return {
+    totalCalories: Math.round(totalCalories),
+    totalProtein: Math.round(totalProtein * 10) / 10,
+    totalCarbs: Math.round(totalCarbs * 10) / 10,
+    totalFat: Math.round(totalFat * 10) / 10,
+    totalFiber: Math.round(totalFiber * 10) / 10,
+  };
+}
 
 export async function logMeal(formData: MealLogFormValues) {
   await connectToDatabase();
@@ -12,26 +34,25 @@ export async function logMeal(formData: MealLogFormValues) {
   if (!user) throw new Error("Unauthorized");
 
   const validated = mealLogSchema.parse(formData);
+  const totals = calcTotals(validated.items as IMealItem[]);
 
-  // Calculate totals from items
-  const totalCalories = validated.items.reduce((sum, i) => sum + i.calories * i.quantity, 0);
-  const totalProtein = validated.items.reduce((sum, i) => sum + i.protein * i.quantity, 0);
-  const totalCarbs = validated.items.reduce((sum, i) => sum + i.carbs * i.quantity, 0);
-  const totalFat = validated.items.reduce((sum, i) => sum + i.fat * i.quantity, 0);
-  const totalFiber = validated.items.reduce((sum, i) => sum + i.fiber * i.quantity, 0);
-
-  const meal = await MealLog.create({
-    clerkId: user.id,
-    date: validated.date,
-    mealType: validated.mealType,
-    items: validated.items,
-    photoUrl: validated.photoUrl || "",
-    totalCalories: Math.round(totalCalories),
-    totalProtein: Math.round(totalProtein * 10) / 10,
-    totalCarbs: Math.round(totalCarbs * 10) / 10,
-    totalFat: Math.round(totalFat * 10) / 10,
-    totalFiber: Math.round(totalFiber * 10) / 10,
-  });
+  const meal = await MealLog.findOneAndUpdate(
+    {
+      clerkId: user.id,
+      date: validated.date,
+      mealType: validated.mealType,
+    },
+    {
+      items: validated.items,
+      photoUrl: validated.photoUrl || "",
+      ...totals,
+    },
+    {
+      new: true,
+      upsert: true,
+      setDefaultsOnInsert: true,
+    },
+  );
 
   revalidatePath("/");
   revalidatePath("/diet");
@@ -84,6 +105,38 @@ export async function deleteMealLog(mealId: string) {
   if (!user) throw new Error("Unauthorized");
 
   await MealLog.findOneAndDelete({ _id: mealId, clerkId: user.id });
+  revalidatePath("/");
+  revalidatePath("/diet");
+}
+
+export async function removeMealItem(mealId: string, itemIndex: number) {
+  await connectToDatabase();
+  const user = await currentUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const rawMeal = await MealLog.findOne({
+    _id: mealId,
+    clerkId: user.id,
+  }).lean();
+  if (!rawMeal) throw new Error("Meal not found");
+
+  const items = ((rawMeal as unknown as { items: IMealItem[] }).items).slice();
+  if (itemIndex < 0 || itemIndex >= items.length) {
+    throw new Error("Invalid item index");
+  }
+
+  items.splice(itemIndex, 1);
+
+  if (items.length === 0) {
+    await MealLog.findOneAndDelete({ _id: mealId, clerkId: user.id });
+  } else {
+    const totals = calcTotals(items);
+    await MealLog.findOneAndUpdate(
+      { _id: mealId, clerkId: user.id },
+      { items, ...totals },
+    );
+  }
+
   revalidatePath("/");
   revalidatePath("/diet");
 }
