@@ -148,21 +148,59 @@ const jsonLdFAQ = {
 // Signature macro ring — same as app logo style
 const MacroRing = () => (
   <svg viewBox="0 0 120 120" className="h-16 w-16 sm:h-20 sm:w-20 shrink-0">
-    <circle cx="60" cy="60" r="52" fill="none" stroke="#E9EBEC" strokeWidth="10" />
     <circle
-      cx="60" cy="60" r="52" fill="none"
-      stroke="#4E8B2E" strokeWidth="10" strokeLinecap="round"
-      strokeDasharray="326.7" strokeDashoffset="98"
+      cx="60"
+      cy="60"
+      r="52"
+      fill="none"
+      stroke="#E9EBEC"
+      strokeWidth="10"
+    />
+    <circle
+      cx="60"
+      cy="60"
+      r="52"
+      fill="none"
+      stroke="#4E8B2E"
+      strokeWidth="10"
+      strokeLinecap="round"
+      strokeDasharray="326.7"
+      strokeDashoffset="98"
       transform="rotate(-90 60 60)"
     />
     <circle
-      cx="60" cy="60" r="52" fill="none"
-      stroke="#37414A" strokeWidth="10" strokeLinecap="round"
-      strokeDasharray="326.7" strokeDashoffset="245"
+      cx="60"
+      cy="60"
+      r="52"
+      fill="none"
+      stroke="#37414A"
+      strokeWidth="10"
+      strokeLinecap="round"
+      strokeDasharray="326.7"
+      strokeDashoffset="245"
       transform="rotate(48 60 60)"
     />
-    <text x="60" y="56" textAnchor="middle" fontFamily="'IBM Plex Mono', monospace" fontSize="20" fontWeight="700" fill="#1F2937">70%</text>
-    <text x="60" y="72" textAnchor="middle" fontFamily="Inter, sans-serif" fontSize="8" fill="#6B7580">today</text>
+    <text
+      x="60"
+      y="56"
+      textAnchor="middle"
+      fontFamily="'IBM Plex Mono', monospace"
+      fontSize="20"
+      fontWeight="700"
+      fill="#1F2937"
+    >
+      70%
+    </text>
+    <text
+      x="60"
+      y="72"
+      textAnchor="middle"
+      fontFamily="Inter, sans-serif"
+      fontSize="8"
+      fill="#6B7580"
+    >
+      today
+    </text>
   </svg>
 );
 
@@ -170,7 +208,11 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div
       className="relative min-h-screen overflow-x-hidden"
-      style={{ background: "#FFFFFF", color: "#1F2937", fontFamily: "'Inter', sans-serif" }}
+      style={{
+        background: "#FFFFFF",
+        color: "#1F2937",
+        fontFamily: "'Inter', sans-serif",
+      }}
     >
       {/* JSON-LD Structured Data for Google rich snippets */}
       <Script
@@ -187,7 +229,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       />
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
-
         {/* ── Header ── */}
         <header className="flex flex-col sm:flex-row items-center justify-between py-3.5 px-4 sm:px-5 rounded-2xl mb-6 sm:mb-10 gap-3 sm:gap-0 bg-white border border-[#E9EBEC] shadow-[0_1px_2px_rgba(31,41,55,0.04)]">
           <div className="flex items-center gap-3">
@@ -219,7 +260,10 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            <Link href="#calc" className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#F1F2F3] border border-[#37414A]/15 text-xs font-semibold text-[#37414A]">
+            <Link
+              href="#calc"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#F1F2F3] border border-[#37414A]/15 text-xs font-semibold text-[#37414A]"
+            >
               <Zap className="w-3.5 h-3.5 fill-[#4E8B2E] text-[#4E8B2E]" />
               <span>Fitness Calculators</span>
             </Link>
@@ -233,26 +277,29 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         </header>
 
         {/* ── Hero + Auth ── */}
-        <main className="flex flex-col lg:flex-row items-center gap-8 items-start mb-16">
+        <main className="flex flex-col lg:flex-row items-center gap-8 mb-16">
           <section className="lg:col-span-7 space-y-7 pt-1">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#EEF6E9] border border-[#4E8B2E]/20 text-xs font-semibold text-[#4E8B2E]">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Free BMI Calculator &amp; Complete Health &amp; Nutrition System</span>
+              <span>
+                Free BMI Calculator &amp; Complete Health &amp; Nutrition System
+              </span>
             </div>
 
             <div className="space-y-4">
               <h1
-                className="text-3xl sm:text-4xl lg:text-[3.25rem] font-bold tracking-tight leading-[1.1] space-x-2 space-y-1"
+                className="text-3xl sm:text-4xl lg:text-[3.25rem] font-bold tracking-tight leading-[1.2]"
                 style={{ fontFamily: "'Space Grotesk', sans-serif" }}
               >
                 Free BMI calculator, calorie counter &amp;{" "}
-                <span className="text-[#4E8B2E]">fitness tracker</span>{" "}
-                with Bangladeshi food database.
+                <span className="text-[#4E8B2E]">fitness tracker</span> with
+                Bangladeshi food database.
               </h1>
               <p className="text-sm sm:text-base leading-relaxed max-w-2xl text-[#6B7580]">
-                Calculate your BMI, BMR, TDEE, and body fat percentage instantly. Track
-                calories from 100+ Bangladeshi and global foods, log workouts, monitor
-                body measurements, and get AI-powered nutrition insights — completely free.
+                Calculate your BMI, BMR, TDEE, and body fat percentage
+                instantly. Track calories from 100+ Bangladeshi and global
+                foods, log workouts, monitor body measurements, and get
+                AI-powered nutrition insights — completely free.
               </p>
             </div>
 
@@ -277,7 +324,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                       <Icon className="h-5 w-5" />
                     </div>
                     <div className="min-w-0">
-                      <h2 className="text-xs sm:text-sm font-bold">{item.title}</h2>
+                      <h2 className="text-xs sm:text-sm font-bold">
+                        {item.title}
+                      </h2>
                       <p className="text-[11px] mt-0.5 leading-snug text-[#6B7580]">
                         {item.desc}
                       </p>
@@ -292,22 +341,37 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               <MacroRing />
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 flex-1 min-w-0">
                 <div>
-                  <p className="text-lg sm:text-2xl font-bold text-[#4E8B2E]" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+                  <p
+                    className="text-lg sm:text-2xl font-bold text-[#4E8B2E]"
+                    style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+                  >
                     100+
                   </p>
-                  <p className="text-[10px] font-medium text-[#6B7580] leading-tight">Bangladeshi Foods</p>
+                  <p className="text-[10px] font-medium text-[#6B7580] leading-tight">
+                    Bangladeshi Foods
+                  </p>
                 </div>
                 <div className="border-l border-[#E9EBEC] pl-3 sm:pl-4">
-                  <p className="text-lg sm:text-2xl font-bold text-[#37414A]" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+                  <p
+                    className="text-lg sm:text-2xl font-bold text-[#37414A]"
+                    style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+                  >
                     100%
                   </p>
-                  <p className="text-[10px] font-medium text-[#6B7580] leading-tight">Free &amp; PWA Ready</p>
+                  <p className="text-[10px] font-medium text-[#6B7580] leading-tight">
+                    Free &amp; PWA Ready
+                  </p>
                 </div>
                 <div className="hidden md:block border-l border-[#E9EBEC] pl-3 sm:pl-4">
-                  <p className="text-lg sm:text-2xl font-bold text-[#1F2937]" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+                  <p
+                    className="text-lg sm:text-2xl font-bold text-[#1F2937]"
+                    style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+                  >
                     5-in-1
                   </p>
-                  <p className="text-[10px] font-medium text-[#6B7580] leading-tight">Fitness Calculators</p>
+                  <p className="text-[10px] font-medium text-[#6B7580] leading-tight">
+                    Fitness Calculators
+                  </p>
                 </div>
               </div>
             </div>
@@ -330,7 +394,10 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           </section>
 
           {/* Auth card */}
-          <section id="auth" className="lg:col-span-5 flex items-center justify-center lg:sticky lg:top-6">
+          <section
+            id="auth"
+            className="lg:col-span-5 flex items-center justify-center lg:sticky lg:top-6"
+          >
             {children}
           </section>
         </main>
@@ -345,8 +412,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               Everything you need to succeed, in one workspace
             </h2>
             <p className="text-xs sm:text-sm text-[#6B7580]">
-              Designed for fitness enthusiasts, athletes, and anyone wanting full control
-              over their health, body composition, and nutrition.
+              Designed for fitness enthusiasts, athletes, and anyone wanting
+              full control over their health, body composition, and nutrition.
             </p>
           </div>
 
@@ -362,7 +429,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                     <Icon className="w-5 h-5" />
                   </div>
                   <h3 className="text-sm font-bold">{pillar.title}</h3>
-                  <p className="text-xs leading-relaxed text-[#6B7580]">{pillar.desc}</p>
+                  <p className="text-xs leading-relaxed text-[#6B7580]">
+                    {pillar.desc}
+                  </p>
                 </article>
               );
             })}
@@ -375,7 +444,10 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         </div>
 
         {/* ── Fitness Calculators ── */}
-        <div id="calc"> <FitnessCalculator /></div>
+        <div id="calc">
+          {" "}
+          <FitnessCalculator />
+        </div>
 
         {/* Ad after calculator */}
         <div className="py-4">
@@ -397,9 +469,10 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 BMI Calculator, Calorie Counter &amp; More — Questions Answered
               </h2>
               <p className="text-xs leading-relaxed text-[#6B7580]">
-                FitOS combines free fitness calculators (BMI, BMR, TDEE, Body Fat %,
-                Ideal Weight), a 100+ Bangladeshi food database, workout tracking, and
-                AI-powered health insights into a single intuitive web app.
+                FitOS combines free fitness calculators (BMI, BMR, TDEE, Body
+                Fat %, Ideal Weight), a 100+ Bangladeshi food database, workout
+                tracking, and AI-powered health insights into a single intuitive
+                web app.
               </p>
             </div>
 
@@ -413,7 +486,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                     <Activity className="w-3.5 h-3.5 text-[#4E8B2E] shrink-0" />
                     {faq.q}
                   </h3>
-                  <p className="text-xs leading-relaxed pl-5 text-[#6B7580]">{faq.a}</p>
+                  <p className="text-xs leading-relaxed pl-5 text-[#6B7580]">
+                    {faq.a}
+                  </p>
                 </div>
               ))}
             </div>
