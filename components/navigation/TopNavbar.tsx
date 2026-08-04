@@ -11,12 +11,12 @@ export default function TopNavbar() {
       <div className="flex items-center justify-between h-14 px-4 md:px-6">
         {/* Mobile logo */}
         <div className="flex items-center gap-2 md:hidden">
-          <div className="relative h-8 w-8 rounded-lg bg-card overflow-hidden border border-border/60 shadow-sm">
+          <div className="relative h-8 w-8 rounded-lg bg-white overflow-hidden border border-border/60 shadow-sm">
             <Image
               src="/assets/images/logo.png"
               alt="FitOs Logo"
               fill
-              className="object-contain dark:bg-white"
+              className="object-contain p-0.5 bg-white"
               priority
             />
           </div>

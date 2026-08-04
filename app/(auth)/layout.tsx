@@ -51,12 +51,12 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           <div className="relative flex w-full max-w-sm flex-col items-center space-y-8">
             <div className="flex flex-col items-center space-y-3">
               <div className="flex items-center gap-3">
-                <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-card shadow-lg border border-border/60">
+                <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-lg border border-border/60">
                   <Image
                     src="/assets/images/logo.png"
                     alt="FitOs Logo"
                     fill
-                    className="object-contain dark:bg-white"
+                    className="object-contain p-0.5 bg-white"
                     priority
                   />
                 </div>
@@ -120,12 +120,12 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           <div className="flex w-full flex-col items-center lg:hidden">
             <div className="mb-5 w-full flex-shrink-0 flex flex-col items-center">
               <div className="mb-3 flex items-center gap-2.5">
-                <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-card shadow-md border border-border/60">
+                <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-white shadow-md border border-border/60">
                   <Image
                     src="/assets/images/logo.png"
                     alt="FitOs Logo"
                     fill
-                    className="object-contain dark:bg-white"
+                    className="object-contain p-0.5 bg-white"
                     priority
                   />
                 </div>

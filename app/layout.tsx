@@ -108,16 +108,13 @@ export const metadata: Metadata = {
 
   applicationName: "FitOS",
   authors: [{ name: "FitOS" }],
-  colorScheme: "light dark",
   creator: "FitOS",
   publisher: "FitOS",
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f5f7fa" },
-    { media: "(prefers-color-scheme: dark)", color: "#0d1017" },
-  ],
+  themeColor: "#ffffff",
+  colorScheme: "light dark",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -143,7 +140,10 @@ export default function RootLayout({
             />
           )}
         </head>
-        <body className={`${inter.variable} font-sans antialiased`}>
+        <body
+          className={`${inter.variable} font-sans antialiased`}
+          suppressHydrationWarning
+        >
           <ThemeProvider
             attribute="class"
             defaultTheme="system"

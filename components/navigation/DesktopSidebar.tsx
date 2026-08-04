@@ -47,12 +47,12 @@ export default function DesktopSidebar() {
     <aside className="hidden md:flex flex-col w-64 h-screen sticky top-0 border-r border-border bg-card/80 backdrop-blur-xl">
       {/* Logo */}
       <div className="flex items-center gap-3 px-6 py-5 border-b border-border">
-        <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-card overflow-hidden shadow-sm border border-border/60">
+        <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-white overflow-hidden shadow-sm border border-border/60">
           <Image
             src="/assets/images/logo.png"
             alt="FitOs Logo"
             fill
-            className="object-contain dark:bg-white"
+            className="object-contain p-0.5 bg-white"
             priority
           />
         </div>

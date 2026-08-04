@@ -20,12 +20,12 @@ export default function Offline() {
       <div className="relative w-full max-w-md">
         <div className="rounded-3xl border border-border/60 bg-card/70 backdrop-blur-2xl shadow-[0_30px_80px_-28px_rgba(0,0,0,0.45)] p-8 text-center space-y-6">
           <div className="flex flex-col items-center gap-3">
-            <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-card shadow-md border border-border/60">
+            <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-md border border-border/60">
               <Image
                 src="/assets/images/logo.png"
                 alt="FitOs Logo"
                 fill
-                className="object-contain dark:bg-white"
+                className="object-contain p-0.5 bg-white"
               />
             </div>
             <div className="flex flex-col leading-tight">
