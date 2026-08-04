@@ -209,7 +209,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                   FitOS
                 </span>
                 <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#EEF6E9] text-[#4E8B2E] border border-[#4E8B2E]/20">
-                  v2.0
+                  v3.0 
                 </span>
               </div>
               <p className="text-[11px] text-[#6B7580] font-medium">
@@ -218,7 +218,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="hidden md:flex items-center gap-2 sm:gap-3">
             <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F1F2F3] border border-[#37414A]/15 text-xs font-semibold text-[#37414A]">
               <Zap className="w-3.5 h-3.5 fill-[#4E8B2E] text-[#4E8B2E]" />
               <span>Smart AI Insights</span>
