@@ -209,7 +209,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                   FitOS
                 </span>
                 <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#EEF6E9] text-[#4E8B2E] border border-[#4E8B2E]/20">
-                  v3.0 
+                  v3.0
                 </span>
               </div>
               <p className="text-[11px] text-[#6B7580] font-medium">
@@ -218,20 +218,14 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             </div>
           </div>
 
-          <div className="hidden md:flex items-center gap-2 sm:gap-3">
-            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F1F2F3] border border-[#37414A]/15 text-xs font-semibold text-[#37414A]">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Link href="#calc" className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#F1F2F3] border border-[#37414A]/15 text-xs font-semibold text-[#37414A]">
               <Zap className="w-3.5 h-3.5 fill-[#4E8B2E] text-[#4E8B2E]" />
-              <span>Smart AI Insights</span>
-            </div>
-            <Link
-              href="/sign-in"
-              className="text-xs font-semibold text-[#6B7580] hover:text-[#1F2937] transition-colors px-3 py-1.5"
-            >
-              Sign In
+              <span>Fitness Calculators</span>
             </Link>
             <Link
-              href="/sign-up"
-              className="text-xs font-bold px-3.5 py-1.5 rounded-xl bg-[#4E8B2E] text-white hover:bg-[#3F7223] transition-all shadow-sm flex items-center gap-1"
+              href="#auth"
+              className="text-sm font-semibold px-4 py-2 rounded-full bg-[#4E8B2E] text-white hover:bg-[#3F7223] transition-all shadow-sm flex items-center gap-1"
             >
               Get Started <ArrowRight className="w-3 h-3" />
             </Link>
@@ -239,7 +233,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         </header>
 
         {/* ── Hero + Auth ── */}
-        <main className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mb-16">
+        <main className="flex flex-col lg:flex-row items-center gap-8 items-start mb-16">
           <section className="lg:col-span-7 space-y-7 pt-1">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#EEF6E9] border border-[#4E8B2E]/20 text-xs font-semibold text-[#4E8B2E]">
               <Sparkles className="w-3.5 h-3.5" />
@@ -248,7 +242,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
             <div className="space-y-4">
               <h1
-                className="text-3xl sm:text-4xl lg:text-[3.25rem] font-bold tracking-tight leading-[1.1]"
+                className="text-3xl sm:text-4xl lg:text-[3.25rem] font-bold tracking-tight leading-[1.1] space-x-2 space-y-1"
                 style={{ fontFamily: "'Space Grotesk', sans-serif" }}
               >
                 Free BMI calculator, calorie counter &amp;{" "}
@@ -336,7 +330,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           </section>
 
           {/* Auth card */}
-          <section className="lg:col-span-5 flex items-center justify-center lg:sticky lg:top-6">
+          <section id="auth" className="lg:col-span-5 flex items-center justify-center lg:sticky lg:top-6">
             {children}
           </section>
         </main>
@@ -381,7 +375,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         </div>
 
         {/* ── Fitness Calculators ── */}
-        <FitnessCalculator />
+        <div id="calc"> <FitnessCalculator /></div>
 
         {/* Ad after calculator */}
         <div className="py-4">
@@ -429,7 +423,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         {/* ── Footer ── */}
         <footer className="py-6 border-t border-[#E9EBEC] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#6B7580]">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-[#1F2937]">FitOS v2.0</span>
+            <span className="font-bold text-[#1F2937]">FitOS v3.0</span>
             <span>&middot; Free BMI Calculator &amp; Fitness Tracker</span>
           </div>
           <div>
