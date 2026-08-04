@@ -4,35 +4,32 @@ import { connectToDatabase } from "@/lib/database";
 import BodyMeasurement from "@/lib/database/models/body-measurement.model";
 import { currentUser } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
+import {
+  bodyMeasurementSchema,
+  type BodyMeasurementFormValues,
+} from "@/validations/fitness";
 
-export async function logBodyMeasurement(data: {
-  date: string;
-  waist?: number;
-  chest?: number;
-  hip?: number;
-  neck?: number;
-  shoulder?: number;
-  arm?: number;
-  forearm?: number;
-  thigh?: number;
-  calf?: number;
-}) {
+export async function logBodyMeasurement(data: BodyMeasurementFormValues) {
   await connectToDatabase();
   const user = await currentUser();
   if (!user) throw new Error("Unauthorized");
 
-  // Strip empty/undefined values
+  const validated = bodyMeasurementSchema.parse(data);
+
   const cleaned = Object.fromEntries(
-    Object.entries(data).filter(([, v]) => v !== undefined && v !== "")
+    Object.entries(validated).filter(
+      ([, v]) => v !== undefined && v !== "" && v !== null
+    )
   );
 
   const measurement = await BodyMeasurement.findOneAndUpdate(
-    { clerkId: user.id, date: data.date },
+    { clerkId: user.id, date: validated.date },
     { ...cleaned, clerkId: user.id },
     { new: true, upsert: true }
   );
 
   revalidatePath("/progress");
+  revalidatePath("/profile");
   return JSON.parse(JSON.stringify(measurement));
 }
 
@@ -58,4 +55,18 @@ export async function getLatestBodyMeasurement() {
   });
 
   return measurement ? JSON.parse(JSON.stringify(measurement)) : null;
+}
+
+export async function deleteBodyMeasurement(measurementId: string) {
+  await connectToDatabase();
+  const user = await currentUser();
+  if (!user) throw new Error("Unauthorized");
+
+  await BodyMeasurement.findOneAndDelete({
+    _id: measurementId,
+    clerkId: user.id,
+  });
+
+  revalidatePath("/progress");
+  revalidatePath("/profile");
 }
