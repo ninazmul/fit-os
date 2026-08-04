@@ -7,7 +7,12 @@ import {
   deleteMealLog,
   removeMealItem,
 } from "@/lib/actions/meal.actions";
-import { getFoods, createCustomFood } from "@/lib/actions/food.actions";
+import {
+  getFoods,
+  createCustomFood,
+  updateCustomFood,
+  deleteCustomFood,
+} from "@/lib/actions/food.actions";
 import { getUserProfile } from "@/lib/actions/profile.actions";
 import {
   Dialog,
@@ -23,6 +28,7 @@ import {
   UtensilsCrossed,
   Plus,
   Trash2,
+  Pencil,
   Search,
   Flame,
   Calendar,
@@ -63,6 +69,7 @@ export default function DietPage() {
 
   // Custom food modal state
   const [customFoodModalOpen, setCustomFoodModalOpen] = useState(false);
+  const [editingFoodId, setEditingFoodId] = useState<string | null>(null);
   const [customName, setCustomName] = useState("");
   const [customCategory] = useState<FoodCategory>("custom");
   const [customServing, setCustomServing] = useState("1 plate");
@@ -148,10 +155,56 @@ export default function DietPage() {
     }
   };
 
-  const handleCreateCustomFood = async (e: React.FormEvent) => {
+  const resetCustomFoodForm = () => {
+    setEditingFoodId(null);
+    setCustomName("");
+    setCustomServing("1 plate");
+    setCustomCalories(200);
+    setCustomProtein(10);
+    setCustomCarbs(30);
+    setCustomFat(5);
+    setCustomFiber(2);
+  };
+
+  const handleOpenCreateCustomFood = () => {
+    resetCustomFoodForm();
+    setCustomFoodModalOpen(true);
+  };
+
+  const handleEditCustomFood = (e: React.MouseEvent, food: IFood) => {
+    e.stopPropagation();
+    if (!food._id) return;
+    setEditingFoodId(food._id);
+    setCustomName(food.name);
+    setCustomServing(food.servingSize);
+    setCustomCalories(food.calories);
+    setCustomProtein(food.protein);
+    setCustomCarbs(food.carbs);
+    setCustomFat(food.fat);
+    setCustomFiber(food.fiber || 0);
+    setCustomFoodModalOpen(true);
+  };
+
+  const handleDeleteCustomFood = async (e: React.MouseEvent, foodId: string) => {
+    e.stopPropagation();
+    if (!confirm("Are you sure you want to delete this custom food?")) return;
+    try {
+      await deleteCustomFood(foodId);
+      toast.success("Custom food deleted!");
+      if (selectedFood?._id === foodId) {
+        setSelectedFood(null);
+      }
+      const foods = await getFoods(searchQuery, selectedCategory);
+      setFoodCatalog(foods);
+    } catch {
+      toast.error("Failed to delete custom food");
+    }
+  };
+
+  const handleSaveCustomFood = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await createCustomFood({
+      const payload = {
         name: customName,
         category: customCategory,
         servingSize: customServing,
@@ -160,14 +213,23 @@ export default function DietPage() {
         carbs: customCarbs,
         fat: customFat,
         fiber: customFiber,
-      });
-      toast.success("Custom food created!");
+      };
+
+      if (editingFoodId) {
+        await updateCustomFood(editingFoodId, payload);
+        toast.success("Custom food updated!");
+      } else {
+        await createCustomFood(payload);
+        toast.success("Custom food created!");
+      }
+
       setCustomFoodModalOpen(false);
+      resetCustomFoodForm();
       // Reload catalog
       const foods = await getFoods(searchQuery, selectedCategory);
       setFoodCatalog(foods);
     } catch {
-      toast.error("Failed to create food");
+      toast.error(editingFoodId ? "Failed to update food" : "Failed to create food");
     }
   };
 
@@ -478,7 +540,7 @@ export default function DietPage() {
             </div>
             <Button
               variant="outline"
-              onClick={() => setCustomFoodModalOpen(true)}
+              onClick={handleOpenCreateCustomFood}
               className="rounded-xl text-xs whitespace-nowrap border-primary text-primary"
             >
               + Custom
@@ -497,27 +559,58 @@ export default function DietPage() {
                     : "border-border/40 hover:bg-accent/50"
                 }`}
               >
-                <div>
-                  <p className="font-semibold text-sm flex items-center gap-1.5">
-                    {food.name}
+                <div className="flex-1 min-w-0 pr-2">
+                  <p className="font-semibold text-sm flex items-center gap-1.5 truncate">
+                    <span>{food.name}</span>
                     {food.isBangladeshi && (
-                      <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-medium shrink-0">
                         BD
                       </span>
                     )}
+                    {food.isCustom && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-purple-500/15 text-purple-700 dark:text-purple-300 font-medium shrink-0">
+                        Custom
+                      </span>
+                    )}
                   </p>
-                  <p className="text-muted-foreground text-[11px]">
+                  <p className="text-muted-foreground text-[11px] truncate">
                     {food.servingSize} &middot; P:{food.protein}g | C:
                     {food.carbs}g | F:{food.fat}g
                   </p>
                 </div>
-                <div className="text-right">
-                  <span className="font-bold text-sm text-primary">
-                    {food.calories}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground block">
-                    kcal
-                  </span>
+                <div className="flex items-center gap-2.5 shrink-0">
+                  <div className="text-right">
+                    <span className="font-bold text-sm text-primary">
+                      {food.calories}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground block">
+                      kcal
+                    </span>
+                  </div>
+                  {food.isCustom && (
+                    <div className="flex items-center gap-1 pl-1 border-l border-border/40">
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        onClick={(e) => handleEditCustomFood(e, food)}
+                        className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg"
+                        title="Edit custom food"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        onClick={(e) => food._id && handleDeleteCustomFood(e, food._id)}
+                        className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg"
+                        title="Delete custom food"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -549,16 +642,22 @@ export default function DietPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Custom Food Creation Modal */}
-      <Dialog open={customFoodModalOpen} onOpenChange={setCustomFoodModalOpen}>
+      {/* Custom Food Creation / Edit Modal */}
+      <Dialog
+        open={customFoodModalOpen}
+        onOpenChange={(open) => {
+          setCustomFoodModalOpen(open);
+          if (!open) resetCustomFoodForm();
+        }}
+      >
         <DialogContent className="sm:max-w-md rounded-2xl p-6 space-y-4">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold">
-              Create Custom Food 🍳
+              {editingFoodId ? "Edit Custom Food ✏️" : "Create Custom Food 🍳"}
             </DialogTitle>
           </DialogHeader>
 
-          <form onSubmit={handleCreateCustomFood} className="space-y-3 text-xs">
+          <form onSubmit={handleSaveCustomFood} className="space-y-3 text-xs">
             <div>
               <Label>Food Name</Label>
               <Input
@@ -637,7 +736,7 @@ export default function DietPage() {
               type="submit"
               className="w-full rounded-xl mt-3 bg-primary hover:bg-primary/90 font-bold"
             >
-              Save Custom Food
+              {editingFoodId ? "Update Custom Food" : "Save Custom Food"}
             </Button>
           </form>
         </DialogContent>

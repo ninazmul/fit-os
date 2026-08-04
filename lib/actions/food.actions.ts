@@ -45,6 +45,22 @@ export async function createCustomFood(formData: FoodFormValues) {
   return JSON.parse(JSON.stringify(food));
 }
 
+export async function updateCustomFood(foodId: string, formData: FoodFormValues) {
+  await connectToDatabase();
+  const user = await currentUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const validated = foodSchema.parse(formData);
+  const food = await Food.findOneAndUpdate(
+    { _id: foodId, clerkId: user.id, isCustom: true },
+    { ...validated },
+    { new: true }
+  );
+
+  revalidatePath("/diet");
+  return JSON.parse(JSON.stringify(food));
+}
+
 export async function deleteCustomFood(foodId: string) {
   await connectToDatabase();
   const user = await currentUser();
