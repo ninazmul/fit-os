@@ -35,6 +35,38 @@ export async function getDashboardData() {
   const todayFat = meals.reduce((s, m) => s + m.totalFat, 0);
   const todayFiber = meals.reduce((s, m) => s + m.totalFiber, 0);
 
+  // Water total: prefer totalMl field, fallback to summing entries, legacy amountMl
+  const waterEntries =
+    (waterLog?.entries as { amountMl: number }[] | undefined) || [];
+  const todayWaterMl =
+    Number(waterLog?.totalMl) ||
+    (waterEntries.length > 0
+      ? waterEntries.reduce((s, e) => s + Number(e.amountMl || 0), 0)
+      : Number(waterLog?.amountMl) || 0);
+
+  // Sleep total: prefer sessions aggregation, fallback to legacy fields
+  const sleepSessions =
+    (sleepLog?.sessions as
+      | { totalHours: number; quality: number }[]
+      | undefined) || [];
+  const sleepHoursFromSessions = sleepSessions.length
+    ? sleepSessions.reduce((s, ses) => s + Number(ses.totalHours || 0), 0)
+    : null;
+  const sleepQualityFromSessions = sleepSessions.length
+    ? sleepSessions.reduce((s, ses) => s + Number(ses.quality || 0), 0) /
+      sleepSessions.length
+    : null;
+  const todaySleepHours =
+    Number(sleepLog?.totalHours) ||
+    (sleepHoursFromSessions !== null
+      ? Math.round(sleepHoursFromSessions * 10) / 10
+      : (sleepLog?.totalHours ?? null));
+  const todaySleepQuality =
+    Number(sleepLog?.avgQuality) ||
+    (sleepQualityFromSessions !== null
+      ? Math.round(sleepQualityFromSessions * 10) / 10
+      : (sleepLog?.quality ?? null));
+
   // Weekly chart data (last 7 days)
   const weekDates: string[] = [];
   for (let i = 6; i >= 0; i--) {
@@ -81,7 +113,10 @@ export async function getDashboardData() {
   const checkDate = new Date();
   for (let i = 0; i < 365; i++) {
     const dateStr = checkDate.toISOString().split("T")[0];
-    const hasWorkout = await WorkoutLog.findOne({ clerkId: user.id, date: dateStr });
+    const hasWorkout = await WorkoutLog.findOne({
+      clerkId: user.id,
+      date: dateStr,
+    });
     const hasMeal = await MealLog.findOne({ clerkId: user.id, date: dateStr });
     if (hasWorkout || hasMeal) {
       streak++;
@@ -117,11 +152,11 @@ export async function getDashboardData() {
         fat: Math.round(todayFat * 10) / 10,
         fiber: Math.round(todayFiber * 10) / 10,
         weight: weightLog?.weight ?? profile.currentWeight,
-        waterMl: waterLog?.amountMl ?? 0,
+        waterMl: todayWaterMl,
         workoutDone: workouts.length > 0,
         workoutCount: workouts.length,
-        sleepHours: sleepLog?.totalHours ?? null,
-        sleepQuality: sleepLog?.quality ?? null,
+        sleepHours: todaySleepHours ?? null,
+        sleepQuality: todaySleepQuality ?? null,
         mealCount: meals.length,
       },
       charts: {
@@ -130,6 +165,6 @@ export async function getDashboardData() {
       },
       streak,
       workoutDaysThisWeek,
-    })
+    }),
   );
 }

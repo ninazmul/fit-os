@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,7 +29,9 @@ export default function QuickActionModal({
   defaultAction = "water",
   onCompleted,
 }: QuickActionModalProps) {
-  const [activeTab, setActiveTab] = useState<"meal" | "weight" | "water" | "workout">(defaultAction);
+  const [activeTab, setActiveTab] = useState<
+    "meal" | "weight" | "water" | "workout"
+  >(defaultAction);
   const [waterAmount, setWaterAmount] = useState<number>(250);
   const [weightVal, setWeightVal] = useState<string>("");
   const [weightNotes, setWeightNotes] = useState<string>("");
@@ -41,7 +48,7 @@ export default function QuickActionModal({
     try {
       setLoading(true);
       const today = new Date().toISOString().split("T")[0];
-      await addWater(today, amount);
+      await addWater(amount, today);
       toast.success(`Logged ${amount}ml of water! 💧`);
       onOpenChange(false);
       await onCompleted?.();
@@ -160,7 +167,13 @@ export default function QuickActionModal({
                     +{amt >= 1000 ? `${amt / 1000}L` : `${amt}ml`}
                   </span>
                   <span className="text-[10px] text-muted-foreground">
-                    {amt === 250 ? "Glass" : amt === 500 ? "Small Bottle" : amt === 750 ? "Sports Bottle" : "Large Bottle"}
+                    {amt === 250
+                      ? "Glass"
+                      : amt === 500
+                        ? "Small Bottle"
+                        : amt === 750
+                          ? "Sports Bottle"
+                          : "Large Bottle"}
                   </span>
                 </Button>
               ))}
@@ -168,7 +181,9 @@ export default function QuickActionModal({
 
             <div className="flex gap-2 items-end pt-2">
               <div className="flex-1 space-y-1">
-                <Label htmlFor="custom-water" className="text-xs">Custom Water (ml)</Label>
+                <Label htmlFor="custom-water" className="text-xs">
+                  Custom Water (ml)
+                </Label>
                 <Input
                   id="custom-water"
                   type="number"
@@ -192,7 +207,9 @@ export default function QuickActionModal({
         {activeTab === "weight" && (
           <form onSubmit={handleLogWeight} className="space-y-4">
             <div className="space-y-1">
-              <Label htmlFor="weight-val" className="text-xs">Today&apos;s Weight (kg)</Label>
+              <Label htmlFor="weight-val" className="text-xs">
+                Today&apos;s Weight (kg)
+              </Label>
               <Input
                 id="weight-val"
                 type="number"
@@ -206,7 +223,9 @@ export default function QuickActionModal({
             </div>
 
             <div className="space-y-1">
-              <Label htmlFor="weight-notes" className="text-xs">Notes (optional)</Label>
+              <Label htmlFor="weight-notes" className="text-xs">
+                Notes (optional)
+              </Label>
               <Input
                 id="weight-notes"
                 placeholder="e.g. Morning empty stomach"

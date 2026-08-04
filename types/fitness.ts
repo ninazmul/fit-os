@@ -151,22 +151,36 @@ export interface IWorkoutLog {
   notes?: string;
 }
 
+export interface IWaterEntry {
+  amountMl: number;
+  time: string; // HH:mm
+  createdAt?: Date | string;
+}
+
 export interface IWaterLog {
   _id?: string;
   clerkId: string;
   date: string; // YYYY-MM-DD
-  amountMl: number;
+  entries: IWaterEntry[];
+  totalMl: number;
+}
+
+export interface ISleepSession {
+  sleepTime: string; // HH:mm
+  wakeTime: string; // HH:mm
+  totalHours: number;
+  quality: number; // 1-5
+  notes?: string;
+  createdAt?: Date | string;
 }
 
 export interface ISleepLog {
   _id?: string;
   clerkId: string;
-  date: string; // YYYY-MM-DD
-  sleepTime: string; // e.g. "23:00"
-  wakeTime: string; // e.g. "07:00"
+  date: string; // YYYY-MM-DD (wake date)
+  sessions: ISleepSession[];
   totalHours: number;
-  quality: number; // 1 to 5 rating
-  notes?: string;
+  avgQuality: number;
 }
 
 export interface IProgressPhoto {

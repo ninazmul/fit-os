@@ -1,7 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { getDashboardData } from "@/lib/actions/dashboard.actions";
+import {
+  addWater,
+  removeWaterEntry,
+  getWaterLogForDate,
+} from "@/lib/actions/water-sleep.actions";
 import StatCard from "@/components/shared/StatCard";
 import ProgressRing from "@/components/shared/ProgressRing";
 import QuickActionModal from "@/components/shared/QuickActionModal";
@@ -24,6 +29,8 @@ import {
   TrendingDown,
   Sparkles,
   UtensilsCrossed,
+  Trash2,
+  Clock,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -38,6 +45,7 @@ import {
 } from "recharts";
 import Link from "next/link";
 import AdUnit from "@/components/shared/AdUnit";
+import toast from "react-hot-toast";
 
 export default function DashboardPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -49,8 +57,23 @@ export default function DashboardPage() {
   >("water");
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [waterLog, setWaterLog] = useState<any>({ entries: [], totalMl: 0 });
+  const [waterAdding, setWaterAdding] = useState<number | null>(null);
+  const [waterRemoving, setWaterRemoving] = useState<number | null>(null);
 
-  const fetchDashboard = async () => {
+  const todayStr = new Date().toISOString().split("T")[0];
+
+  const fetchWater = useCallback(async () => {
+    try {
+      const w = await getWaterLogForDate(todayStr);
+      setWaterLog(w);
+    } catch (err) {
+      console.error("Water log error:", err);
+    }
+  }, [todayStr]);
+
+  const fetchDashboard = useCallback(async () => {
     try {
       setLoading(true);
       const res = await getDashboardData();
@@ -63,11 +86,43 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  const fetchAll = useCallback(async () => {
+    await Promise.all([fetchDashboard(), fetchWater()]);
+  }, [fetchDashboard, fetchWater]);
 
   useEffect(() => {
-    fetchDashboard();
-  }, []);
+    fetchAll();
+  }, [fetchAll]);
+
+  const handleQuickAddWater = async (amountMl: number) => {
+    try {
+      setWaterAdding(amountMl);
+      await addWater(amountMl, todayStr);
+      toast.success(
+        `Added ${amountMl >= 1000 ? `${amountMl / 1000}L` : `${amountMl}ml`} 💧`,
+      );
+      await Promise.all([fetchWater(), fetchDashboard()]);
+    } catch {
+      toast.error("Failed to log water");
+    } finally {
+      setWaterAdding(null);
+    }
+  };
+
+  const handleRemoveWaterEntry = async (idx: number) => {
+    try {
+      setWaterRemoving(idx);
+      await removeWaterEntry(idx, todayStr);
+      toast.success("Water entry removed");
+      await Promise.all([fetchWater(), fetchDashboard()]);
+    } catch {
+      toast.error("Failed to remove entry");
+    } finally {
+      setWaterRemoving(null);
+    }
+  };
 
   if (loading || !data) {
     return <DashboardSkeleton />;
@@ -247,7 +302,107 @@ export default function DashboardPage() {
           }
           icon={Moon}
           variant="purple"
+          onClick={() => {
+            setQuickLogAction("water");
+            setQuickLogOpen(true);
+          }}
         />
+      </div>
+
+      {/* Quick Water Log Panel */}
+      <div className="glass-card p-5 rounded-3xl border border-border/50 space-y-4">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+              <Droplet className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold">Quick Water Log</h3>
+              <p className="text-xs text-muted-foreground">
+                Tap a button to log instantly &mdash; no typing required
+              </p>
+            </div>
+          </div>
+          <div className="text-right text-xs">
+            <p className="text-muted-foreground">Today so far</p>
+            <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
+              {waterLog.totalMl >= 1000
+                ? `${(waterLog.totalMl / 1000).toFixed(1)}L`
+                : `${waterLog.totalMl}ml`}
+              <span className="text-xs font-normal text-muted-foreground ml-1">
+                / {(profile.waterGoalMl / 1000).toFixed(1)}L
+              </span>
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {[
+            { ml: 150, label: "Sip", hint: "Small cup" },
+            { ml: 250, label: "+250ml", hint: "Glass" },
+            { ml: 500, label: "+500ml", hint: "Bottle" },
+            { ml: 1000, label: "+1L", hint: "Large bottle" },
+          ].map((p) => (
+            <Button
+              key={p.ml}
+              variant="outline"
+              disabled={waterAdding !== null}
+              onClick={() => handleQuickAddWater(p.ml)}
+              className="h-auto py-3 rounded-2xl flex-col gap-0.5 border-blue-500/20 hover:bg-blue-500/10 hover:border-blue-500/40 min-h-[3.5rem]"
+            >
+              <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
+                {p.label}
+              </span>
+              <span className="text-[10px] text-muted-foreground">
+                {p.hint}
+              </span>
+            </Button>
+          ))}
+        </div>
+
+        {/* Today's water entries timeline */}
+        {waterLog.entries && waterLog.entries.length > 0 ? (
+          <div className="pt-2 border-t border-border/30">
+            <p className="text-[11px] font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
+              Today&apos;s log &middot; {waterLog.entries.length} entr
+              {waterLog.entries.length === 1 ? "y" : "ies"}
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {waterLog.entries.map(
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (entry: any, idx: number) => (
+                  <div
+                    key={idx}
+                    className="group flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-xs"
+                  >
+                    <Clock className="w-3 h-3 text-blue-500/70" />
+                    <span className="font-medium text-blue-700 dark:text-blue-300">
+                      {entry.time}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {entry.amountMl >= 1000
+                        ? `${(entry.amountMl / 1000).toFixed(1)}L`
+                        : `${entry.amountMl}ml`}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveWaterEntry(idx)}
+                      disabled={waterRemoving === idx}
+                      className="ml-0.5 p-0.5 rounded-full text-muted-foreground/60 hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                      title="Remove entry"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                ),
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="pt-2 border-t border-border/30 text-xs text-muted-foreground italic text-center py-2">
+            No water logged today. Tap a button above to get started! 💧
+          </div>
+        )}
       </div>
 
       {/* Mid-page Ad Banner (above-the-fold high-fill placement) */}

@@ -28,7 +28,9 @@ export async function generateInsights(): Promise<AIInsight[]> {
   // Fetch last 7 days of data
   const [meals, weights, waterLogs, workouts, sleepLogs] = await Promise.all([
     MealLog.find({ clerkId: user.id, date: { $gte: startStr } }),
-    WeightLog.find({ clerkId: user.id, date: { $gte: startStr } }).sort({ date: 1 }),
+    WeightLog.find({ clerkId: user.id, date: { $gte: startStr } }).sort({
+      date: 1,
+    }),
     WaterLog.find({ clerkId: user.id, date: { $gte: startStr } }),
     WorkoutLog.find({ clerkId: user.id, date: { $gte: startStr } }),
     SleepLog.find({ clerkId: user.id, date: { $gte: startStr } }),
@@ -38,9 +40,7 @@ export async function generateInsights(): Promise<AIInsight[]> {
 
   // Protein insight
   const avgProtein =
-    meals.length > 0
-      ? meals.reduce((s, m) => s + m.totalProtein, 0) / 7
-      : 0;
+    meals.length > 0 ? meals.reduce((s, m) => s + m.totalProtein, 0) / 7 : 0;
   if (avgProtein > 0 && avgProtein < profile.dailyProteinGoal * 0.8) {
     insights.push({
       id: "low-protein",
@@ -60,9 +60,7 @@ export async function generateInsights(): Promise<AIInsight[]> {
 
   // Calorie insight
   const avgCalories =
-    meals.length > 0
-      ? meals.reduce((s, m) => s + m.totalCalories, 0) / 7
-      : 0;
+    meals.length > 0 ? meals.reduce((s, m) => s + m.totalCalories, 0) / 7 : 0;
   if (avgCalories > 0) {
     const diff = avgCalories - profile.dailyCaloriesGoal;
     if (diff > 300) {
@@ -122,10 +120,22 @@ export async function generateInsights(): Promise<AIInsight[]> {
   }
 
   // Water insight
+  // Build per-day totals (legacy amountMl + new totalMl + sessions summation)
+  const waterByDay = new Map<string, number>();
+  waterLogs.forEach((w) => {
+    const entries = Array.isArray(w.entries)
+      ? (w.entries as { amountMl: number }[])
+      : [];
+    const total =
+      Number(w.totalMl) ||
+      (entries.length > 0
+        ? entries.reduce((s, e) => s + Number(e.amountMl || 0), 0)
+        : Number(w.amountMl) || 0);
+    waterByDay.set(w.date, (waterByDay.get(w.date) || 0) + total);
+  });
+  const waterDays = Array.from(waterByDay.values());
   const avgWater =
-    waterLogs.length > 0
-      ? waterLogs.reduce((s, w) => s + w.amountMl, 0) / 7
-      : 0;
+    waterDays.length > 0 ? waterDays.reduce((s, v) => s + v, 0) / 7 : 0;
   if (avgWater > 0 && avgWater >= profile.waterGoalMl * 0.9) {
     insights.push({
       id: "water-good",
@@ -163,9 +173,23 @@ export async function generateInsights(): Promise<AIInsight[]> {
   }
 
   // Sleep insight
+  // Build per-day totals from sessions and legacy fields
+  const sleepByDay = new Map<string, number>();
+  sleepLogs.forEach((l) => {
+    const sessions = Array.isArray(l.sessions)
+      ? (l.sessions as { totalHours: number }[])
+      : [];
+    const total =
+      Number(l.totalHours) ||
+      (sessions.length > 0
+        ? sessions.reduce((s, ses) => s + Number(ses.totalHours || 0), 0)
+        : Number(l.totalHours) || 0);
+    sleepByDay.set(l.date, (sleepByDay.get(l.date) || 0) + total);
+  });
+  const sleepDayTotals = Array.from(sleepByDay.values());
   const avgSleep =
-    sleepLogs.length > 0
-      ? sleepLogs.reduce((s, l) => s + l.totalHours, 0) / sleepLogs.length
+    sleepDayTotals.length > 0
+      ? sleepDayTotals.reduce((s, v) => s + v, 0) / sleepDayTotals.length
       : 0;
   if (avgSleep > 0 && avgSleep < 6) {
     insights.push({
@@ -183,7 +207,8 @@ export async function generateInsights(): Promise<AIInsight[]> {
       id: "no-meals-today",
       type: "tip",
       title: "No Meals Logged Today",
-      description: "Start tracking today's meals to stay on top of your nutrition goals.",
+      description:
+        "Start tracking today's meals to stay on top of your nutrition goals.",
       actionableText: "Log a meal",
     });
   }

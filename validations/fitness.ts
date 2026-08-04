@@ -7,7 +7,13 @@ export const profileSchema = z.object({
   height: z.coerce.number().min(50).max(300), // cm
   currentWeight: z.coerce.number().min(20).max(500), // kg
   targetWeight: z.coerce.number().min(20).max(500),
-  activityLevel: z.enum(["sedentary", "light", "moderate", "active", "very_active"]),
+  activityLevel: z.enum([
+    "sedentary",
+    "light",
+    "moderate",
+    "active",
+    "very_active",
+  ]),
   goal: z.enum(["lose_weight", "gain_muscle", "maintain"]),
   workoutDaysPerWeek: z.coerce.number().min(0).max(7),
   waterGoalMl: z.coerce.number().min(500).max(10000),
@@ -116,17 +122,36 @@ export const workoutLogSchema = z.object({
 
 export const waterLogSchema = z.object({
   date: z.string().min(1),
+  entries: z.array(
+    z.object({
+      amountMl: z.coerce.number().min(1).max(5000),
+      time: z.string().min(1),
+    }),
+  ),
+});
+
+export const waterEntrySchema = z.object({
   amountMl: z.coerce.number().min(1).max(5000),
+  time: z.string().min(1).optional(),
+});
+
+export const sleepSessionSchema = z.object({
+  sleepTime: z.string().min(1, "Sleep time required"),
+  wakeTime: z.string().min(1, "Wake time required"),
+  totalHours: z.coerce.number().min(0).max(24),
+  quality: z.coerce.number().min(1).max(5).optional(),
+  notes: z.string().max(500).optional(),
 });
 
 export const sleepLogSchema = z.object({
   date: z.string().min(1),
-  sleepTime: z.string().min(1, "Sleep time required"),
-  wakeTime: z.string().min(1, "Wake time required"),
-  totalHours: z.coerce.number().min(0).max(24),
-  quality: z.coerce.number().min(1).max(5),
-  notes: z.string().max(500).optional(),
+  sessions: z.array(sleepSessionSchema),
 });
+
+export type WaterLogFormValues = z.infer<typeof waterLogSchema>;
+export type WaterEntryFormValues = z.infer<typeof waterEntrySchema>;
+export type SleepSessionFormValues = z.infer<typeof sleepSessionSchema>;
+export type SleepLogFormValues = z.infer<typeof sleepLogSchema>;
 
 export type ProfileFormValues = z.infer<typeof profileSchema>;
 export type FoodFormValues = z.infer<typeof foodSchema>;
@@ -134,5 +159,3 @@ export type MealLogFormValues = z.infer<typeof mealLogSchema>;
 export type WeightLogFormValues = z.infer<typeof weightLogSchema>;
 export type BodyMeasurementFormValues = z.infer<typeof bodyMeasurementSchema>;
 export type WorkoutLogFormValues = z.infer<typeof workoutLogSchema>;
-export type WaterLogFormValues = z.infer<typeof waterLogSchema>;
-export type SleepLogFormValues = z.infer<typeof sleepLogSchema>;
