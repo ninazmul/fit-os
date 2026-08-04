@@ -16,18 +16,59 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://fit-os.vercel.app";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
+
   title: {
-    default: "FitOS – Personal Fitness & Nutrition Tracker",
-    template: "%s | FitOS",
+    default:
+      "FitOS – Free BMI Calculator, Calorie Counter & Fitness Tracker | Bangladeshi Food Database",
+    template: "%s | FitOS – Fitness & Nutrition Tracker",
   },
 
   description:
-    "FitOS is your all-in-one personal fitness companion. Track workouts, nutrition, weight, water, sleep, and body measurements with smart AI insights.",
+    "FitOS is a free online fitness tracker with BMI calculator, BMR calculator, TDEE calculator, body fat percentage calculator, calorie counter, workout logger, and 100+ Bangladeshi food nutrition database. Track macros, water intake, weight, and body measurements with AI-powered insights. Works offline as a PWA.",
+
+  keywords: [
+    "BMI calculator",
+    "BMR calculator",
+    "TDEE calculator",
+    "body fat percentage calculator",
+    "calorie counter",
+    "calorie tracker",
+    "fitness tracker",
+    "nutrition tracker",
+    "macro calculator",
+    "Bangladeshi food calories",
+    "Bengali food nutrition",
+    "workout tracker",
+    "weight tracker",
+    "body measurement tracker",
+    "water intake tracker",
+    "protein tracker",
+    "diet planner",
+    "Kacchi Biryani calories",
+    "Polao calories",
+    "Ilish fish calories",
+    "daily calorie calculator",
+    "ideal weight calculator",
+    "free fitness app",
+    "PWA fitness app",
+    "online BMI calculator metric",
+    "Mifflin-St Jeor calculator",
+    "U.S. Navy body fat calculator",
+    "health tracker app",
+    "muscle gain diet plan",
+    "weight loss calorie deficit",
+    "FitOS",
+  ],
 
   alternates: {
     canonical: "/",
   },
+
+  category: "Health & Fitness",
 
   robots: {
     index: true,
@@ -43,26 +84,29 @@ export const metadata: Metadata = {
 
   openGraph: {
     type: "website",
-    locale: "en_BD",
+    locale: "en_US",
+    url: SITE_URL,
     siteName: "FitOS",
-    title: "FitOS – Personal Fitness & Nutrition Tracker",
+    title:
+      "FitOS – Free BMI Calculator, Calorie Counter & Fitness Tracker",
     description:
-      "Track workouts, nutrition, weight, water, sleep, and body measurements with smart AI insights.",
+      "Free online BMI, BMR, TDEE & body fat calculators. Track workouts, nutrition, Bangladeshi foods, water intake, and body measurements with AI insights.",
     images: [
       {
         url: "/assets/images/logo.png",
         width: 512,
         height: 512,
-        alt: "FitOS",
+        alt: "FitOS – Free Fitness & Nutrition Tracker with BMI Calculator",
       },
     ],
   },
 
   twitter: {
     card: "summary_large_image",
-    title: "FitOS – Personal Fitness & Nutrition Tracker",
+    title:
+      "FitOS – Free BMI Calculator, Calorie Counter & Fitness Tracker",
     description:
-      "Your all-in-one fitness companion for tracking nutrition, workouts, and body progress.",
+      "Free online fitness calculators (BMI, BMR, TDEE, Body Fat %). Track Bangladeshi & global meals, workouts, weight, and body metrics.",
     images: ["/assets/images/logo.png"],
   },
 
@@ -107,9 +151,9 @@ export const metadata: Metadata = {
   },
 
   applicationName: "FitOS",
-  authors: [{ name: "FitOS" }],
-  creator: "FitOS",
-  publisher: "FitOS",
+  authors: [{ name: "ArtistyCode Studio", url: "https://www.artistycode.studio/" }],
+  creator: "ArtistyCode Studio",
+  publisher: "ArtistyCode Studio",
 };
 
 export const viewport: Viewport = {
