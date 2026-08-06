@@ -8,34 +8,60 @@ import WaterLog from "@/lib/database/models/water-log.model";
 import WorkoutLog from "@/lib/database/models/workout-log.model";
 import SleepLog from "@/lib/database/models/sleep-log.model";
 import { currentUser } from "@clerk/nextjs/server";
+import type {
+  IMealLog,
+  ISleepLog,
+  IUserProfile,
+  IWaterLog,
+  IWeightLog,
+  IWorkoutLog,
+} from "@/types/fitness";
+
+type DashboardWaterLog = IWaterLog & { amountMl?: number | string };
+type DashboardSleepLog = ISleepLog & { quality?: number | string };
 
 export async function getDashboardData() {
   await connectToDatabase();
   const user = await currentUser();
   if (!user) return null;
 
-  const profile = await UserProfile.findOne({ clerkId: user.id });
+  const profile = (await UserProfile.findOne({
+    clerkId: user.id,
+  }).lean()) as IUserProfile | null;
   if (!profile) return { needsOnboarding: true };
 
   const today = new Date().toISOString().split("T")[0];
 
-  // Fetch today's data in parallel
-  const [meals, weightLog, waterLog, workouts, sleepLog] = await Promise.all([
-    MealLog.find({ clerkId: user.id, date: today }),
-    WeightLog.findOne({ clerkId: user.id, date: today }),
-    WaterLog.findOne({ clerkId: user.id, date: today }),
-    WorkoutLog.find({ clerkId: user.id, date: today }),
-    SleepLog.findOne({ clerkId: user.id, date: today }),
-  ]);
+  const [meals, weightLog, waterLog, workouts, sleepLog] = (await Promise.all([
+    MealLog.find({ clerkId: user.id, date: today }).lean(),
+    WeightLog.findOne({ clerkId: user.id, date: today }).lean(),
+    WaterLog.findOne({ clerkId: user.id, date: today }).lean(),
+    WorkoutLog.find({ clerkId: user.id, date: today }).lean(),
+    SleepLog.findOne({ clerkId: user.id, date: today }).lean(),
+  ])) as unknown as [
+    IMealLog[],
+    IWeightLog | null,
+    DashboardWaterLog | null,
+    IWorkoutLog[],
+    DashboardSleepLog | null,
+  ];
 
-  // Today's nutrition
-  const todayCalories = meals.reduce((s, m) => s + m.totalCalories, 0);
-  const todayProtein = meals.reduce((s, m) => s + m.totalProtein, 0);
-  const todayCarbs = meals.reduce((s, m) => s + m.totalCarbs, 0);
-  const todayFat = meals.reduce((s, m) => s + m.totalFat, 0);
-  const todayFiber = meals.reduce((s, m) => s + m.totalFiber, 0);
+  // Today's nutrition totals
+  let todayCalories = 0;
+  let todayProtein = 0;
+  let todayCarbs = 0;
+  let todayFat = 0;
+  let todayFiber = 0;
 
-  // Water total: prefer totalMl field, fallback to summing entries, legacy amountMl
+  for (const m of meals) {
+    todayCalories += Number(m.totalCalories || 0);
+    todayProtein += Number(m.totalProtein || 0);
+    todayCarbs += Number(m.totalCarbs || 0);
+    todayFat += Number(m.totalFat || 0);
+    todayFiber += Number(m.totalFiber || 0);
+  }
+
+  // Water total: prefer totalMl field, fallback to summing entries
   const waterEntries =
     (waterLog?.entries as { amountMl: number }[] | undefined) || [];
   const todayWaterMl =
@@ -44,7 +70,7 @@ export async function getDashboardData() {
       ? waterEntries.reduce((s, e) => s + Number(e.amountMl || 0), 0)
       : Number(waterLog?.amountMl) || 0);
 
-  // Sleep total: prefer sessions aggregation, fallback to legacy fields
+  // Sleep total: prefer sessions aggregation
   const sleepSessions =
     (sleepLog?.sessions as
       | { totalHours: number; quality: number }[]
@@ -75,29 +101,44 @@ export async function getDashboardData() {
     weekDates.push(d.toISOString().split("T")[0]);
   }
 
-  const [weekMeals, weekWeights, weekWorkouts] = await Promise.all([
-    MealLog.find({
-      clerkId: user.id,
-      date: { $gte: weekDates[0], $lte: weekDates[6] },
-    }),
-    WeightLog.find({
-      clerkId: user.id,
-      date: { $gte: weekDates[0], $lte: weekDates[6] },
-    }).sort({ date: 1 }),
-    WorkoutLog.find({
-      clerkId: user.id,
-      date: { $gte: weekDates[0], $lte: weekDates[6] },
-    }),
-  ]);
+  const [weekMeals, weekWeights, weekWorkouts, activeWorkoutDates, activeMealDates] =
+    await Promise.all([
+      MealLog.find({
+        clerkId: user.id,
+        date: { $gte: weekDates[0], $lte: weekDates[6] },
+      }).lean(),
+      WeightLog.find({
+        clerkId: user.id,
+        date: { $gte: weekDates[0], $lte: weekDates[6] },
+      })
+        .sort({ date: 1 })
+        .lean(),
+      WorkoutLog.find({
+        clerkId: user.id,
+        date: { $gte: weekDates[0], $lte: weekDates[6] },
+      }).lean(),
+      WorkoutLog.find({ clerkId: user.id }, { date: 1 }).lean(),
+      MealLog.find({ clerkId: user.id }, { date: 1 }).lean(),
+    ]);
+
+  // DSA Hash Map for O(1) daily meal aggregations
+  const mealNutritionByDate = new Map<string, { calories: number; protein: number }>();
+  for (const m of weekMeals) {
+    const curr = mealNutritionByDate.get(m.date) || { calories: 0, protein: 0 };
+    mealNutritionByDate.set(m.date, {
+      calories: curr.calories + (Number(m.totalCalories) || 0),
+      protein: curr.protein + (Number(m.totalProtein) || 0),
+    });
+  }
 
   // Build weekly calories chart
   const weeklyCaloriesChart = weekDates.map((date) => {
-    const dayMeals = weekMeals.filter((m) => m.date === date);
+    const n = mealNutritionByDate.get(date) || { calories: 0, protein: 0 };
     return {
       date,
       day: new Date(date).toLocaleDateString("en-US", { weekday: "short" }),
-      calories: dayMeals.reduce((s, m) => s + m.totalCalories, 0),
-      protein: dayMeals.reduce((s, m) => s + m.totalProtein, 0),
+      calories: n.calories,
+      protein: n.protein,
     };
   });
 
@@ -108,17 +149,16 @@ export async function getDashboardData() {
     weight: w.weight,
   }));
 
-  // Workout streak
+  // DSA Hash Set for O(1) workout & meal streak calculation (0 DB queries inside loop)
+  const activeDatesSet = new Set<string>();
+  for (const w of activeWorkoutDates) activeDatesSet.add(w.date);
+  for (const m of activeMealDates) activeDatesSet.add(m.date);
+
   let streak = 0;
   const checkDate = new Date();
   for (let i = 0; i < 365; i++) {
     const dateStr = checkDate.toISOString().split("T")[0];
-    const hasWorkout = await WorkoutLog.findOne({
-      clerkId: user.id,
-      date: dateStr,
-    });
-    const hasMeal = await MealLog.findOne({ clerkId: user.id, date: dateStr });
-    if (hasWorkout || hasMeal) {
+    if (activeDatesSet.has(dateStr)) {
       streak++;
       checkDate.setDate(checkDate.getDate() - 1);
     } else {

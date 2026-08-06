@@ -50,8 +50,12 @@ import {
   BarChart,
   Bar,
 } from "recharts";
+import dynamic from "next/dynamic";
 import toast from "react-hot-toast";
-import AdUnit from "@/components/shared/AdUnit";
+
+const AdUnit = dynamic(() => import("@/components/shared/AdUnit"), {
+  ssr: false,
+});
 
 type SleepLogItem = Partial<{
   clerkId: string;

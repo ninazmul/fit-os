@@ -4,7 +4,11 @@ import { useState, useEffect } from "react";
 import { generateInsights } from "@/lib/actions/insights.actions";
 import { getUserProfile } from "@/lib/actions/profile.actions";
 import { Button } from "@/components/ui/button";
-import AdUnit from "@/components/shared/AdUnit";
+import dynamic from "next/dynamic";
+
+const AdUnit = dynamic(() => import("@/components/shared/AdUnit"), {
+  ssr: false,
+});
 import {
   Sparkles,
   CheckCircle2,

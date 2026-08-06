@@ -8,7 +8,7 @@ import WaterLog from "@/lib/database/models/water-log.model";
 import WorkoutLog from "@/lib/database/models/workout-log.model";
 import SleepLog from "@/lib/database/models/sleep-log.model";
 import { currentUser } from "@clerk/nextjs/server";
-import type { AIInsight } from "@/types/fitness";
+import type { AIInsight, IUserProfile } from "@/types/fitness";
 
 /** Rule-based AI insights engine — evaluates recent data to generate actionable tips */
 export async function generateInsights(): Promise<AIInsight[]> {
@@ -16,7 +16,9 @@ export async function generateInsights(): Promise<AIInsight[]> {
   const user = await currentUser();
   if (!user) return [];
 
-  const profile = await UserProfile.findOne({ clerkId: user.id });
+  const profile = (await UserProfile.findOne({
+    clerkId: user.id,
+  }).lean()) as IUserProfile | null;
   if (!profile) return [];
 
   const today = new Date();
@@ -27,13 +29,13 @@ export async function generateInsights(): Promise<AIInsight[]> {
 
   // Fetch last 7 days of data
   const [meals, weights, waterLogs, workouts, sleepLogs] = await Promise.all([
-    MealLog.find({ clerkId: user.id, date: { $gte: startStr } }),
+    MealLog.find({ clerkId: user.id, date: { $gte: startStr } }).lean(),
     WeightLog.find({ clerkId: user.id, date: { $gte: startStr } }).sort({
       date: 1,
-    }),
-    WaterLog.find({ clerkId: user.id, date: { $gte: startStr } }),
-    WorkoutLog.find({ clerkId: user.id, date: { $gte: startStr } }),
-    SleepLog.find({ clerkId: user.id, date: { $gte: startStr } }),
+    }).lean(),
+    WaterLog.find({ clerkId: user.id, date: { $gte: startStr } }).lean(),
+    WorkoutLog.find({ clerkId: user.id, date: { $gte: startStr } }).lean(),
+    SleepLog.find({ clerkId: user.id, date: { $gte: startStr } }).lean(),
   ]);
 
   const insights: AIInsight[] = [];

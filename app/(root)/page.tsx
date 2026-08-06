@@ -10,12 +10,26 @@ import {
   removeSleepSession,
   getSleepLogForDate,
 } from "@/lib/actions/water-sleep.actions";
+import dynamic from "next/dynamic";
 import StatCard from "@/components/shared/StatCard";
 import ProgressRing from "@/components/shared/ProgressRing";
-import QuickActionModal from "@/components/shared/QuickActionModal";
-import OnboardingModal from "@/components/shared/OnboardingModal";
-import SearchModal from "@/components/shared/SearchModal";
 import { DashboardSkeleton } from "@/components/shared/SkeletonLoaders";
+
+const QuickActionModal = dynamic(
+  () => import("@/components/shared/QuickActionModal"),
+  { ssr: false },
+);
+const OnboardingModal = dynamic(
+  () => import("@/components/shared/OnboardingModal"),
+  { ssr: false },
+);
+const SearchModal = dynamic(
+  () => import("@/components/shared/SearchModal"),
+  { ssr: false },
+);
+const AdUnit = dynamic(() => import("@/components/shared/AdUnit"), {
+  ssr: false,
+});
 import { Button } from "@/components/ui/button";
 import {
   Flame,
@@ -48,7 +62,6 @@ import {
   CartesianGrid,
 } from "recharts";
 import Link from "next/link";
-import AdUnit from "@/components/shared/AdUnit";
 import toast from "react-hot-toast";
 
 export default function DashboardPage() {

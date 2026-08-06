@@ -42,7 +42,7 @@ export async function getWorkoutLogsForDate(date: string) {
   const user = await currentUser();
   if (!user) throw new Error("Unauthorized");
 
-  const logs = await WorkoutLog.find({ clerkId: user.id, date });
+  const logs = await WorkoutLog.find({ clerkId: user.id, date }).lean();
   return JSON.parse(JSON.stringify(logs));
 }
 
@@ -58,7 +58,9 @@ export async function getWorkoutHistory(days: number = 30) {
   const logs = await WorkoutLog.find({
     clerkId: user.id,
     date: { $gte: startStr },
-  }).sort({ date: -1 });
+  })
+    .sort({ date: -1 })
+    .lean();
 
   return JSON.parse(JSON.stringify(logs));
 }
@@ -68,7 +70,7 @@ export async function getPersonalRecords() {
   const user = await currentUser();
   if (!user) throw new Error("Unauthorized");
 
-  const workouts = await WorkoutLog.find({ clerkId: user.id });
+  const workouts = await WorkoutLog.find({ clerkId: user.id }).lean();
 
   // Aggregate PRs: for each exercise, find max weight * reps
   const prMap: Record<string, { weight: number; reps: number; date: string }> = {};

@@ -213,7 +213,7 @@ export async function getUserProfile() {
   const user = await currentUser();
   if (!user) return null;
 
-  const profile = await UserProfile.findOne({ clerkId: user.id });
+  const profile = await UserProfile.findOne({ clerkId: user.id }).lean();
   return profile ? JSON.parse(JSON.stringify(profile)) : null;
 }
 

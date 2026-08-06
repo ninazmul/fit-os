@@ -5,18 +5,8 @@ const FoodSchema = new Schema(
     name: { type: String, required: true, index: true },
     category: {
       type: String,
-      enum: [
-        "rice_grains",
-        "curry_meat",
-        "fish_seafood",
-        "bread_bakery",
-        "dairy_eggs",
-        "fruits_veg",
-        "sweets_desserts",
-        "snacks_beverages",
-        "custom",
-      ],
       default: "custom",
+      index: true,
     },
     servingSize: { type: String, required: true, default: "100g" },
     calories: { type: Number, required: true },
@@ -26,11 +16,14 @@ const FoodSchema = new Schema(
     fiber: { type: Number, required: true, default: 0 },
     image: { type: String, default: "" },
     isBangladeshi: { type: Boolean, default: false },
-    isCustom: { type: Boolean, default: false },
+    isCustom: { type: Boolean, default: false, index: true },
     clerkId: { type: String, index: true },
   },
   { timestamps: true }
 );
+
+FoodSchema.index({ isCustom: 1, clerkId: 1 });
+FoodSchema.index({ name: 1, category: 1 });
 
 const Food = models.Food || model("Food", FoodSchema);
 

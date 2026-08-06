@@ -38,7 +38,7 @@ export default function QuickActionModal({
   const [sleepTime, setSleepTime] = useState<string>("23:00");
   const [wakeTime, setWakeTime] = useState<string>("07:00");
   const [sleepQuality, setSleepQuality] = useState<number>(4);
-  const [sleepNotes, setSleepNotes] = useState<string>("");
+  const [sleepNotes] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 

@@ -39,9 +39,13 @@ import {
   Apple,
 } from "lucide-react";
 import type { MealType, IFood, IMealItem, FoodCategory } from "@/types/fitness";
+import dynamic from "next/dynamic";
 import toast from "react-hot-toast";
 import { format, addDays, subDays } from "date-fns";
-import AdUnit from "@/components/shared/AdUnit";
+
+const AdUnit = dynamic(() => import("@/components/shared/AdUnit"), {
+  ssr: false,
+});
 
 const mealTypes: { type: MealType; label: string; icon: typeof Sun }[] = [
   { type: "breakfast", label: "Breakfast", icon: Sun },

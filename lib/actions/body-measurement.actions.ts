@@ -40,7 +40,8 @@ export async function getBodyMeasurements(limit: number = 10) {
 
   const measurements = await BodyMeasurement.find({ clerkId: user.id })
     .sort({ date: -1 })
-    .limit(limit);
+    .limit(limit)
+    .lean();
 
   return JSON.parse(JSON.stringify(measurements));
 }
@@ -52,7 +53,7 @@ export async function getLatestBodyMeasurement() {
 
   const measurement = await BodyMeasurement.findOne({ clerkId: user.id }).sort({
     date: -1,
-  });
+  }).lean();
 
   return measurement ? JSON.parse(JSON.stringify(measurement)) : null;
 }

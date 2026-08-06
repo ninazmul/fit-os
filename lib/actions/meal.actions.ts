@@ -67,7 +67,9 @@ export async function getMealLogsForDate(date: string) {
   const meals = await MealLog.find({
     clerkId: user.id,
     date,
-  }).sort({ mealType: 1 });
+  })
+    .sort({ mealType: 1 })
+    .lean();
 
   return JSON.parse(JSON.stringify(meals));
 }
@@ -77,7 +79,7 @@ export async function getDailyNutritionSummary(date: string) {
   const user = await currentUser();
   if (!user) throw new Error("Unauthorized");
 
-  const meals = await MealLog.find({ clerkId: user.id, date });
+  const meals = await MealLog.find({ clerkId: user.id, date }).lean();
 
   const summary = {
     totalCalories: 0,
@@ -149,7 +151,9 @@ export async function getMealLogsForRange(startDate: string, endDate: string) {
   const meals = await MealLog.find({
     clerkId: user.id,
     date: { $gte: startDate, $lte: endDate },
-  }).sort({ date: -1 });
+  })
+    .sort({ date: -1 })
+    .lean();
 
   return JSON.parse(JSON.stringify(meals));
 }

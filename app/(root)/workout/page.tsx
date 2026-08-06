@@ -19,8 +19,12 @@ import {
   Calendar,
 } from "lucide-react";
 import type { WorkoutType, IWorkoutExercise } from "@/types/fitness";
+import dynamic from "next/dynamic";
 import toast from "react-hot-toast";
-import AdUnit from "@/components/shared/AdUnit";
+
+const AdUnit = dynamic(() => import("@/components/shared/AdUnit"), {
+  ssr: false,
+});
 
 const workoutTypes: { type: WorkoutType; label: string }[] = [
   { type: "push", label: "Push Day (Chest, Shoulders, Triceps)" },

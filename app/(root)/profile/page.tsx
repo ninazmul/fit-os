@@ -29,8 +29,12 @@ import {
   Calendar,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import dynamic from "next/dynamic";
 import type { IBodyMeasurement } from "@/types/fitness";
-import AdUnit from "@/components/shared/AdUnit";
+
+const AdUnit = dynamic(() => import("@/components/shared/AdUnit"), {
+  ssr: false,
+});
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type HealthData = any;

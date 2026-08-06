@@ -6,6 +6,7 @@ import UserProfile from "@/lib/database/models/user-profile.model";
 import { currentUser } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { weightLogSchema, type WeightLogFormValues } from "@/validations/fitness";
+import type { IUserProfile, IWeightLog } from "@/types/fitness";
 
 export async function logWeight(formData: WeightLogFormValues) {
   await connectToDatabase();
@@ -43,7 +44,9 @@ export async function getWeightHistory(days: number = 30) {
   const logs = await WeightLog.find({
     clerkId: user.id,
     date: { $gte: startStr },
-  }).sort({ date: 1 });
+  })
+    .sort({ date: 1 })
+    .lean();
 
   return JSON.parse(JSON.stringify(logs));
 }
@@ -53,7 +56,9 @@ export async function getWeightStats() {
   const user = await currentUser();
   if (!user) throw new Error("Unauthorized");
 
-  const allLogs = await WeightLog.find({ clerkId: user.id }).sort({ date: -1 });
+  const allLogs = (await WeightLog.find({ clerkId: user.id })
+    .sort({ date: -1 })
+    .lean()) as unknown as IWeightLog[];
   if (allLogs.length === 0) return null;
 
   const today = new Date().toISOString().split("T")[0];
@@ -97,7 +102,9 @@ export async function getWeightStats() {
     : null;
 
   // BMI
-  const profile = await UserProfile.findOne({ clerkId: user.id });
+  const profile = (await UserProfile.findOne({
+    clerkId: user.id,
+  }).lean()) as IUserProfile | null;
   const heightM = profile ? profile.height / 100 : 1.7;
   const bmi = Math.round((latestWeight / (heightM * heightM)) * 10) / 10;
 

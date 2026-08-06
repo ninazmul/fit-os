@@ -5,6 +5,13 @@ import Food from "@/lib/database/models/food.model";
 import { currentUser } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { foodSchema, type FoodFormValues } from "@/validations/fitness";
+import { foods as defaultFoods, type FoodItem } from "@/public/foods";
+
+type FoodListItem = FoodItem & {
+  _id?: string;
+  isCustom?: boolean;
+  clerkId?: string;
+};
 
 export async function getFoods(query?: string, category?: string) {
   await connectToDatabase();
@@ -24,8 +31,22 @@ export async function getFoods(query?: string, category?: string) {
     filter.category = category;
   }
 
-  const foods = await Food.find(filter).sort({ name: 1 }).limit(100);
-  return JSON.parse(JSON.stringify(foods));
+  let dbFoods = (await Food.find(filter)
+    .select("name category servingSize calories protein carbs fat fiber isBangladeshi isCustom")
+    .sort({ name: 1 })
+    .limit(100)
+    .lean()) as unknown as FoodListItem[];
+
+  if (dbFoods.length === 0 && !query && (!category || category === "all")) {
+    dbFoods = defaultFoods.slice(0, 100);
+  } else if (dbFoods.length === 0 && query) {
+    const qLower = query.toLowerCase();
+    dbFoods = defaultFoods
+      .filter((f) => f.name.toLowerCase().includes(qLower))
+      .slice(0, 100);
+  }
+
+  return JSON.parse(JSON.stringify(dbFoods));
 }
 
 export async function createCustomFood(formData: FoodFormValues) {
@@ -69,8 +90,6 @@ export async function deleteCustomFood(foodId: string) {
   await Food.findOneAndDelete({ _id: foodId, clerkId: user.id, isCustom: true });
   revalidatePath("/diet");
 }
-
-import { foods as defaultFoods } from "@/public/foods";
 
 export async function seedFoods() {
   await connectToDatabase();

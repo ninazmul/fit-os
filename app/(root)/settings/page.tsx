@@ -11,8 +11,12 @@ import {
   Laptop,
   Download,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import toast from "react-hot-toast";
-import AdUnit from "@/components/shared/AdUnit";
+
+const AdUnit = dynamic(() => import("@/components/shared/AdUnit"), {
+  ssr: false,
+});
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
