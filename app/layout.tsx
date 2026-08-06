@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import Script from "next/script";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ThemeProvider } from "@/components/shared/ThemeProvider";
+import { SEO_KEYWORDS, SITE_URL } from "@/lib/seo";
 
 import "./globals.css";
 
@@ -17,17 +18,16 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+    metadataBase: new URL(SITE_URL),
     title: {
-        default: "FitOS – Personal Fitness & Nutrition Tracker",
+        default: "FitOS - Personal Fitness & Nutrition Tracker",
         template: "%s | FitOS",
     },
 
     description:
-        "FitOS is your all-in-one personal fitness companion. Track workouts, nutrition, weight, water, sleep, and body measurements with smart AI insights.",
+        "FitOS is a free fitness tracker with BMI, BMR, TDEE, body fat and ideal weight calculators, calorie counter, workout tracker and Bangladeshi food nutrition database.",
 
-    alternates: {
-        canonical: "/",
-    },
+    keywords: SEO_KEYWORDS,
 
     robots: {
         index: true,
@@ -45,9 +45,10 @@ export const metadata: Metadata = {
         type: "website",
         locale: "en_BD",
         siteName: "FitOS",
-        title: "FitOS – Personal Fitness & Nutrition Tracker",
+        title: "FitOS - Free BMI Calculator, Calorie Counter & Fitness Tracker",
         description:
-            "Track workouts, nutrition, weight, water, sleep, and body measurements with smart AI insights.",
+            "Calculate BMI, BMR, TDEE and body fat, then track calories, workouts, weight, water, sleep and body measurements in FitOS.",
+        url: SITE_URL,
         images: [
             {
                 url: "/assets/images/logo.png",
@@ -60,9 +61,9 @@ export const metadata: Metadata = {
 
     twitter: {
         card: "summary_large_image",
-        title: "FitOS – Personal Fitness & Nutrition Tracker",
+        title: "FitOS - Free BMI Calculator, Calorie Counter & Fitness Tracker",
         description:
-            "Your all-in-one fitness companion for tracking nutrition, workouts, and body progress.",
+            "Free fitness tracker with BMI, BMR, TDEE, body fat calculators, calorie counter and workout tracking.",
         images: ["/assets/images/logo.png"],
     },
 

@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import Script from "next/script";
+import type { Metadata } from "next";
 import {
   Flame,
   Scale,
@@ -10,7 +10,6 @@ import {
   ShieldCheck,
   Zap,
   Activity,
-  CheckCircle2,
   PieChart,
   ArrowRight,
   Smartphone,
@@ -18,9 +17,15 @@ import {
 } from "lucide-react";
 import AdUnit from "@/components/shared/AdUnit";
 import FitnessCalculator from "@/components/shared/FitnessCalculator";
+import {
+  buildPublicPageMetadata,
+  publicSeoPages,
+  SEO_KEYWORDS,
+  SITE_NAME,
+  SITE_URL,
+} from "@/lib/seo";
 
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL || "https://fit-os.vercel.app";
+export const metadata: Metadata = buildPublicPageMetadata("/sign-in");
 
 const featureHighlights = [
   {
@@ -72,6 +77,10 @@ const saasPillars = [
   },
 ];
 
+const calculatorLinks = publicSeoPages.filter((page) =>
+  page.path.includes("calculator"),
+);
+
 const faqItems = [
   {
     q: "What is FitOS and how does it help with fitness tracking?",
@@ -104,10 +113,40 @@ const faqItems = [
 ];
 
 // JSON-LD structured data for rich Google snippets
+const jsonLdOrganization = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: SITE_NAME,
+  url: SITE_URL,
+  logo: `${SITE_URL}/assets/images/logo.png`,
+  sameAs: ["https://www.artistycode.studio/"],
+};
+
+const jsonLdWebsite = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: SITE_NAME,
+  alternateName: ["fitOs", "Fit OS"],
+  url: SITE_URL,
+  inLanguage: "en",
+  description:
+    "Free fitness tracker and online fitness calculators for BMI, BMR, TDEE, body fat percentage, ideal weight, calories, macros, workouts and Bangladeshi food nutrition.",
+  keywords: SEO_KEYWORDS.join(", "),
+  publisher: {
+    "@type": "Organization",
+    name: SITE_NAME,
+    logo: {
+      "@type": "ImageObject",
+      url: `${SITE_URL}/assets/images/logo.png`,
+    },
+  },
+};
+
 const jsonLdWebApp = {
   "@context": "https://schema.org",
   "@type": "WebApplication",
-  name: "FitOS",
+  name: SITE_NAME,
+  alternateName: ["fitOs", "Fit OS fitness tracker"],
   url: SITE_URL,
   applicationCategory: "HealthApplication",
   operatingSystem: "All",
@@ -135,6 +174,21 @@ const jsonLdWebApp = {
   },
 };
 
+const jsonLdCalculatorList = {
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  name: "FitOS Free Fitness Calculators",
+  itemListElement: publicSeoPages
+    .filter((page) => page.path.includes("calculator"))
+    .map((page, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      url: `${SITE_URL}${page.path}`,
+      name: page.title.replace(" | FitOS", ""),
+      description: page.description,
+    })),
+};
+
 const jsonLdFAQ = {
   "@context": "https://schema.org",
   "@type": "FAQPage",
@@ -144,6 +198,14 @@ const jsonLdFAQ = {
     acceptedAnswer: { "@type": "Answer", text: item.a },
   })),
 };
+
+const structuredData = [
+  jsonLdOrganization,
+  jsonLdWebsite,
+  jsonLdWebApp,
+  jsonLdCalculatorList,
+  jsonLdFAQ,
+];
 
 // Signature macro ring — same as app logo style
 const MacroRing = () => (
@@ -207,32 +269,25 @@ const MacroRing = () => (
 const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div
-      className="relative min-h-screen overflow-x-hidden"
+      className="relative min-h-screen overflow-x-hidden bg-[#F7F9F6]"
       style={{
-        background: "#FFFFFF",
         color: "#1F2937",
         fontFamily: "'Inter', sans-serif",
       }}
     >
       {/* JSON-LD Structured Data for Google rich snippets */}
-      <Script
-        id="json-ld-webapp"
-        type="application/ld+json"
-        strategy="afterInteractive"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdWebApp) }}
-      />
-      <Script
-        id="json-ld-faq"
-        type="application/ld+json"
-        strategy="afterInteractive"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdFAQ) }}
-      />
+      {structuredData.map((data, index) => (
+        <script
+          key={index}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+        />
+      ))}
 
-      <div className="relative z-10 mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
-        {/* ── Header ── */}
-        <header className="flex flex-col sm:flex-row items-center justify-between py-3.5 px-4 sm:px-5 rounded-2xl mb-6 sm:mb-10 gap-3 sm:gap-0 bg-white border border-[#E9EBEC] shadow-[0_1px_2px_rgba(31,41,55,0.04)]">
-          <div className="flex items-center gap-3">
-            <div className="relative flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center overflow-hidden rounded-xl bg-white border border-[#E9EBEC]">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 pb-8 pt-4 sm:px-6 lg:px-8">
+        <header className="sticky top-3 z-30 mb-5 flex items-center justify-between gap-3 rounded-2xl border border-[#E1E7DD] bg-white/95 px-3 py-3 shadow-sm backdrop-blur sm:mb-8 sm:px-4">
+          <Link href="/sign-in" className="flex min-w-0 items-center gap-3">
+            <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[#E1E7DD] bg-white">
               <Image
                 src="/assets/images/logo.png"
                 alt="FitOS Logo – Free BMI Calculator & Fitness Tracker"
@@ -241,78 +296,88 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 priority
               />
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <span
-                  className="text-lg sm:text-xl font-bold tracking-tight"
+                  className="truncate text-lg font-bold tracking-tight"
                   style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                 >
                   FitOS
                 </span>
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#EEF6E9] text-[#4E8B2E] border border-[#4E8B2E]/20">
+                <span className="rounded-full border border-[#4E8B2E]/20 bg-[#EEF6E9] px-2 py-0.5 text-[10px] font-semibold text-[#4E8B2E]">
                   v4.0
                 </span>
               </div>
-              <p className="text-[11px] text-[#6B7580] font-medium">
+              <p className="truncate text-[11px] font-medium text-[#6B7580]">
                 Free BMI Calculator &amp; Fitness Tracker
               </p>
             </div>
-          </div>
+          </Link>
 
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Link
-              href="#calc"
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#F1F2F3] border border-[#37414A]/15 text-xs font-semibold text-[#37414A]"
-            >
-              <Zap className="w-3.5 h-3.5 fill-[#4E8B2E] text-[#4E8B2E]" />
-              <span>Fitness Calculators</span>
-            </Link>
-            <Link
-              href="#auth"
-              className="text-sm font-semibold px-4 py-2 rounded-full bg-[#4E8B2E] text-white hover:bg-[#3F7223] transition-all shadow-sm flex items-center gap-1"
-            >
-              Get Started <ArrowRight className="w-3 h-3" />
-            </Link>
-          </div>
+          <Link
+            href="#auth"
+            className="flex shrink-0 items-center gap-1 rounded-full bg-[#4E8B2E] px-3 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-[#3F7223] sm:px-4"
+          >
+            Start <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
         </header>
 
-        {/* ── Hero + Auth ── */}
-        <main className="flex flex-col lg:flex-row items-center gap-8 mb-16">
-          <section className="lg:col-span-7 space-y-7 pt-1">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#EEF6E9] border border-[#4E8B2E]/20 text-xs font-semibold text-[#4E8B2E]">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>
-                Free BMI Calculator &amp; Complete Health &amp; Nutrition System
-              </span>
+        <main className="mb-10 grid gap-5 min-w-0 lg:grid-cols-[minmax(0,1fr)_430px] lg:items-start lg:gap-8">
+          <section className="space-y-5 min-w-0 rounded-[2rem] border border-[#E1E7DD] bg-white px-4 py-5 shadow-sm sm:px-6 sm:py-7 lg:min-h-[calc(100vh-8rem)] lg:px-8 lg:py-9">
+            <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-[#4E8B2E]/20 bg-[#EEF6E9] px-3 py-1.5 text-[11px] font-bold text-[#4E8B2E] sm:text-xs">
+              <Sparkles className="h-3.5 w-3.5 shrink-0" />
+              <span>Free calculators plus daily fitness tracking</span>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               <h1
-                className="text-3xl sm:text-4xl lg:text-[3.25rem] font-bold tracking-tight leading-[1.2]"
+                className="max-w-3xl text-[2.35rem] font-bold leading-[1.04] tracking-tight text-[#172018] sm:text-5xl lg:text-[4rem]"
                 style={{ fontFamily: "'Space Grotesk', sans-serif" }}
               >
-                Free BMI calculator, calorie counter &amp;{" "}
-                <span className="text-[#4E8B2E]">fitness tracker</span> with
-                Bangladeshi food database.
+                FitOS is your free{" "}
+                <span className="text-[#4E8B2E]">fitness tracker</span> for
+                food, workouts and body metrics.
               </h1>
-              <p className="text-sm sm:text-base leading-relaxed max-w-2xl text-[#6B7580]">
-                Calculate your BMI, BMR, TDEE, and body fat percentage
-                instantly. Track calories from 100+ Bangladeshi and global
-                foods, log workouts, monitor body measurements, and get
-                AI-powered nutrition insights — completely free.
+              <p className="max-w-2xl text-sm leading-6 text-[#5F6C61] sm:text-base sm:leading-7">
+                Calculate BMI, BMR, TDEE, body fat percentage and ideal weight.
+                Then track calories from Bangladeshi and global foods, workouts,
+                water, sleep and measurements from one private dashboard.
               </p>
             </div>
 
-            {/* Feature grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            <div className="grid grid-cols-3 overflow-hidden rounded-2xl border border-[#E1E7DD] bg-[#F7F9F6]">
+              {[
+                ["100+", "Foods"],
+                ["5-in-1", "Calculators"],
+                ["Free", "PWA"],
+              ].map(([value, label], index) => (
+                <div
+                  key={label}
+                  className={`px-3 py-3 text-center ${
+                    index > 0 ? "border-l border-[#E1E7DD]" : ""
+                  }`}
+                >
+                  <p
+                    className="text-lg font-bold text-[#4E8B2E] sm:text-2xl"
+                    style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+                  >
+                    {value}
+                  </p>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#6B7580]">
+                    {label}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
               {featureHighlights.map((item) => {
                 const Icon = item.icon;
                 const isGreen = item.accent === "green";
                 return (
-                  <div
+                  <article
                     key={item.title}
-                    className="flex items-start gap-3.5 p-4 rounded-2xl border bg-white hover:shadow-md transition-all"
-                    style={{ borderColor: "#E9EBEC" }}
+                    className="flex items-start gap-3 rounded-2xl border border-[#E1E7DD] bg-white p-3.5"
                   >
                     <div
                       className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
@@ -324,112 +389,111 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                       <Icon className="h-5 w-5" />
                     </div>
                     <div className="min-w-0">
-                      <h2 className="text-xs sm:text-sm font-bold">
+                      <h2 className="text-sm font-bold leading-tight">
                         {item.title}
                       </h2>
-                      <p className="text-[11px] mt-0.5 leading-snug text-[#6B7580]">
+                      <p className="mt-1 text-xs leading-5 text-[#6B7580]">
                         {item.desc}
                       </p>
                     </div>
-                  </div>
+                  </article>
                 );
               })}
             </div>
 
-            {/* Stats strip */}
-            <div className="flex items-center gap-5 p-4 sm:p-5 rounded-2xl bg-white border border-[#E9EBEC]">
-              <MacroRing />
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 flex-1 min-w-0">
-                <div>
-                  <p
-                    className="text-lg sm:text-2xl font-bold text-[#4E8B2E]"
-                    style={{ fontFamily: "'IBM Plex Mono', monospace" }}
-                  >
-                    100+
-                  </p>
-                  <p className="text-[10px] font-medium text-[#6B7580] leading-tight">
-                    Bangladeshi Foods
-                  </p>
-                </div>
-                <div className="border-l border-[#E9EBEC] pl-3 sm:pl-4">
-                  <p
-                    className="text-lg sm:text-2xl font-bold text-[#37414A]"
-                    style={{ fontFamily: "'IBM Plex Mono', monospace" }}
-                  >
-                    100%
-                  </p>
-                  <p className="text-[10px] font-medium text-[#6B7580] leading-tight">
-                    Free &amp; PWA Ready
-                  </p>
-                </div>
-                <div className="hidden md:block border-l border-[#E9EBEC] pl-3 sm:pl-4">
-                  <p
-                    className="text-lg sm:text-2xl font-bold text-[#1F2937]"
-                    style={{ fontFamily: "'IBM Plex Mono', monospace" }}
-                  >
-                    5-in-1
-                  </p>
-                  <p className="text-[10px] font-medium text-[#6B7580] leading-tight">
-                    Fitness Calculators
-                  </p>
+            <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {calculatorLinks.map((page) => (
+                <Link
+                  key={page.path}
+                  href={page.path}
+                  className="flex shrink-0 items-center gap-2 rounded-full border border-[#DDE6D9] bg-[#F7F9F6] px-3.5 py-2 text-xs font-bold text-[#37414A] transition-colors hover:border-[#4E8B2E]/40 hover:bg-[#EEF6E9]"
+                >
+                  <Zap className="h-3.5 w-3.5 text-[#4E8B2E]" />
+                  {page.path
+                    .replace("/", "")
+                    .replace(/-/g, " ")
+                    .replace(/\b\w/g, (char) => char.toUpperCase())}
+                </Link>
+              ))}
+            </div>
+
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Link
+                href="#auth"
+                className="flex items-center justify-center gap-2 rounded-2xl bg-[#4E8B2E] px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#3F7223]"
+              >
+                Start Free <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link
+                href="#calc"
+                className="flex items-center justify-center gap-2 rounded-2xl border border-[#DDE6D9] bg-white px-5 py-3 text-sm font-bold text-[#37414A] transition-colors hover:bg-[#F1F2F3]"
+              >
+                Use Calculators <Zap className="h-4 w-4 text-[#4E8B2E]" />
+              </Link>
+            </div>
+          </section>
+
+          <aside id="auth" className="lg:sticky lg:top-24 min-w-0">
+            <div className="overflow-hidden rounded-xl border border-[#E1E7DD] bg-white p-3 shadow-sm sm:p-4">
+              <div className="mb-3 flex items-center justify-between gap-3 rounded-2xl bg-[#F7F9F6] p-3">
+                <div className="flex items-center gap-3">
+                  <MacroRing />
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#4E8B2E]">
+                      Personal OS
+                    </p>
+                    <p className="text-sm font-bold text-[#1F2937]">
+                      Sign in to your tracker
+                    </p>
+                    <p className="text-xs text-[#6B7580]">
+                      Calories, workouts and progress in one place.
+                    </p>
+                  </div>
                 </div>
               </div>
+              <div className="flex items-center justify-center">{children}</div>
             </div>
 
-            {/* Trust row */}
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-medium text-[#6B7580] pt-1">
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-[#4E8B2E]" />
-                No Credit Card Required
-              </span>
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-[#4E8B2E]" />
-                Works Offline (PWA)
-              </span>
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-[#4E8B2E]" />
-                Free BMI &amp; TDEE Calculators
-              </span>
+            <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[10px] font-bold uppercase tracking-[0.12em] text-[#6B7580]">
+              {["No card", "Private", "PWA ready"].map((item) => (
+                <div
+                  key={item}
+                  className="rounded-2xl border border-[#E1E7DD] bg-white px-2 py-2"
+                >
+                  {item}
+                </div>
+              ))}
             </div>
-          </section>
-
-          {/* Auth card */}
-          <section
-            id="auth"
-            className="lg:col-span-5 flex items-center justify-center lg:sticky lg:top-6"
-          >
-            {children}
-          </section>
+          </aside>
         </main>
 
-        {/* ── Pillars ── */}
-        <section className="space-y-8 py-10 border-t border-[#E9EBEC]">
-          <div className="text-center max-w-2xl mx-auto space-y-2">
+        <section className="space-y-5 py-8 sm:space-y-7 sm:py-10">
+          <div className="mx-auto max-w-2xl space-y-2 text-center">
             <h2
-              className="text-2xl sm:text-3xl font-bold tracking-tight"
+              className="text-2xl font-bold tracking-tight sm:text-3xl"
               style={{ fontFamily: "'Space Grotesk', sans-serif" }}
             >
-              Everything you need to succeed, in one workspace
+              Built for daily tracking, not one-time guessing
             </h2>
-            <p className="text-xs sm:text-sm text-[#6B7580]">
-              Designed for fitness enthusiasts, athletes, and anyone wanting
-              full control over their health, body composition, and nutrition.
+            <p className="text-sm leading-6 text-[#6B7580]">
+              FitOS connects calculator results with real nutrition, workout,
+              water, sleep and measurement logs.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {saasPillars.map((pillar) => {
               const Icon = pillar.icon;
               return (
                 <article
                   key={pillar.title}
-                  className="p-5 rounded-2xl border border-[#E9EBEC] bg-white hover:border-[#4E8B2E]/30 hover:shadow-md transition-all space-y-2.5"
+                  className="space-y-2.5 rounded-2xl border border-[#E1E7DD] bg-white p-4 shadow-sm transition-colors hover:border-[#4E8B2E]/30 sm:p-5"
                 >
-                  <div className="h-9 w-9 rounded-xl bg-[#EEF6E9] text-[#4E8B2E] flex items-center justify-center">
-                    <Icon className="w-5 h-5" />
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#EEF6E9] text-[#4E8B2E]">
+                    <Icon className="h-5 w-5" />
                   </div>
                   <h3 className="text-sm font-bold">{pillar.title}</h3>
-                  <p className="text-xs leading-relaxed text-[#6B7580]">
+                  <p className="text-xs leading-5 text-[#6B7580]">
                     {pillar.desc}
                   </p>
                 </article>
@@ -438,37 +502,32 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           </div>
         </section>
 
-        {/* Ad between pillars and calculator */}
         <div className="py-4">
           <AdUnit size="auto" maxWidth="970px" />
         </div>
 
-        {/* ── Fitness Calculators ── */}
         <div id="calc">
-          {" "}
           <FitnessCalculator />
         </div>
 
-        {/* Ad after calculator */}
         <div className="py-4">
           <AdUnit size="auto" label="Sponsored" maxWidth="970px" />
         </div>
 
-        {/* ── FAQ ── */}
-        <section className="py-10 border-t border-[#E9EBEC]">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            <div className="lg:col-span-5 space-y-3">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F1F2F3] text-[#37414A] text-xs font-semibold">
-                <BookOpen className="w-3.5 h-3.5" />
+        <section className="border-t border-[#E1E7DD] py-8 sm:py-10">
+          <div className="grid gap-6 lg:grid-cols-12 lg:items-start">
+            <div className="space-y-3 lg:col-span-5">
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#37414A] ring-1 ring-[#E1E7DD]">
+                <BookOpen className="h-3.5 w-3.5" />
                 <span>Frequently Asked Questions</span>
               </div>
               <h2
-                className="text-2xl font-bold tracking-tight"
+                className="text-2xl font-bold tracking-tight sm:text-3xl"
                 style={{ fontFamily: "'Space Grotesk', sans-serif" }}
               >
-                BMI Calculator, Calorie Counter &amp; More — Questions Answered
+                BMI calculator, calorie counter and fitness tracking answers
               </h2>
-              <p className="text-xs leading-relaxed text-[#6B7580]">
+              <p className="text-sm leading-6 text-[#6B7580]">
                 FitOS combines free fitness calculators (BMI, BMR, TDEE, Body
                 Fat %, Ideal Weight), a 100+ Bangladeshi food database, workout
                 tracking, and AI-powered health insights into a single intuitive
@@ -476,17 +535,17 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               </p>
             </div>
 
-            <div className="lg:col-span-7 space-y-3">
+            <div className="space-y-3 lg:col-span-7">
               {faqItems.map((faq) => (
                 <div
                   key={faq.q}
-                  className="p-4 rounded-2xl border border-[#E9EBEC] bg-white space-y-1.5"
+                  className="space-y-1.5 rounded-2xl border border-[#E1E7DD] bg-white p-4 shadow-sm"
                 >
-                  <h3 className="text-xs sm:text-sm font-bold flex items-center gap-2">
-                    <Activity className="w-3.5 h-3.5 text-[#4E8B2E] shrink-0" />
+                  <h3 className="flex items-center gap-2 text-sm font-bold">
+                    <Activity className="h-3.5 w-3.5 shrink-0 text-[#4E8B2E]" />
                     {faq.q}
                   </h3>
-                  <p className="text-xs leading-relaxed pl-5 text-[#6B7580]">
+                  <p className="pl-5 text-xs leading-5 text-[#6B7580]">
                     {faq.a}
                   </p>
                 </div>
@@ -495,9 +554,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           </div>
         </section>
 
-        {/* ── Footer ── */}
-        <footer className="py-6 border-t border-[#E9EBEC] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#6B7580]">
-          <div className="flex items-center gap-2">
+        <footer className="flex flex-col items-center justify-between gap-3 border-t border-[#E1E7DD] py-6 text-center text-xs text-[#6B7580] sm:flex-row sm:text-left">
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
             <span className="font-bold text-[#1F2937]">FitOS v4.0</span>
             <span>&middot; Free BMI Calculator &amp; Fitness Tracker</span>
           </div>

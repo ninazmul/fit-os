@@ -2,11 +2,11 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "FitOS – Personal Fitness & Nutrition Tracker",
+    name: "FitOS - Free Fitness Tracker & Calculators",
     short_name: "FitOS",
     description:
-      "FitOS is your all-in-one personal fitness companion. Track workouts, nutrition, weight, water, sleep, and body measurements with smart AI insights.",
-    start_url: "/",
+      "Free BMI, BMR, TDEE, body fat and ideal weight calculators with calorie, macro, workout, water, sleep and body measurement tracking.",
+    start_url: "/sign-in",
     display: "standalone",
     orientation: "portrait-primary",
     background_color: "#ffffff",
@@ -14,6 +14,19 @@ export default function manifest(): MetadataRoute.Manifest {
     categories: ["health", "fitness", "lifestyle", "productivity"],
     prefer_related_applications: false,
     shortcuts: [
+      {
+        name: "Fitness Calculators",
+        short_name: "Calculators",
+        description: "Open FitOS BMI, BMR, TDEE and body fat calculators",
+        url: "/fitness-calculator",
+        icons: [
+          {
+            src: "/assets/icons/icon-192.png",
+            sizes: "192x192",
+            type: "image/png",
+          },
+        ],
+      },
       {
         name: "Quick Log Water",
         short_name: "Log Water",
