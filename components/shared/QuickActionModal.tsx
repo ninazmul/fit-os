@@ -10,8 +10,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UtensilsCrossed, Scale, Droplet, Dumbbell, Moon, Star } from "lucide-react";
+import {
+  UtensilsCrossed,
+  Scale,
+  Droplet,
+  Dumbbell,
+  Moon,
+  Star,
+} from "lucide-react";
 import { addWater, addSleepSession } from "@/lib/actions/water-sleep.actions";
+import { formatTime12h } from "@/lib/utils";
 import { logWeight } from "@/lib/actions/weight.actions";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
@@ -265,7 +273,7 @@ export default function QuickActionModal({
                     {p.label}
                   </span>
                   <span className="text-[9px] text-muted-foreground">
-                    {p.sleep}-{p.wake}
+                    {formatTime12h(p.sleep)} - {formatTime12h(p.wake)}
                   </span>
                 </Button>
               ))}
@@ -350,7 +358,9 @@ export default function QuickActionModal({
                           : "text-muted-foreground/30"
                       }`}
                     >
-                      <Star className={`w-5 h-5 ${sleepQuality >= star ? "fill-amber-400" : ""}`} />
+                      <Star
+                        className={`w-5 h-5 ${sleepQuality >= star ? "fill-amber-400" : ""}`}
+                      />
                     </button>
                   ))}
                   <span className="text-xs font-semibold text-muted-foreground ml-2 min-w-[50px] text-right">

@@ -39,6 +39,7 @@ import {
   Star,
   Clock,
 } from "lucide-react";
+import { formatTime12h } from "@/lib/utils";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -630,7 +631,8 @@ export default function ProgressPage() {
                                 <div className="flex items-center gap-2">
                                   <Clock className="w-3.5 h-3.5 text-muted-foreground" />
                                   <p className="font-semibold text-sm">
-                                    {ses.sleepTime} &rarr; {ses.wakeTime}
+                                    {formatTime12h(ses.sleepTime)} &rarr;{" "}
+                                    {formatTime12h(ses.wakeTime)}
                                   </p>
                                   <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">
                                     {ses.totalHours}h

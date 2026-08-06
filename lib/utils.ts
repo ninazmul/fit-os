@@ -17,3 +17,14 @@ export function formatDate(date: Date | string): string {
   const year = d.getFullYear();
   return `${day}/${month}/${year}`;
 }
+
+export function formatTime12h(time: string): string {
+  const [hourStr, minuteStr] = time.split(":");
+  const hour = Number(hourStr);
+  const minute = Number(minuteStr);
+  if (Number.isNaN(hour) || Number.isNaN(minute)) return time;
+
+  const suffix = hour >= 12 ? "PM" : "AM";
+  const hour12 = hour % 12 === 0 ? 12 : hour % 12;
+  return `${hour12}:${String(minute).padStart(2, "0")} ${suffix}`;
+}

@@ -10,6 +10,7 @@ import {
   removeSleepSession,
   getSleepLogForDate,
 } from "@/lib/actions/water-sleep.actions";
+import { formatTime12h } from "@/lib/utils";
 import dynamic from "next/dynamic";
 import StatCard from "@/components/shared/StatCard";
 import ProgressRing from "@/components/shared/ProgressRing";
@@ -23,10 +24,9 @@ const OnboardingModal = dynamic(
   () => import("@/components/shared/OnboardingModal"),
   { ssr: false },
 );
-const SearchModal = dynamic(
-  () => import("@/components/shared/SearchModal"),
-  { ssr: false },
-);
+const SearchModal = dynamic(() => import("@/components/shared/SearchModal"), {
+  ssr: false,
+});
 const AdUnit = dynamic(() => import("@/components/shared/AdUnit"), {
   ssr: false,
 });
@@ -509,25 +509,26 @@ export default function DashboardPage() {
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {[
-                { hours: 6, label: "6 hrs", time: "23:00 - 05:00" },
-                { hours: 7, label: "7 hrs", time: "23:00 - 06:00" },
-                { hours: 7.5, label: "7.5 hrs", time: "23:00 - 06:30" },
-                { hours: 8, label: "8 hrs", time: "23:00 - 07:00" },
+                { hours: 6, label: "6 hrs", sleep: "23:00", wake: "05:00" },
+                { hours: 7, label: "7 hrs", sleep: "23:00", wake: "06:00" },
+                { hours: 7.5, label: "7.5 hrs", sleep: "23:00", wake: "06:30" },
+                { hours: 8, label: "8 hrs", sleep: "23:00", wake: "07:00" },
               ].map((p) => {
-                const [sTime, wTime] = p.time.split(" - ");
                 return (
                   <Button
                     key={p.hours}
                     variant="outline"
                     disabled={sleepAdding !== null}
-                    onClick={() => handleQuickAddSleep(p.hours, sTime, wTime)}
+                    onClick={() =>
+                      handleQuickAddSleep(p.hours, p.sleep, p.wake)
+                    }
                     className="h-auto py-3 rounded-2xl flex-col gap-0.5 border-indigo-500/20 hover:bg-indigo-500/10 hover:border-indigo-500/40 min-h-[3.5rem]"
                   >
                     <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
                       {p.label}
                     </span>
                     <span className="text-[10px] text-muted-foreground">
-                      {p.time}
+                      {formatTime12h(p.sleep)} - {formatTime12h(p.wake)}
                     </span>
                   </Button>
                 );
@@ -564,7 +565,8 @@ export default function DashboardPage() {
                     >
                       <Moon className="w-3 h-3 text-indigo-500/70" />
                       <span className="font-medium text-indigo-700 dark:text-indigo-300">
-                        {session.sleepTime} &rarr; {session.wakeTime}
+                        {formatTime12h(session.sleepTime)} &rarr;{" "}
+                        {formatTime12h(session.wakeTime)}
                       </span>
                       <span className="font-bold text-foreground">
                         ({session.totalHours}h)
