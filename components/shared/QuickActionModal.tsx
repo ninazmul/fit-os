@@ -10,8 +10,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UtensilsCrossed, Scale, Droplet, Dumbbell } from "lucide-react";
-import { addWater } from "@/lib/actions/water-sleep.actions";
+import { UtensilsCrossed, Scale, Droplet, Dumbbell, Moon, Star } from "lucide-react";
+import { addWater, addSleepSession } from "@/lib/actions/water-sleep.actions";
 import { logWeight } from "@/lib/actions/weight.actions";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
@@ -19,7 +19,7 @@ import { useRouter } from "next/navigation";
 interface QuickActionModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  defaultAction?: "meal" | "weight" | "water" | "workout";
+  defaultAction?: "meal" | "weight" | "water" | "workout" | "sleep";
   onCompleted?: () => void | Promise<void>;
 }
 
@@ -30,11 +30,15 @@ export default function QuickActionModal({
   onCompleted,
 }: QuickActionModalProps) {
   const [activeTab, setActiveTab] = useState<
-    "meal" | "weight" | "water" | "workout"
+    "meal" | "weight" | "water" | "workout" | "sleep"
   >(defaultAction);
   const [waterAmount, setWaterAmount] = useState<number>(250);
   const [weightVal, setWeightVal] = useState<string>("");
   const [weightNotes, setWeightNotes] = useState<string>("");
+  const [sleepTime, setSleepTime] = useState<string>("23:00");
+  const [wakeTime, setWakeTime] = useState<string>("07:00");
+  const [sleepQuality, setSleepQuality] = useState<number>(4);
+  const [sleepNotes, setSleepNotes] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -96,7 +100,7 @@ export default function QuickActionModal({
         </DialogHeader>
 
         {/* Tab switcher */}
-        <div className="grid grid-cols-4 gap-1 p-1 bg-muted rounded-xl mb-4">
+        <div className="grid grid-cols-5 gap-1 p-1 bg-muted rounded-xl mb-4">
           <button
             type="button"
             onClick={() => setActiveTab("water")}
@@ -108,6 +112,19 @@ export default function QuickActionModal({
           >
             <Droplet className="w-4 h-4 mb-0.5 text-blue-500" />
             Water
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("sleep")}
+            className={`flex flex-col items-center py-2 rounded-lg text-xs font-medium transition-all ${
+              activeTab === "sleep"
+                ? "bg-background text-primary shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Moon className="w-4 h-4 mb-0.5 text-indigo-500" />
+            Sleep
           </button>
 
           <button
@@ -201,6 +218,155 @@ export default function QuickActionModal({
                 Add
               </Button>
             </div>
+          </div>
+        )}
+
+        {activeTab === "sleep" && (
+          <div className="space-y-4">
+            <p className="text-xs text-muted-foreground text-center">
+              Quick presets for last night&apos;s sleep duration:
+            </p>
+            <div className="grid grid-cols-4 gap-2">
+              {[
+                { hours: 6, sleep: "23:00", wake: "05:00", label: "6 hrs" },
+                { hours: 7, sleep: "23:00", wake: "06:00", label: "7 hrs" },
+                { hours: 7.5, sleep: "23:00", wake: "06:30", label: "7.5 hrs" },
+                { hours: 8, sleep: "23:00", wake: "07:00", label: "8 hrs" },
+              ].map((p) => (
+                <Button
+                  key={p.hours}
+                  variant="outline"
+                  disabled={loading}
+                  onClick={async () => {
+                    try {
+                      setLoading(true);
+                      const today = new Date().toISOString().split("T")[0];
+                      await addSleepSession({
+                        date: today,
+                        sleepTime: p.sleep,
+                        wakeTime: p.wake,
+                        totalHours: p.hours,
+                        quality: sleepQuality,
+                        notes: sleepNotes,
+                      });
+                      toast.success(`Logged ${p.hours}h sleep! 🌙`);
+                      onOpenChange(false);
+                      await onCompleted?.();
+                      router.refresh();
+                    } catch {
+                      toast.error("Failed to log sleep");
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                  className="rounded-xl py-4 flex flex-col gap-0.5 border-indigo-500/20 hover:bg-indigo-500/10 hover:border-indigo-500/40"
+                >
+                  <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
+                    {p.label}
+                  </span>
+                  <span className="text-[9px] text-muted-foreground">
+                    {p.sleep}-{p.wake}
+                  </span>
+                </Button>
+              ))}
+            </div>
+
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                try {
+                  setLoading(true);
+                  const today = new Date().toISOString().split("T")[0];
+                  let hrs = 8;
+                  try {
+                    const [h1, m1] = sleepTime.split(":").map(Number);
+                    const [h2, m2] = wakeTime.split(":").map(Number);
+                    let mins = h2 * 60 + m2 - (h1 * 60 + m1);
+                    if (mins <= 0) mins += 24 * 60;
+                    hrs = Math.round((mins / 60) * 10) / 10;
+                  } catch {
+                    hrs = 8;
+                  }
+                  await addSleepSession({
+                    date: today,
+                    sleepTime,
+                    wakeTime,
+                    totalHours: hrs,
+                    quality: sleepQuality,
+                    notes: sleepNotes,
+                  });
+                  toast.success(`Logged ${hrs}h sleep session! 🌙`);
+                  onOpenChange(false);
+                  await onCompleted?.();
+                  router.refresh();
+                } catch {
+                  toast.error("Failed to save sleep");
+                } finally {
+                  setLoading(false);
+                }
+              }}
+              className="space-y-3 pt-2 border-t border-border/30"
+            >
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label htmlFor="sleep-time" className="text-xs">
+                    Sleep Time
+                  </Label>
+                  <Input
+                    id="sleep-time"
+                    type="time"
+                    value={sleepTime}
+                    onChange={(e) => setSleepTime(e.target.value)}
+                    required
+                    className="rounded-xl"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="wake-time" className="text-xs">
+                    Wake Time
+                  </Label>
+                  <Input
+                    id="wake-time"
+                    type="time"
+                    value={wakeTime}
+                    onChange={(e) => setWakeTime(e.target.value)}
+                    required
+                    className="rounded-xl"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs">Sleep Quality</Label>
+                <div className="flex items-center justify-between gap-1 p-2 rounded-xl bg-muted/50 border border-border/30">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setSleepQuality(star)}
+                      className={`p-1.5 rounded-lg transition-transform hover:scale-110 ${
+                        sleepQuality >= star
+                          ? "text-amber-500 fill-amber-500"
+                          : "text-muted-foreground/30"
+                      }`}
+                    >
+                      <Star className={`w-5 h-5 ${sleepQuality >= star ? "fill-amber-400" : ""}`} />
+                    </button>
+                  ))}
+                  <span className="text-xs font-semibold text-muted-foreground ml-2 min-w-[50px] text-right">
+                    {sleepQuality}/5 ★
+                  </span>
+                </div>
+              </div>
+
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
+              >
+                {loading ? "Saving..." : "Save Custom Sleep Session"}
+              </Button>
+            </form>
           </div>
         )}
 

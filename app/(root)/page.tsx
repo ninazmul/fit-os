@@ -6,6 +6,9 @@ import {
   addWater,
   removeWaterEntry,
   getWaterLogForDate,
+  addSleepSession,
+  removeSleepSession,
+  getSleepLogForDate,
 } from "@/lib/actions/water-sleep.actions";
 import StatCard from "@/components/shared/StatCard";
 import ProgressRing from "@/components/shared/ProgressRing";
@@ -31,6 +34,7 @@ import {
   UtensilsCrossed,
   Trash2,
   Clock,
+  Star,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -53,7 +57,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [quickLogOpen, setQuickLogOpen] = useState(false);
   const [quickLogAction, setQuickLogAction] = useState<
-    "meal" | "weight" | "water" | "workout"
+    "meal" | "weight" | "water" | "workout" | "sleep"
   >("water");
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -61,6 +65,14 @@ export default function DashboardPage() {
   const [waterLog, setWaterLog] = useState<any>({ entries: [], totalMl: 0 });
   const [waterAdding, setWaterAdding] = useState<number | null>(null);
   const [waterRemoving, setWaterRemoving] = useState<number | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [sleepLog, setSleepLog] = useState<any>({
+    sessions: [],
+    totalHours: 0,
+    avgQuality: 0,
+  });
+  const [sleepAdding, setSleepAdding] = useState<number | null>(null);
+  const [sleepRemoving, setSleepRemoving] = useState<number | null>(null);
 
   const todayStr = new Date().toISOString().split("T")[0];
 
@@ -70,6 +82,15 @@ export default function DashboardPage() {
       setWaterLog(w);
     } catch (err) {
       console.error("Water log error:", err);
+    }
+  }, [todayStr]);
+
+  const fetchSleep = useCallback(async () => {
+    try {
+      const s = await getSleepLogForDate(todayStr);
+      setSleepLog(s);
+    } catch (err) {
+      console.error("Sleep log error:", err);
     }
   }, [todayStr]);
 
@@ -89,8 +110,8 @@ export default function DashboardPage() {
   }, []);
 
   const fetchAll = useCallback(async () => {
-    await Promise.all([fetchDashboard(), fetchWater()]);
-  }, [fetchDashboard, fetchWater]);
+    await Promise.all([fetchDashboard(), fetchWater(), fetchSleep()]);
+  }, [fetchDashboard, fetchWater, fetchSleep]);
 
   useEffect(() => {
     fetchAll();
@@ -121,6 +142,42 @@ export default function DashboardPage() {
       toast.error("Failed to remove entry");
     } finally {
       setWaterRemoving(null);
+    }
+  };
+
+  const handleQuickAddSleep = async (
+    hours: number,
+    sleepTime = "23:00",
+    wakeTime = "07:00",
+  ) => {
+    try {
+      setSleepAdding(hours);
+      await addSleepSession({
+        date: todayStr,
+        sleepTime,
+        wakeTime,
+        totalHours: hours,
+        quality: 4,
+      });
+      toast.success(`Logged ${hours}h sleep! 🌙`);
+      await Promise.all([fetchSleep(), fetchDashboard()]);
+    } catch {
+      toast.error("Failed to log sleep");
+    } finally {
+      setSleepAdding(null);
+    }
+  };
+
+  const handleRemoveSleepSession = async (idx: number) => {
+    try {
+      setSleepRemoving(idx);
+      await removeSleepSession(idx, todayStr);
+      toast.success("Sleep session removed");
+      await Promise.all([fetchSleep(), fetchDashboard()]);
+    } catch {
+      toast.error("Failed to remove session");
+    } finally {
+      setSleepRemoving(null);
     }
   };
 
@@ -303,106 +360,238 @@ export default function DashboardPage() {
           icon={Moon}
           variant="purple"
           onClick={() => {
-            setQuickLogAction("water");
+            setQuickLogAction("sleep");
             setQuickLogOpen(true);
           }}
         />
       </div>
 
-      {/* Quick Water Log Panel */}
-      <div className="glass-card p-5 rounded-3xl border border-border/50 space-y-4">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
-              <Droplet className="w-5 h-5" />
+      {/* Quick Log Panels: Water & Sleep */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Quick Water Log Panel */}
+        <div className="glass-card p-5 rounded-3xl border border-border/50 space-y-4 flex flex-col justify-between">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                  <Droplet className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold">Quick Water Log</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Tap a button to log instantly &mdash; no typing required
+                  </p>
+                </div>
+              </div>
+              <div className="text-right text-xs">
+                <p className="text-muted-foreground">Today so far</p>
+                <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                  {waterLog.totalMl >= 1000
+                    ? `${(waterLog.totalMl / 1000).toFixed(1)}L`
+                    : `${waterLog.totalMl}ml`}
+                  <span className="text-xs font-normal text-muted-foreground ml-1">
+                    / {(profile.waterGoalMl / 1000).toFixed(1)}L
+                  </span>
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-base font-bold">Quick Water Log</h3>
-              <p className="text-xs text-muted-foreground">
-                Tap a button to log instantly &mdash; no typing required
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {[
+                { ml: 150, label: "Sip", hint: "Small cup" },
+                { ml: 250, label: "+250ml", hint: "Glass" },
+                { ml: 500, label: "+500ml", hint: "Bottle" },
+                { ml: 1000, label: "+1L", hint: "Large bottle" },
+              ].map((p) => (
+                <Button
+                  key={p.ml}
+                  variant="outline"
+                  disabled={waterAdding !== null}
+                  onClick={() => handleQuickAddWater(p.ml)}
+                  className="h-auto py-3 rounded-2xl flex-col gap-0.5 border-blue-500/20 hover:bg-blue-500/10 hover:border-blue-500/40 min-h-[3.5rem]"
+                >
+                  <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
+                    {p.label}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">
+                    {p.hint}
+                  </span>
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Today's water entries timeline */}
+          {waterLog.entries && waterLog.entries.length > 0 ? (
+            <div className="pt-2 border-t border-border/30">
+              <p className="text-[11px] font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
+                Today&apos;s log &middot; {waterLog.entries.length} entr
+                {waterLog.entries.length === 1 ? "y" : "ies"}
               </p>
-            </div>
-          </div>
-          <div className="text-right text-xs">
-            <p className="text-muted-foreground">Today so far</p>
-            <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
-              {waterLog.totalMl >= 1000
-                ? `${(waterLog.totalMl / 1000).toFixed(1)}L`
-                : `${waterLog.totalMl}ml`}
-              <span className="text-xs font-normal text-muted-foreground ml-1">
-                / {(profile.waterGoalMl / 1000).toFixed(1)}L
-              </span>
-            </p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          {[
-            { ml: 150, label: "Sip", hint: "Small cup" },
-            { ml: 250, label: "+250ml", hint: "Glass" },
-            { ml: 500, label: "+500ml", hint: "Bottle" },
-            { ml: 1000, label: "+1L", hint: "Large bottle" },
-          ].map((p) => (
-            <Button
-              key={p.ml}
-              variant="outline"
-              disabled={waterAdding !== null}
-              onClick={() => handleQuickAddWater(p.ml)}
-              className="h-auto py-3 rounded-2xl flex-col gap-0.5 border-blue-500/20 hover:bg-blue-500/10 hover:border-blue-500/40 min-h-[3.5rem]"
-            >
-              <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
-                {p.label}
-              </span>
-              <span className="text-[10px] text-muted-foreground">
-                {p.hint}
-              </span>
-            </Button>
-          ))}
-        </div>
-
-        {/* Today's water entries timeline */}
-        {waterLog.entries && waterLog.entries.length > 0 ? (
-          <div className="pt-2 border-t border-border/30">
-            <p className="text-[11px] font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
-              Today&apos;s log &middot; {waterLog.entries.length} entr
-              {waterLog.entries.length === 1 ? "y" : "ies"}
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              {waterLog.entries.map(
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (entry: any, idx: number) => (
-                  <div
-                    key={idx}
-                    className="group flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-xs"
-                  >
-                    <Clock className="w-3 h-3 text-blue-500/70" />
-                    <span className="font-medium text-blue-700 dark:text-blue-300">
-                      {entry.time}
-                    </span>
-                    <span className="text-muted-foreground">
-                      {entry.amountMl >= 1000
-                        ? `${(entry.amountMl / 1000).toFixed(1)}L`
-                        : `${entry.amountMl}ml`}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveWaterEntry(idx)}
-                      disabled={waterRemoving === idx}
-                      className="ml-0.5 p-0.5 rounded-full text-muted-foreground/60 hover:text-red-500 hover:bg-red-500/10 transition-colors"
-                      title="Remove entry"
+              <div className="flex flex-wrap gap-1.5">
+                {waterLog.entries.map(
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  (entry: any, idx: number) => (
+                    <div
+                      key={idx}
+                      className="group flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-xs"
                     >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  </div>
-                ),
-              )}
+                      <Clock className="w-3 h-3 text-blue-500/70" />
+                      <span className="font-medium text-blue-700 dark:text-blue-300">
+                        {entry.time}
+                      </span>
+                      <span className="text-muted-foreground">
+                        {entry.amountMl >= 1000
+                          ? `${(entry.amountMl / 1000).toFixed(1)}L`
+                          : `${entry.amountMl}ml`}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveWaterEntry(idx)}
+                        disabled={waterRemoving === idx}
+                        className="ml-0.5 p-0.5 rounded-full text-muted-foreground/60 hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                        title="Remove entry"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ),
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="pt-2 border-t border-border/30 text-xs text-muted-foreground italic text-center py-2">
+              No water logged today. Tap a button above to get started! 💧
+            </div>
+          )}
+        </div>
+
+        {/* Quick Sleep Log Panel */}
+        <div className="glass-card p-5 rounded-3xl border border-border/50 space-y-4 flex flex-col justify-between">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                  <Moon className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold">Quick Sleep Log</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Tap a preset or track last night&apos;s sleep duration
+                  </p>
+                </div>
+              </div>
+              <div className="text-right text-xs">
+                <p className="text-muted-foreground">Today so far</p>
+                <p className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
+                  {sleepLog.totalHours || today.sleepHours || 0}h
+                  <span className="text-xs font-normal text-muted-foreground ml-1">
+                    {sleepLog.avgQuality
+                      ? `(${sleepLog.avgQuality}/5 ★)`
+                      : "/ 8h target"}
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {[
+                { hours: 6, label: "6 hrs", time: "23:00 - 05:00" },
+                { hours: 7, label: "7 hrs", time: "23:00 - 06:00" },
+                { hours: 7.5, label: "7.5 hrs", time: "23:00 - 06:30" },
+                { hours: 8, label: "8 hrs", time: "23:00 - 07:00" },
+              ].map((p) => {
+                const [sTime, wTime] = p.time.split(" - ");
+                return (
+                  <Button
+                    key={p.hours}
+                    variant="outline"
+                    disabled={sleepAdding !== null}
+                    onClick={() => handleQuickAddSleep(p.hours, sTime, wTime)}
+                    className="h-auto py-3 rounded-2xl flex-col gap-0.5 border-indigo-500/20 hover:bg-indigo-500/10 hover:border-indigo-500/40 min-h-[3.5rem]"
+                  >
+                    <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
+                      {p.label}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">
+                      {p.time}
+                    </span>
+                  </Button>
+                );
+              })}
             </div>
           </div>
-        ) : (
-          <div className="pt-2 border-t border-border/30 text-xs text-muted-foreground italic text-center py-2">
-            No water logged today. Tap a button above to get started! 💧
-          </div>
-        )}
+
+          {/* Today's sleep sessions timeline */}
+          {sleepLog.sessions && sleepLog.sessions.length > 0 ? (
+            <div className="pt-2 border-t border-border/30">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  Today&apos;s log &middot; {sleepLog.sessions.length} session
+                  {sleepLog.sessions.length === 1 ? "" : "s"}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQuickLogAction("sleep");
+                    setQuickLogOpen(true);
+                  }}
+                  className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
+                >
+                  + Custom Session
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {sleepLog.sessions.map(
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  (session: any, idx: number) => (
+                    <div
+                      key={idx}
+                      className="group flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-xs"
+                    >
+                      <Moon className="w-3 h-3 text-indigo-500/70" />
+                      <span className="font-medium text-indigo-700 dark:text-indigo-300">
+                        {session.sleepTime} &rarr; {session.wakeTime}
+                      </span>
+                      <span className="font-bold text-foreground">
+                        ({session.totalHours}h)
+                      </span>
+                      {session.quality && (
+                        <span className="text-amber-500 font-semibold text-[10px] flex items-center gap-0.5">
+                          <Star className="w-2.5 h-2.5 fill-amber-400" />
+                          {session.quality}
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveSleepSession(idx)}
+                        disabled={sleepRemoving === idx}
+                        className="ml-0.5 p-0.5 rounded-full text-muted-foreground/60 hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                        title="Remove session"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ),
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="pt-2 border-t border-border/30 flex items-center justify-between text-xs text-muted-foreground italic py-1">
+              <span>No sleep logged today. Tap a preset above! 🌙</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setQuickLogAction("sleep");
+                  setQuickLogOpen(true);
+                }}
+                className="not-italic font-bold text-indigo-600 dark:text-indigo-400 hover:underline text-xs"
+              >
+                + Custom
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Mid-page Ad Banner (above-the-fold high-fill placement) */}
