@@ -250,7 +250,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                   FitOS
                 </span>
                 <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#EEF6E9] text-[#4E8B2E] border border-[#4E8B2E]/20">
-                  v3.0
+                  v4.0
                 </span>
               </div>
               <p className="text-[11px] text-[#6B7580] font-medium">
@@ -498,7 +498,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         {/* ── Footer ── */}
         <footer className="py-6 border-t border-[#E9EBEC] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#6B7580]">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-[#1F2937]">FitOS v3.0</span>
+            <span className="font-bold text-[#1F2937]">FitOS v4.0</span>
             <span>&middot; Free BMI Calculator &amp; Fitness Tracker</span>
           </div>
           <div>
