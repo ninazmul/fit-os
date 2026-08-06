@@ -56,8 +56,7 @@ function TrendingBadge({ change }: { change: number | null | undefined }) {
   if (change > 0)
     return (
       <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
-        <TrendingUp className="w-3 h-3" />
-        +{change}
+        <TrendingUp className="w-3 h-3" />+{change}
       </span>
     );
   if (change < 0)
@@ -69,8 +68,7 @@ function TrendingBadge({ change }: { change: number | null | undefined }) {
     );
   return (
     <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-muted-foreground">
-      <Minus className="w-3 h-3" />
-      0
+      <Minus className="w-3 h-3" />0
     </span>
   );
 }
@@ -90,7 +88,8 @@ function MeasurementChangeBadge({
 export default function ProfilePage() {
   const [data, setData] = useState<HealthData>(null);
   const [measurementsHistory, setMeasurementsHistory] = useState<
-    IBodyMeasurement[]>([]);
+    IBodyMeasurement[]
+  >([]);
   const [, setLoading] = useState(true);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [measurementModalOpen, setMeasurementModalOpen] = useState(false);
@@ -156,7 +155,10 @@ export default function ProfilePage() {
       const already = initialGuess - curW;
       weightProgressPct =
         totalJourney > 0
-          ? Math.min(100, Math.max(0, Math.round((already / totalJourney) * 100)))
+          ? Math.min(
+              100,
+              Math.max(0, Math.round((already / totalJourney) * 100)),
+            )
           : 100;
     } else if (curW < tgtW) {
       weightDiffLabel = "Weight to Gain";
@@ -164,7 +166,7 @@ export default function ProfilePage() {
       weightDiffValue = `${diff} kg`;
       weightProgressPct = Math.min(
         100,
-        Math.max(0, Math.round((curW / tgtW) * 100))
+        Math.max(0, Math.round((curW / tgtW) * 100)),
       );
     } else {
       weightDiffLabel = "At Target Weight";
@@ -187,7 +189,7 @@ export default function ProfilePage() {
       />
 
       {/* Header Banner */}
-      <div className="glass-card p-6 rounded-3xl border border-border/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="glass-card p-6 rounded-3xl border border-border/50 flex flex-wrap sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-primary-foreground text-2xl font-bold shadow-lg">
             {profile?.name ? profile.name[0].toUpperCase() : "F"}
@@ -203,44 +205,47 @@ export default function ProfilePage() {
                 {profile?.height} cm
               </span>
             </p>
-            <div className="flex flex-wrap items-center gap-1.5 mt-2">
-              <Badge
-                variant="secondary"
-                className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border-0"
-              >
-                🎯 {labels?.goal}
-              </Badge>
-              <Badge
-                variant="secondary"
-                className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-0"
-              >
-                <Activity className="w-3 h-3 mr-0.5" />
-                {labels?.activity}
-              </Badge>
-              <Badge
-                variant="outline"
-                className="text-[10px] px-2 py-0.5 rounded-full"
-              >
-                <Calendar className="w-3 h-3 mr-0.5" />
-                {profile?.workoutDaysPerWeek} workouts/week
-              </Badge>
-            </div>
-            <p className="mt-2 flex items-center gap-1 text-[11px] text-muted-foreground">
-              Developed by{" "}
-              <a
-                href="https://www.artistycode.studio/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
-              >
-                ArtistyCode Studio
-                <ExternalLink className="w-2.5 h-2.5" />
-              </a>
-            </p>
           </div>
         </div>
 
-        <div className="flex gap-2 flex-wrap sm:flex-col md:flex-row">
+        <div className="">
+          <div className="flex flex-wrap items-center gap-1.5 mt-2">
+            <Badge
+              variant="secondary"
+              className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border-0"
+            >
+              🎯 {labels?.goal}
+            </Badge>
+            <Badge
+              variant="secondary"
+              className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-0"
+            >
+              <Activity className="w-3 h-3 mr-0.5" />
+              {labels?.activity}
+            </Badge>
+            <Badge
+              variant="outline"
+              className="text-[10px] px-2 py-0.5 rounded-full"
+            >
+              <Calendar className="w-3 h-3 mr-0.5" />
+              {profile?.workoutDaysPerWeek} workouts/week
+            </Badge>
+          </div>
+          <p className="mt-2 flex items-center gap-1 text-[11px] text-muted-foreground">
+            Developed by{" "}
+            <a
+              href="https://www.artistycode.studio/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+            >
+              ArtistyCode Studio
+              <ExternalLink className="w-2.5 h-2.5" />
+            </a>
+          </p>
+        </div>
+
+        <div className="flex gap-2 flex-wrap items-center justify-center mt-2 sm:mt-0">
           <Button
             onClick={() => setMeasurementModalOpen(true)}
             className="rounded-xl gap-1.5 bg-emerald-600 hover:bg-emerald-600/90 text-white font-bold"
@@ -268,9 +273,7 @@ export default function ProfilePage() {
           icon={Scale}
           variant="purple"
         />
-        <div
-          className="glass-card p-4 rounded-2xl transition-all hover:shadow-md border border-border/50 relative overflow-hidden stat-card-orange"
-        >
+        <div className="glass-card p-4 rounded-2xl transition-all hover:shadow-md border border-border/50 relative overflow-hidden stat-card-orange">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-xs font-medium text-muted-foreground">
@@ -288,7 +291,7 @@ export default function ProfilePage() {
                 <p
                   className={cn(
                     "text-xs font-bold mt-1",
-                    metrics.bmiCategory.color
+                    metrics.bmiCategory.color,
                   )}
                 >
                   {metrics.bmiCategory.label}
@@ -331,7 +334,7 @@ export default function ProfilePage() {
 
       {/* Body Composition: Body Fat %, Lean Mass, Fat Mass */}
       <div className="glass-card p-5 rounded-3xl border border-border/50">
-        <div className="flex items-center justify-between mb-4">
+        <div className="space-y-2 mb-4">
           <h2 className="text-base font-bold flex items-center gap-2">
             <ShieldCheck className="w-5 h-5 text-primary" />
             Body Composition Analysis
@@ -359,7 +362,10 @@ export default function ProfilePage() {
             </p>
             {metrics?.bodyFatCategory && (
               <p
-                className={cn("text-[10px] font-bold", metrics.bodyFatCategory.color)}
+                className={cn(
+                  "text-[10px] font-bold",
+                  metrics.bodyFatCategory.color,
+                )}
               >
                 {metrics.bodyFatCategory.label}
               </p>
@@ -389,7 +395,9 @@ export default function ProfilePage() {
                 ? `${metrics.fatMass} kg`
                 : "--"}
             </p>
-            <p className="text-[10px] text-muted-foreground">Total fat tissue</p>
+            <p className="text-[10px] text-muted-foreground">
+              Total fat tissue
+            </p>
           </div>
 
           <div className="p-3 rounded-2xl bg-muted/40 border border-border/30 space-y-1">
@@ -402,9 +410,7 @@ export default function ProfilePage() {
                 : "--"}
             </p>
             {metrics?.whrRisk && (
-              <p
-                className={cn("text-[10px] font-bold", metrics.whrRisk.color)}
-              >
+              <p className={cn("text-[10px] font-bold", metrics.whrRisk.color)}>
                 {metrics.whrRisk.label}
               </p>
             )}
@@ -421,7 +427,10 @@ export default function ProfilePage() {
             </p>
             {metrics?.whtrCategory && (
               <p
-                className={cn("text-[10px] font-bold", metrics.whtrCategory.color)}
+                className={cn(
+                  "text-[10px] font-bold",
+                  metrics.whtrCategory.color,
+                )}
               >
                 {metrics.whtrCategory.label}
               </p>
@@ -444,12 +453,12 @@ export default function ProfilePage() {
 
       {/* Latest Body Measurements */}
       <div className="glass-card p-5 rounded-3xl border border-border/50">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-bold flex items-center gap-2">
-            <Ruler className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-            Latest Body Measurements
-          </h2>
-          <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-base font-bold flex items-center gap-2">
+              <Ruler className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+              Latest Body Measurements
+            </h2>
             {latest?.date && (
               <Badge
                 variant="secondary"
@@ -463,15 +472,15 @@ export default function ProfilePage() {
                 })}
               </Badge>
             )}
-            <Button
-              size="sm"
-              onClick={() => setMeasurementModalOpen(true)}
-              className="rounded-xl text-xs font-bold gap-1"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              Update
-            </Button>
           </div>
+          <Button
+            size="sm"
+            onClick={() => setMeasurementModalOpen(true)}
+            className="rounded-xl text-xs font-bold gap-1 w-full sm:w-auto bg-emerald-600 hover:bg-emerald-600/90 text-white"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Update
+          </Button>
         </div>
 
         {!latest ? (
@@ -681,10 +690,7 @@ export default function ProfilePage() {
                   {profile?.currentWeight || "--"} kg
                 </p>
               </div>
-              <Badge
-                variant="secondary"
-                className="text-[10px] rounded-full"
-              >
+              <Badge variant="secondary" className="text-[10px] rounded-full">
                 Now
               </Badge>
             </div>
@@ -737,7 +743,9 @@ export default function ProfilePage() {
               <span className="text-[11px] text-muted-foreground font-medium">
                 Age
               </span>
-              <span className="text-sm font-bold">{profile?.age || "--"} yrs</span>
+              <span className="text-sm font-bold">
+                {profile?.age || "--"} yrs
+              </span>
             </div>
             <div className="flex items-center justify-between p-2.5 rounded-xl bg-muted/40">
               <span className="text-[11px] text-muted-foreground font-medium">
