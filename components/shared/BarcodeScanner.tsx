@@ -345,19 +345,22 @@ export default function BarcodeScanner({
         setProduct(null);
         setCameraReady(false);
 
-        // Cancel any existing scanner animation loop
+        // -----------------------------------------
+        // Cancel previous scanner loop
+        // -----------------------------------------
+
         if (animationFrameRef.current !== null) {
           cancelAnimationFrame(animationFrameRef.current);
           animationFrameRef.current = null;
         }
 
-        // Prevent an old detection cycle from continuing
         detectingRef.current = false;
-
-        // Reset the previously detected barcode
         detectedBarcodeRef.current = null;
 
-        // Stop the existing camera stream before starting another one
+        // -----------------------------------------
+        // Stop previous camera
+        // -----------------------------------------
+
         if (cameraStreamRef.current) {
           cameraStreamRef.current
             .getTracks()
@@ -366,21 +369,44 @@ export default function BarcodeScanner({
           cameraStreamRef.current = null;
         }
 
-        // Make sure the previous video element is completely detached
         if (videoRef.current) {
           videoRef.current.pause();
           videoRef.current.srcObject = null;
         }
 
-        // Check camera support
-        if (!navigator.mediaDevices?.getUserMedia) {
+        // -----------------------------------------
+        // Check browser support
+        // -----------------------------------------
+
+        if (!navigator.mediaDevices) {
           setErrorMsg(
-            "Camera access is not supported by this browser."
+            "Camera access is unavailable. Please use HTTPS or localhost."
           );
           return;
         }
 
-        // Check BarcodeDetector support
+        if (!navigator.mediaDevices.getUserMedia) {
+          setErrorMsg(
+            "Your browser does not support camera access."
+          );
+          return;
+        }
+
+        // -----------------------------------------
+        // Check secure context
+        // -----------------------------------------
+
+        if (!window.isSecureContext) {
+          setErrorMsg(
+            "Camera access requires HTTPS. It works on localhost during development."
+          );
+          return;
+        }
+
+        // -----------------------------------------
+        // Check BarcodeDetector
+        // -----------------------------------------
+
         const detector = createDetector();
 
         if (!detector) {
@@ -392,9 +418,39 @@ export default function BarcodeScanner({
 
         detectorRef.current = detector;
 
-        // Request the selected camera
-        const stream =
-          await navigator.mediaDevices.getUserMedia({
+        // -----------------------------------------
+        // Check existing camera permission
+        // -----------------------------------------
+
+        try {
+          if (navigator.permissions?.query) {
+            const permission = await navigator.permissions.query({
+              name: "camera" as PermissionName,
+            });
+
+            if (permission.state === "denied") {
+              setErrorMsg(
+                "Camera permission is blocked for this site. Please allow Camera access in your browser's site settings, then try again."
+              );
+              return;
+            }
+          }
+        } catch {
+          /*
+           * Some browsers don't support querying the camera
+           * permission state. That's fine — getUserMedia()
+           * below will request it normally.
+           */
+        }
+
+        // -----------------------------------------
+        // Request camera permission
+        // -----------------------------------------
+
+        let stream: MediaStream;
+
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
             video: {
               facingMode: {
                 ideal: mode,
@@ -411,21 +467,60 @@ export default function BarcodeScanner({
             },
             audio: false,
           });
+        } catch (error) {
+          console.error("getUserMedia error:", error);
+
+          const cameraError =
+            error instanceof DOMException
+              ? error.name
+              : "";
+
+          if (cameraError === "NotAllowedError") {
+            setErrorMsg(
+              "Camera permission was denied. Please allow Camera access for this site in your browser settings, then try again."
+            );
+          } else if (cameraError === "NotFoundError") {
+            setErrorMsg(
+              "No camera was found on this device."
+            );
+          } else if (cameraError === "NotReadableError") {
+            setErrorMsg(
+              "The camera is already being used by another application."
+            );
+          } else if (cameraError === "SecurityError") {
+            setErrorMsg(
+              "Camera access was blocked by the browser's security settings."
+            );
+          } else {
+            setErrorMsg(
+              "Unable to access the camera. Please check your browser permissions and try again."
+            );
+          }
+
+          return;
+        }
+
+        // -----------------------------------------
+        // Camera permission granted
+        // -----------------------------------------
 
         cameraStreamRef.current = stream;
 
         setFacingMode(mode);
         setCameraOpen(true);
 
-        /*
-         * React needs one render cycle to mount the video
-         * element before we can attach the stream.
-         */
+        // -----------------------------------------
+        // Attach stream to video
+        // -----------------------------------------
+
         requestAnimationFrame(async () => {
           const video = videoRef.current;
 
           if (!video) {
-            stream.getTracks().forEach((track) => track.stop());
+            stream
+              .getTracks()
+              .forEach((track) => track.stop());
+
             cameraStreamRef.current = null;
             return;
           }
@@ -433,17 +528,19 @@ export default function BarcodeScanner({
           try {
             video.srcObject = stream;
 
-            // Make sure the browser has loaded enough video data
             await new Promise<void>((resolve) => {
-              if (video.readyState >= HTMLMediaElement.HAVE_METADATA) {
+              if (
+                video.readyState >=
+                HTMLMediaElement.HAVE_METADATA
+              ) {
                 resolve();
                 return;
               }
 
-              const handleLoadedMetadata = () => {
+              const handleMetadata = () => {
                 video.removeEventListener(
                   "loadedmetadata",
-                  handleLoadedMetadata
+                  handleMetadata
                 );
 
                 resolve();
@@ -451,7 +548,7 @@ export default function BarcodeScanner({
 
               video.addEventListener(
                 "loadedmetadata",
-                handleLoadedMetadata
+                handleMetadata
               );
             });
 
@@ -459,17 +556,27 @@ export default function BarcodeScanner({
 
             setCameraReady(true);
 
-            /*
-             * Start continuous barcode scanning.
-             */
+            // ---------------------------------------
+            // Start continuous barcode scanner
+            // ---------------------------------------
+
             if (animationFrameRef.current !== null) {
-              cancelAnimationFrame(animationFrameRef.current);
+              cancelAnimationFrame(
+                animationFrameRef.current
+              );
             }
 
             animationFrameRef.current =
               requestAnimationFrame(scanFrame);
-          } catch {
-            stream.getTracks().forEach((track) => track.stop());
+          } catch (error) {
+            console.error(
+              "Video playback error:",
+              error
+            );
+
+            stream
+              .getTracks()
+              .forEach((track) => track.stop());
 
             cameraStreamRef.current = null;
 
@@ -486,15 +593,13 @@ export default function BarcodeScanner({
           }
         });
       } catch (error) {
-        console.error("Camera error:", error);
+        console.error("Camera initialization error:", error);
 
         setCameraReady(false);
 
         setErrorMsg(
-          "Camera permission denied or unavailable. Please allow camera access or enter the barcode manually."
+          "Unable to initialize the camera. Please check your browser permissions."
         );
-
-        toast.error("Unable to access camera");
       }
     },
     [createDetector, facingMode, scanFrame]
