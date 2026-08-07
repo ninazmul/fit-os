@@ -480,7 +480,7 @@ export default function ProfilePage() {
           <Button
             size="sm"
             onClick={() => setMeasurementModalOpen(true)}
-            className="rounded-xl text-xs font-bold gap-1 w-full sm:w-auto bg-emerald-600 hover:bg-emerald-600/90 text-white"
+            className="rounded-xl text-xs font-bold gap-1 sm:w-auto bg-emerald-600 hover:bg-emerald-600/90 text-white ml-auto"
           >
             <Plus className="w-3.5 h-3.5" />
             Update
