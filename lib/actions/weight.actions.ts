@@ -8,6 +8,8 @@ import { revalidatePath } from "next/cache";
 import { weightLogSchema, type WeightLogFormValues } from "@/validations/fitness";
 import type { IUserProfile, IWeightLog } from "@/types/fitness";
 
+import { calculateRecommendedMacros } from "@/lib/actions/profile.actions";
+
 export async function logWeight(formData: WeightLogFormValues) {
   await connectToDatabase();
   const user = await currentUser();
@@ -21,15 +23,61 @@ export async function logWeight(formData: WeightLogFormValues) {
     { new: true, upsert: true }
   );
 
-  // Also update current weight on profile
-  await UserProfile.findOneAndUpdate(
-    { clerkId: user.id },
-    { currentWeight: validated.weight }
-  );
+  // Fetch current user profile to recalculate adaptive goals
+  const existingProfile = await UserProfile.findOne({ clerkId: user.id }).lean() as IUserProfile | null;
+
+  let adaptiveUpdate = null;
+
+  if (existingProfile) {
+    const oldCalories = existingProfile.dailyCaloriesGoal;
+    const oldProtein = existingProfile.dailyProteinGoal;
+
+    const newMacros = await calculateRecommendedMacros({
+      gender: existingProfile.gender,
+      age: existingProfile.age,
+      height: existingProfile.height,
+      currentWeight: validated.weight,
+      targetWeight: existingProfile.targetWeight,
+      activityLevel: existingProfile.activityLevel,
+      goal: existingProfile.goal,
+    });
+
+    await UserProfile.findOneAndUpdate(
+      { clerkId: user.id },
+      {
+        currentWeight: validated.weight,
+        dailyCaloriesGoal: newMacros.dailyCaloriesGoal,
+        dailyProteinGoal: newMacros.dailyProteinGoal,
+        dailyFatGoal: newMacros.dailyFatGoal,
+        dailyCarbGoal: newMacros.dailyCarbGoal,
+        dailyFiberGoal: newMacros.dailyFiberGoal,
+        waterGoalMl: newMacros.waterGoalMl,
+      }
+    );
+
+    const calorieDiff = newMacros.dailyCaloriesGoal - oldCalories;
+    const proteinDiff = Math.round((newMacros.dailyProteinGoal - oldProtein) * 10) / 10;
+
+    adaptiveUpdate = {
+      recalculated: true,
+      weightDiff: Math.round((validated.weight - existingProfile.currentWeight) * 10) / 10,
+      newCalories: newMacros.dailyCaloriesGoal,
+      calorieDiff,
+      newProtein: newMacros.dailyProteinGoal,
+      proteinDiff,
+      newWaterMl: newMacros.waterGoalMl,
+    };
+  } else {
+    await UserProfile.findOneAndUpdate(
+      { clerkId: user.id },
+      { currentWeight: validated.weight }
+    );
+  }
 
   revalidatePath("/");
   revalidatePath("/progress");
-  return JSON.parse(JSON.stringify(weight));
+  revalidatePath("/profile");
+  return JSON.parse(JSON.stringify({ weight, adaptiveUpdate }));
 }
 
 export async function getWeightHistory(days: number = 30) {

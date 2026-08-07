@@ -37,8 +37,16 @@ import {
   Sun,
   Moon,
   Apple,
+  Bookmark,
+  ScanBarcode,
 } from "lucide-react";
-import type { MealType, IFood, IMealItem, FoodCategory } from "@/types/fitness";
+import type { MealType, IFood, IMealItem, FoodCategory, SavedMealCategory, ISavedMeal } from "@/types/fitness";
+import {
+  getSavedMeals,
+  createSavedMeal,
+  logSavedMeal,
+  deleteSavedMeal,
+} from "@/lib/actions/saved-meal.actions";
 import dynamic from "next/dynamic";
 import toast from "react-hot-toast";
 import { format, addDays, subDays } from "date-fns";
@@ -46,6 +54,10 @@ import { format, addDays, subDays } from "date-fns";
 const AdUnit = dynamic(() => import("@/components/shared/AdUnit"), {
   ssr: false,
 });
+const BarcodeScanner = dynamic(
+  () => import("@/components/shared/BarcodeScanner"),
+  { ssr: false }
+);
 
 const mealTypes: { type: MealType; label: string; icon: typeof Sun }[] = [
   { type: "breakfast", label: "Breakfast", icon: Sun },
@@ -60,7 +72,17 @@ export default function DietPage() {
   const [meals, setMeals] = useState<any[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [profile, setProfile] = useState<any>(null);
+  const [savedMeals, setSavedMeals] = useState<ISavedMeal[]>([]);
   const [, setLoading] = useState(true);
+
+  // Barcode modal state
+  const [barcodeOpen, setBarcodeOpen] = useState(false);
+
+  // Save template modal state
+  const [saveTemplateModalOpen, setSaveTemplateModalOpen] = useState(false);
+  const [templateName, setTemplateName] = useState("");
+  const [templateCategory, setTemplateCategory] = useState<SavedMealCategory>("breakfast");
+  const [itemsToSave, setItemsToSave] = useState<IMealItem[]>([]);
 
   // Add meal modal states
   const [addModalOpen, setAddModalOpen] = useState(false);
@@ -88,12 +110,14 @@ export default function DietPage() {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const [mealsData, userProfile] = await Promise.all([
+      const [mealsData, userProfile, templates] = await Promise.all([
         getMealLogsForDate(dateStr),
         getUserProfile(),
+        getSavedMeals(),
       ]);
       setMeals(mealsData);
       setProfile(userProfile);
+      setSavedMeals(templates);
     } catch (err) {
       console.error("Error fetching diet data:", err);
     } finally {
@@ -237,6 +261,51 @@ export default function DietPage() {
     }
   };
 
+  const handleLogSavedTemplate = async (templateId: string, mealType: MealType) => {
+    try {
+      await logSavedMeal(templateId, dateStr, mealType);
+      toast.success(`Logged saved meal template to ${mealType}! ⚡`);
+      fetchData();
+    } catch {
+      toast.error("Failed to log saved meal template");
+    }
+  };
+
+  const handleOpenSaveTemplateModal = (items: IMealItem[], mealType: MealType) => {
+    setItemsToSave(items);
+    setTemplateName(`${mealType.toUpperCase()} Template`);
+    setTemplateCategory(mealType as SavedMealCategory);
+    setSaveTemplateModalOpen(true);
+  };
+
+  const handleCreateTemplate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!templateName.trim() || itemsToSave.length === 0) return;
+
+    try {
+      await createSavedMeal({
+        name: templateName,
+        category: templateCategory,
+        items: itemsToSave,
+      });
+      toast.success(`Saved template "${templateName}"! 🔖`);
+      setSaveTemplateModalOpen(false);
+      fetchData();
+    } catch {
+      toast.error("Failed to save meal template");
+    }
+  };
+
+  const handleDeleteTemplate = async (id: string) => {
+    try {
+      await deleteSavedMeal(id);
+      toast.success("Saved meal template removed");
+      fetchData();
+    } catch {
+      toast.error("Failed to remove template");
+    }
+  };
+
   const handleDeleteMeal = async (mealId: string) => {
     try {
       await deleteMealLog(mealId);
@@ -272,6 +341,12 @@ export default function DietPage() {
 
   return (
     <div className="space-y-6">
+      <BarcodeScanner
+        open={barcodeOpen}
+        onOpenChange={setBarcodeOpen}
+        dateStr={dateStr}
+      />
+
       {/* Date Navigation & Title */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -279,34 +354,113 @@ export default function DietPage() {
             Diet & Nutrition Tracker 🥗
           </h1>
           <p className="text-xs text-muted-foreground">
-            Log meals, Bangladeshi dishes, and track macros
+            Log meals, Bangladeshi dishes, saved templates & barcodes
           </p>
         </div>
 
-        {/* Date Selector Pill */}
-        <div className="flex items-center gap-2 bg-card border border-border/60 p-1.5 rounded-2xl">
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Barcode Scanner Button */}
           <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSelectedDate((d) => subDays(d, 1))}
-            className="h-8 w-8 rounded-xl"
+            variant="outline"
+            onClick={() => setBarcodeOpen(true)}
+            className="rounded-2xl gap-1.5 border-primary/40 text-primary hover:bg-primary/10 text-xs font-bold"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ScanBarcode className="w-4 h-4" />
+            Scan Barcode
           </Button>
-          <div className="flex items-center gap-2 px-3 text-xs font-semibold">
-            <Calendar className="w-4 h-4 text-primary" />
-            <span>{format(selectedDate, "EEE, MMM d, yyyy")}</span>
+
+          {/* Date Selector Pill */}
+          <div className="flex items-center gap-2 bg-card border border-border/60 p-1.5 rounded-2xl">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSelectedDate((d) => subDays(d, 1))}
+              className="h-8 w-8 rounded-xl"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <div className="flex items-center gap-2 px-3 text-xs font-semibold">
+              <Calendar className="w-4 h-4 text-primary" />
+              <span>{format(selectedDate, "EEE, MMM d, yyyy")}</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSelectedDate((d) => addDays(d, 1))}
+              className="h-8 w-8 rounded-xl"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSelectedDate((d) => addDays(d, 1))}
-            className="h-8 w-8 rounded-xl"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </Button>
         </div>
       </div>
+
+      {/* Saved Meals & Templates Carousel (⭐⭐⭐⭐⭐ Phase 1) */}
+      {savedMeals.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between px-1">
+            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+              <Bookmark className="w-3.5 h-3.5 text-primary" />
+              Saved Meal Templates ({savedMeals.length})
+            </h3>
+            <span className="text-[11px] text-muted-foreground">Tap to log to {format(selectedDate, "MMM d")}</span>
+          </div>
+
+          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+            {savedMeals.map((template) => (
+              <div
+                key={template._id}
+                className="glass-card p-3 rounded-2xl border border-border/50 shrink-0 w-52 space-y-2 hover:border-primary/40 transition-all flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="text-[9px] uppercase font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                      {template.category.replace("_", " ")}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => template._id && handleDeleteTemplate(template._id)}
+                      className="text-muted-foreground hover:text-red-500 p-0.5"
+                      title="Delete template"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+
+                  <h4 className="text-xs font-bold truncate mt-1.5">{template.name}</h4>
+                  <p className="text-[10px] text-muted-foreground truncate">
+                    {template.items?.map((i) => i.name).join(", ")}
+                  </p>
+
+                  <div className="flex items-center gap-2 text-[10px] font-semibold mt-1">
+                    <span className="text-primary">{template.totalCalories} kcal</span>
+                    <span>&middot;</span>
+                    <span className="text-emerald-600">P: {template.totalProtein}g</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-1 pt-1">
+                  <Button
+                    size="sm"
+                    onClick={() => template._id && handleLogSavedTemplate(template._id, "breakfast")}
+                    className="h-7 text-[10px] rounded-xl font-bold bg-primary hover:bg-primary/90 text-white"
+                  >
+                    + Breakfast
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => template._id && handleLogSavedTemplate(template._id, "lunch")}
+                    className="h-7 text-[10px] rounded-xl font-semibold"
+                  >
+                    + Lunch
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Daily Nutrition Summary Banner */}
       <div className="glass-card p-6 rounded-3xl border border-border/50 space-y-4">
@@ -451,15 +605,26 @@ export default function DietPage() {
 
                 <div className="flex items-center gap-2">
                   {loggedMeal && loggedMeal.items.length > 0 && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleDeleteMeal(loggedMeal._id)}
-                      className="rounded-xl gap-1 text-xs text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      Clear
-                    </Button>
+                    <>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleOpenSaveTemplateModal(loggedMeal.items, mType.type)}
+                        className="rounded-xl gap-1 text-xs text-primary hover:bg-primary/10 font-bold"
+                      >
+                        <Bookmark className="w-3.5 h-3.5" />
+                        Save Template
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleDeleteMeal(loggedMeal._id)}
+                        className="rounded-xl gap-1 text-xs text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        Clear
+                      </Button>
+                    </>
                   )}
                   <Button
                     size="sm"
@@ -741,6 +906,80 @@ export default function DietPage() {
               className="w-full rounded-xl mt-3 bg-primary hover:bg-primary/90 font-bold"
             >
               {editingFoodId ? "Update Custom Food" : "Save Custom Food"}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Save Meal Template Dialog */}
+      <Dialog
+        open={saveTemplateModalOpen}
+        onOpenChange={setSaveTemplateModalOpen}
+      >
+        <DialogContent className="sm:max-w-md rounded-3xl p-6 space-y-4">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold flex items-center gap-2">
+              <Bookmark className="w-5 h-5 text-primary" />
+              Save Meal as Template
+            </DialogTitle>
+          </DialogHeader>
+
+          <form onSubmit={handleCreateTemplate} className="space-y-4 text-xs">
+            <div className="space-y-1">
+              <Label htmlFor="template-name">Template Name</Label>
+              <Input
+                id="template-name"
+                placeholder="e.g. Daily Gym Breakfast, Office Lunch"
+                value={templateName}
+                onChange={(e) => setTemplateName(e.target.value)}
+                required
+                className="rounded-xl text-sm font-semibold"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <Label>Category</Label>
+              <div className="grid grid-cols-2 gap-1.5 pt-1">
+                {[
+                  { id: "breakfast", label: "Breakfast" },
+                  { id: "lunch", label: "Lunch" },
+                  { id: "dinner", label: "Dinner" },
+                  { id: "iftar", label: "Iftar" },
+                  { id: "gym_meal", label: "Gym Meal" },
+                  { id: "office_lunch", label: "Office Lunch" },
+                  { id: "cheat_meal", label: "Cheat Meal" },
+                  { id: "custom", label: "Custom" },
+                ].map((cat) => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setTemplateCategory(cat.id as SavedMealCategory)}
+                    className={`p-2 rounded-xl text-xs font-bold text-left transition-all border ${
+                      templateCategory === cat.id
+                        ? "bg-primary/10 border-primary text-primary"
+                        : "bg-muted/40 border-border/40 text-muted-foreground"
+                    }`}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-muted/40 border border-border/40 space-y-1">
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                Items in Template ({itemsToSave.length})
+              </p>
+              <p className="text-xs font-medium text-foreground truncate">
+                {itemsToSave.map((i) => i.name).join(", ")}
+              </p>
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full rounded-xl bg-primary hover:bg-primary/90 font-bold text-xs"
+            >
+              Save Template 🔖
             </Button>
           </form>
         </DialogContent>

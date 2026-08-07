@@ -9,6 +9,9 @@ interface EmptyStateProps {
   description: string;
   actionText?: string;
   onAction?: () => void;
+  secondaryActionText?: string;
+  onSecondaryAction?: () => void;
+  className?: string;
 }
 
 export default function EmptyState({
@@ -17,19 +20,32 @@ export default function EmptyState({
   description,
   actionText,
   onAction,
+  secondaryActionText,
+  onSecondaryAction,
+  className,
 }: EmptyStateProps) {
   return (
-    <div className="glass-card rounded-2xl p-8 text-center flex flex-col items-center justify-center max-w-md mx-auto my-6 border border-dashed border-border">
-      <div className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-4">
+    <div className={`glass-card rounded-3xl p-8 text-center flex flex-col items-center justify-center max-w-md mx-auto my-4 border border-dashed border-border/70 ${className || ""}`}>
+      <div className="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-4 shadow-inner">
         <Icon className="w-7 h-7" />
       </div>
-      <h3 className="text-lg font-semibold tracking-tight">{title}</h3>
-      <p className="text-sm text-muted-foreground mt-1 max-w-xs">{description}</p>
-      {actionText && onAction && (
-        <Button onClick={onAction} className="mt-5 rounded-xl">
-          {actionText}
-        </Button>
-      )}
+      <h3 className="text-lg font-bold tracking-tight">{title}</h3>
+      <p className="text-xs text-muted-foreground mt-1.5 max-w-xs leading-relaxed">{description}</p>
+      
+      <div className="flex items-center gap-2 mt-5">
+        {actionText && onAction && (
+          <Button onClick={onAction} className="rounded-xl font-bold text-xs">
+            {actionText}
+          </Button>
+        )}
+
+        {secondaryActionText && onSecondaryAction && (
+          <Button variant="outline" onClick={onSecondaryAction} className="rounded-xl text-xs font-semibold border-border/60">
+            {secondaryActionText}
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
+

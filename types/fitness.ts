@@ -212,3 +212,70 @@ export interface AIInsight {
   description: string;
   actionableText?: string;
 }
+
+// ===== Phase 1: Saved Meals =====
+
+export type SavedMealCategory =
+  | "breakfast"
+  | "lunch"
+  | "dinner"
+  | "iftar"
+  | "gym_meal"
+  | "cheat_meal"
+  | "office_lunch"
+  | "custom";
+
+export interface ISavedMeal {
+  _id?: string;
+  clerkId: string;
+  name: string;
+  category: SavedMealCategory;
+  items: IMealItem[];
+  totalCalories: number;
+  totalProtein: number;
+  totalCarbs: number;
+  totalFat: number;
+  totalFiber: number;
+  usageCount: number;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+// ===== Phase 1: Food Display Categories =====
+
+export type FoodDisplayCategory =
+  | "home_cooking"
+  | "fast_food"
+  | "drinks"
+  | "fruits"
+  | "street_food"
+  | "traditional"
+  | "restaurant"
+  | "all";
+
+// ===== Phase 1: Weight Prediction =====
+
+export interface IWeightPrediction {
+  weeklyRate: number; // kg/week (negative = losing)
+  estimatedGoalDate: string | null; // ISO date string
+  daysToGoal: number | null;
+  motivationMessage: string;
+  isOnTrack: boolean;
+}
+
+// ===== Phase 1: Daily Score =====
+
+export interface IDailyScoreBreakdown {
+  label: string;
+  points: number;
+  maxPoints: number;
+  done: boolean;
+}
+
+export interface IDailyScore {
+  score: number;
+  maxScore: number;
+  grade: string;
+  gradeEmoji: string;
+  breakdown: IDailyScoreBreakdown[];
+}

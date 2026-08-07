@@ -49,6 +49,9 @@ import {
   Trash2,
   Clock,
   Star,
+  Award,
+  Compass,
+  Calendar,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -219,7 +222,16 @@ export default function DashboardPage() {
     );
   }
 
-  const { profile, today, charts, streak, workoutDaysThisWeek } = data;
+  const {
+    profile,
+    today,
+    charts,
+    streak,
+    workoutDaysThisWeek,
+    todaysMission,
+    dailyScore,
+    weightPrediction,
+  } = data;
 
   const caloriePct = Math.round(
     (today.calories / profile.dailyCaloriesGoal) * 100,
@@ -258,47 +270,216 @@ export default function DashboardPage() {
       />
       <SearchModal open={searchOpen} onOpenChange={setSearchOpen} />
 
-      {/* Top Banner & Quick Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-card p-6 rounded-3xl border border-border/50 relative overflow-hidden">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary/10 text-primary flex items-center gap-1">
-              <Zap className="w-3.5 h-3.5 fill-primary text-primary" /> {streak}{" "}
-              Day Streak!
-            </span>
-            <span className="text-xs text-muted-foreground font-medium">
-              Goal: {profile.goal.replace("_", " ")}
+      {/* Hero Section: Today's Mission (⭐⭐⭐⭐⭐ Phase 1) */}
+      <div className="glass-card p-6 rounded-3xl border border-primary/20 relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-emerald-500/5">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+          <div className="space-y-3 max-w-xl">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="px-3 py-1 rounded-full text-xs font-bold bg-primary text-white flex items-center gap-1 shadow-sm">
+                <Compass className="w-3.5 h-3.5" /> Today&apos;s Mission
+              </span>
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                <Zap className="w-3.5 h-3.5 fill-current" /> {streak} Day Streak
+              </span>
+              <span className="text-xs text-muted-foreground font-medium">
+                Target: {profile.targetWeight} kg ({profile.goal.replace("_", " ")})
+              </span>
+            </div>
+
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+              {todaysMission?.greetingTime || "Welcome back"}, {profile.name}! 👋
+            </h1>
+
+            <div className="p-3.5 rounded-2xl bg-background/80 border border-border/50 backdrop-blur-md">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider text-[10px]">
+                Recommended Action
+              </p>
+              <p className="text-sm font-bold text-foreground mt-0.5">
+                {todaysMission?.primaryMission || "Log your daily progress to stay on track!"}
+              </p>
+            </div>
+
+            {/* Dynamic remaining budgets */}
+            <div className="flex items-center gap-2 flex-wrap text-xs font-semibold">
+              <div className="px-3 py-1.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                🔥 {todaysMission?.remainingCalories || 0} kcal left
+              </div>
+              <div className="px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                🥩 {todaysMission?.remainingProtein || 0}g protein left
+              </div>
+              <div className="px-3 py-1.5 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                💧 {todaysMission?.remainingWaterMl ? `${(todaysMission.remainingWaterMl / 1000).toFixed(1)}L` : "0L"} water left
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Action Hero Buttons */}
+          <div className="flex flex-col sm:flex-row lg:flex-col gap-2 shrink-0">
+            <Button
+              onClick={() => {
+                if (todaysMission?.missionAction === "meal") {
+                  setSearchOpen(true);
+                } else {
+                  setQuickLogAction(todaysMission?.missionAction || "water");
+                  setQuickLogOpen(true);
+                }
+              }}
+              className="rounded-2xl gap-2 bg-primary hover:bg-primary/90 text-white font-bold py-6 px-6 shadow-md text-sm"
+            >
+              <Plus className="w-5 h-5 stroke-[3]" />
+              {todaysMission?.missionAction === "weight"
+                ? "Log Morning Weight"
+                : todaysMission?.missionAction === "workout"
+                  ? "Log Workout Now"
+                  : todaysMission?.missionAction === "sleep"
+                    ? "Log Sleep Hours"
+                    : "Log Food Now"}
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={() => setSearchOpen(true)}
+              className="rounded-2xl gap-2 border-border/60 text-xs font-semibold py-5"
+            >
+              <Search className="w-4 h-4 text-muted-foreground" />
+              Browse BD Foods
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Daily Score & Smart Weight Prediction Grid (⭐⭐⭐⭐⭐ Phase 1) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Daily Score Card (0-100) */}
+        <div className="glass-card p-5 rounded-3xl border border-border/50 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-xl bg-amber-500/10 text-amber-500">
+                <Award className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold">Daily Score</h3>
+                <p className="text-[11px] text-muted-foreground">Habit consistency score</p>
+              </div>
+            </div>
+            <span className="px-2.5 py-1 rounded-full text-xs font-extrabold bg-amber-500/15 text-amber-700 dark:text-amber-300">
+              {dailyScore?.gradeEmoji || "⚡"} {dailyScore?.grade || "Good"}
             </span>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            Welcome back, {profile.name}! 👋
-          </h1>
-          <p className="text-xs text-muted-foreground">
-            You are {Math.abs(profile.currentWeight - profile.targetWeight)}kg
-            away from your {profile.targetWeight}kg goal.
-          </p>
+
+          <div className="flex items-center justify-around py-2">
+            <ProgressRing
+              value={dailyScore?.score || 0}
+              size={110}
+              strokeWidth={10}
+              color="hsl(25, 95%, 53%)"
+              label={`${dailyScore?.score || 0}`}
+              sublabel="/ 100 pts"
+            />
+
+            <div className="space-y-1 text-xs">
+              <p className="font-bold text-foreground">
+                {dailyScore?.breakdown?.filter((b: { done: boolean }) => b.done).length || 0} of 6 Completed
+              </p>
+              <p className="text-[11px] text-muted-foreground max-w-[140px] leading-tight">
+                Complete daily habits to boost your health score to 100!
+              </p>
+            </div>
+          </div>
+
+          {/* Habit breakdown checklist */}
+          <div className="space-y-1.5 pt-2 border-t border-border/40 text-xs">
+            {dailyScore?.breakdown?.map((item: { label: string; done: boolean; points: number }, idx: number) => (
+              <div
+                key={idx}
+                className="flex items-center justify-between p-2 rounded-xl bg-muted/30 border border-border/20 text-[11px]"
+              >
+                <div className="flex items-center gap-2">
+                  {item.done ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                  ) : (
+                    <Circle className="w-4 h-4 text-muted-foreground/40 shrink-0" />
+                  )}
+                  <span className={item.done ? "line-through text-muted-foreground" : "font-medium"}>
+                    {item.label}
+                  </span>
+                </div>
+                <span className="font-bold text-muted-foreground">+{item.points}pts</span>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
-          <Button
-            variant="outline"
-            onClick={() => setSearchOpen(true)}
-            className="rounded-xl gap-2 border-border/60 text-xs"
-          >
-            <Search className="w-4 h-4 text-muted-foreground" />
-            Search Database
-          </Button>
+        {/* Smart Weight Prediction Card (⭐⭐⭐⭐ Phase 1) */}
+        <div className="glass-card p-5 rounded-3xl border border-border/50 md:col-span-2 space-y-4 flex flex-col justify-between">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
+                  <TrendingDown className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold">Smart Weight Prediction</h3>
+                  <p className="text-[11px] text-muted-foreground">Linear regression forecast based on history</p>
+                </div>
+              </div>
 
-          <Button
-            onClick={() => {
-              setQuickLogAction("water");
-              setQuickLogOpen(true);
-            }}
-            className="rounded-xl gap-2 bg-primary hover:bg-primary/90 text-xs font-bold"
-          >
-            <Plus className="w-4 h-4" />
-            Quick Log
-          </Button>
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-bold ${
+                  weightPrediction?.isOnTrack
+                    ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                    : "bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                }`}
+              >
+                {weightPrediction?.isOnTrack ? "✅ On Track" : "📊 Needs Data"}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-1">
+              <div className="p-3 rounded-2xl bg-muted/40 border border-border/40">
+                <p className="text-[10px] text-muted-foreground font-semibold uppercase">Current Pace</p>
+                <p className="text-lg font-extrabold text-purple-600 dark:text-purple-400 mt-0.5">
+                  {weightPrediction?.weeklyRate
+                    ? `${weightPrediction.weeklyRate > 0 ? "+" : ""}${weightPrediction.weeklyRate} kg/wk`
+                    : "0.0 kg/wk"}
+                </p>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-muted/40 border border-border/40">
+                <p className="text-[10px] text-muted-foreground font-semibold uppercase">Estimated Goal Date</p>
+                <p className="text-sm font-bold text-foreground mt-1 flex items-center gap-1">
+                  <Calendar className="w-4 h-4 text-primary" />
+                  {weightPrediction?.estimatedGoalDate
+                    ? new Date(weightPrediction.estimatedGoalDate).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })
+                    : "Log more entries"}
+                </p>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-muted/40 border border-border/40 col-span-2 sm:col-span-1">
+                <p className="text-[10px] text-muted-foreground font-semibold uppercase">Target Weight</p>
+                <p className="text-lg font-extrabold text-emerald-600 dark:text-emerald-400 mt-0.5">
+                  {profile.targetWeight} kg
+                </p>
+              </div>
+            </div>
+
+            {/* Motivational message banner */}
+            <div className="p-3 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-xs font-semibold text-purple-800 dark:text-purple-200">
+              {weightPrediction?.motivationMessage || "Log daily weight to unlock accurate goal date predictions!"}
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-2 border-t border-border/30">
+            <Link href="/progress">
+              <Button variant="ghost" size="sm" className="text-xs font-bold text-purple-600 dark:text-purple-400 gap-1">
+                View Weight Chart &rarr;
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
 

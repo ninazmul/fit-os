@@ -1,6 +1,17 @@
+export type DisplayCategory =
+  | "home_cooking"
+  | "fast_food"
+  | "drinks"
+  | "fruits"
+  | "street_food"
+  | "traditional"
+  | "restaurant"
+  | "all";
+
 export interface FoodItem {
   name: string;
   category: string;
+  displayCategory?: DisplayCategory;
   servingSize: string;
   calories: number;
   protein: number; // grams
@@ -12,9 +23,33 @@ export interface FoodItem {
 
 // Nutrition values are researched averages (USDA / FatSecret / Nutritionix / regional
 // food-composition data) for typical home or restaurant preparations in Bangladesh.
-// Real-world values vary by recipe, oil quantity, and portion — use as estimates.
 
 export const foods: FoodItem[] = [
+  // ============ Street Food & Snacks (Popular BD) ============
+  { name: "Fuchka (Phuchka)", category: "snacks_street", displayCategory: "street_food", servingSize: "1 plate, 8 pcs", calories: 280, protein: 5, carbs: 42, fat: 10, fiber: 3, isBangladeshi: true },
+  { name: "Chotpoti", category: "snacks_street", displayCategory: "street_food", servingSize: "1 plate (250g)", calories: 310, protein: 14, carbs: 48, fat: 7, fiber: 8, isBangladeshi: true },
+  { name: "Jhalmuri", category: "snacks_street", displayCategory: "street_food", servingSize: "1 cup (80g)", calories: 180, protein: 4, carbs: 28, fat: 6, fiber: 2, isBangladeshi: true },
+  { name: "Singara", category: "snacks_street", displayCategory: "street_food", servingSize: "1 piece (60g)", calories: 150, protein: 3, carbs: 18, fat: 8, fiber: 1.5, isBangladeshi: true },
+  { name: "Samosa (Beef/Chicken Shingara)", category: "snacks_street", displayCategory: "street_food", servingSize: "1 piece (60g)", calories: 170, protein: 6, carbs: 16, fat: 9, fiber: 1, isBangladeshi: true },
+  { name: "Piyaju (Lentil Fritter)", category: "snacks_street", displayCategory: "street_food", servingSize: "2 pieces (50g)", calories: 140, protein: 5, carbs: 14, fat: 7, fiber: 2.5, isBangladeshi: true },
+  { name: "Beguni (Fried Eggplant Fritter)", category: "snacks_street", displayCategory: "street_food", servingSize: "2 pieces (60g)", calories: 160, protein: 2, carbs: 16, fat: 10, fiber: 2, isBangladeshi: true },
+  { name: "Alur Chop", category: "snacks_street", displayCategory: "street_food", servingSize: "2 pieces (80g)", calories: 190, protein: 3, carbs: 24, fat: 9, fiber: 2, isBangladeshi: true },
+
+  // ============ Drinks & Beverages ============
+  { name: "Doodh Cha (Milk Tea with Sugar)", category: "beverages", displayCategory: "drinks", servingSize: "1 cup (150ml)", calories: 95, protein: 2.5, carbs: 14, fat: 3.2, fiber: 0, isBangladeshi: true },
+  { name: "Rong Cha (Black Tea, spiced)", category: "beverages", displayCategory: "drinks", servingSize: "1 cup (150ml)", calories: 25, protein: 0.2, carbs: 6, fat: 0, fiber: 0, isBangladeshi: true },
+  { name: "Borhani (Spiced Yogurt Drink)", category: "beverages", displayCategory: "drinks", servingSize: "1 glass (250ml)", calories: 140, protein: 6, carbs: 12, fat: 7, fiber: 0.5, isBangladeshi: true },
+  { name: "Sweet Lassi", category: "beverages", displayCategory: "drinks", servingSize: "1 glass (300ml)", calories: 220, protein: 7, carbs: 32, fat: 7, fiber: 0, isBangladeshi: true },
+  { name: "Mango Lassi", category: "beverages", displayCategory: "drinks", servingSize: "1 glass (300ml)", calories: 260, protein: 6, carbs: 44, fat: 6, fiber: 1, isBangladeshi: true },
+  { name: "Green Coconut Water (Dab)", category: "beverages", displayCategory: "drinks", servingSize: "1 coconut (300ml)", calories: 60, protein: 1.5, carbs: 13, fat: 0.5, fiber: 2.5, isBangladeshi: true },
+  { name: "Sugarcane Juice (Ganderir Rosh)", category: "beverages", displayCategory: "drinks", servingSize: "1 glass (250ml)", calories: 180, protein: 0.5, carbs: 45, fat: 0.2, fiber: 0.5, isBangladeshi: true },
+  { name: "Lemon Mint Sherbet", category: "beverages", displayCategory: "drinks", servingSize: "1 glass (250ml)", calories: 90, protein: 0.2, carbs: 23, fat: 0.1, fiber: 0.3, isBangladeshi: true },
+
+  // ============ Fast Food (BD Style) ============
+  { name: "Chicken Burger (Local Bakery/Cafe)", category: "fast_food", displayCategory: "fast_food", servingSize: "1 burger (180g)", calories: 420, protein: 22, carbs: 42, fat: 18, fiber: 2, isBangladeshi: true },
+  { name: "Crispy Fried Chicken (1 pc)", category: "fast_food", displayCategory: "fast_food", servingSize: "1 piece (130g)", calories: 320, protein: 24, carbs: 12, fat: 20, fiber: 0.5, isBangladeshi: false },
+  { name: "Chicken Roll / Shawarma", category: "fast_food", displayCategory: "fast_food", servingSize: "1 roll (200g)", calories: 380, protein: 20, carbs: 38, fat: 16, fiber: 2, isBangladeshi: true },
+  { name: "French Fries", category: "fast_food", displayCategory: "fast_food", servingSize: "1 medium portion (120g)", calories: 340, protein: 4, carbs: 44, fat: 16, fiber: 4, isBangladeshi: false },
   // ============ Rice & Grains ============
   { name: "Rice (White, cooked)", category: "rice_grains", servingSize: "1 plate (250g)", calories: 325, protein: 6.5, carbs: 71, fat: 0.7, fiber: 0.6, isBangladeshi: true },
   { name: "Polao", category: "rice_grains", servingSize: "1 plate (250g)", calories: 450, protein: 9, carbs: 68, fat: 15, fiber: 1.2, isBangladeshi: true },

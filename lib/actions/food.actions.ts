@@ -28,22 +28,30 @@ export async function getFoods(query?: string, category?: string) {
   }
 
   if (category && category !== "all") {
-    filter.category = category;
+    filter.$or = [
+      { category },
+      { displayCategory: category },
+    ];
   }
 
   let dbFoods = (await Food.find(filter)
-    .select("name category servingSize calories protein carbs fat fiber isBangladeshi isCustom")
+    .select("name category displayCategory servingSize calories protein carbs fat fiber isBangladeshi isCustom")
     .sort({ name: 1 })
     .limit(100)
     .lean()) as unknown as FoodListItem[];
 
-  if (dbFoods.length === 0 && !query && (!category || category === "all")) {
-    dbFoods = defaultFoods.slice(0, 100);
-  } else if (dbFoods.length === 0 && query) {
-    const qLower = query.toLowerCase();
-    dbFoods = defaultFoods
-      .filter((f) => f.name.toLowerCase().includes(qLower))
-      .slice(0, 100);
+  if (dbFoods.length === 0) {
+    let filtered = defaultFoods;
+    if (category && category !== "all") {
+      filtered = filtered.filter(
+        (f) => f.category === category || f.displayCategory === category
+      );
+    }
+    if (query) {
+      const qLower = query.toLowerCase();
+      filtered = filtered.filter((f) => f.name.toLowerCase().includes(qLower));
+    }
+    dbFoods = filtered.slice(0, 100);
   }
 
   return JSON.parse(JSON.stringify(dbFoods));
