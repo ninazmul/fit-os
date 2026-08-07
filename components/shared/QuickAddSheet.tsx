@@ -17,13 +17,20 @@ import {
   Plus,
   Clock,
   Check,
+  ScanBarcode,
 } from "lucide-react";
 import { getRecentFoods } from "@/lib/actions/recent-meals.actions";
 import { addWater } from "@/lib/actions/water-sleep.actions";
-import { logMeal } from "@/lib/actions/meal.actions";
+import { appendMealItem } from "@/lib/actions/meal.actions";
 import type { IMealItem, MealType } from "@/types/fitness";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+
+const BarcodeScanner = dynamic(
+  () => import("@/components/shared/BarcodeScanner"),
+  { ssr: false },
+);
 
 interface QuickAddSheetProps {
   open: boolean;
@@ -38,6 +45,7 @@ export default function QuickAddSheet({
   const [loading, setLoading] = useState(false);
   const [addingFoodIndex, setAddingFoodIndex] = useState<number | null>(null);
   const [loggedFoodNames, setLoggedFoodNames] = useState<Set<string>>(new Set());
+  const [barcodeOpen, setBarcodeOpen] = useState(false);
   const router = useRouter();
 
   const todayStr = new Date().toISOString().split("T")[0];
@@ -59,22 +67,16 @@ export default function QuickAddSheet({
   const handleQuickAddFood = async (item: IMealItem, index: number) => {
     try {
       setAddingFoodIndex(index);
-      await logMeal({
-        date: todayStr,
-        mealType: defaultMealType,
-        items: [
-          {
-            foodId: item.foodId,
-            name: item.name,
-            serving: item.serving || "1 serving",
-            quantity: 1,
-            calories: item.calories,
-            protein: item.protein,
-            carbs: item.carbs,
-            fat: item.fat,
-            fiber: item.fiber || 0,
-          },
-        ],
+      await appendMealItem(todayStr, defaultMealType, {
+        foodId: item.foodId,
+        name: item.name,
+        serving: item.serving || "1 serving",
+        quantity: 1,
+        calories: item.calories,
+        protein: item.protein,
+        carbs: item.carbs,
+        fat: item.fat,
+        fiber: item.fiber || 0,
       });
       setLoggedFoodNames((prev) => new Set(prev).add(item.name));
       toast.success(`Logged ${item.name} (${item.calories} kcal) to ${defaultMealType}! 🍲`);
@@ -101,8 +103,17 @@ export default function QuickAddSheet({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md rounded-3xl p-5 gap-4">
+    <>
+      <BarcodeScanner
+        open={barcodeOpen}
+        onOpenChange={setBarcodeOpen}
+        dateStr={todayStr}
+        defaultMealType={defaultMealType}
+        onLogged={() => router.refresh()}
+      />
+
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-md rounded-3xl p-5 gap-4">
         <DialogHeader className="px-1">
           <DialogTitle className="text-lg font-bold flex items-center justify-between">
             <span className="flex items-center gap-2">
@@ -191,6 +202,19 @@ export default function QuickAddSheet({
           )}
         </div>
 
+        {/* Barcode Scanner Shortcut */}
+        <Button
+          variant="outline"
+          onClick={() => {
+            onOpenChange(false);
+            setBarcodeOpen(true);
+          }}
+          className="w-full rounded-2xl border-dashed border-2 border-primary/30 hover:bg-primary/5 text-primary font-bold gap-2"
+        >
+          <ScanBarcode className="w-4 h-4" />
+          Scan Barcode to {defaultMealType}
+        </Button>
+
         {/* Section 2: Quick Water Presets */}
         <div className="space-y-2 pt-2 border-t border-border/40">
           <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
@@ -255,7 +279,8 @@ export default function QuickAddSheet({
             <span className="text-[11px] font-bold">Log Workout</span>
           </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

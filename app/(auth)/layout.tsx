@@ -305,7 +305,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                   FitOS
                 </span>
                 <span className="rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
-                  v2.0
+                  v2.1.0
                 </span>
               </div>
               <p className="truncate text-[11px] font-medium text-[#6B7580]">
@@ -335,8 +335,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 style={{ fontFamily: "'Space Grotesk', sans-serif" }}
               >
                 FitOS is your free{" "}
-                <span className="text-primary">fitness tracker</span> for
-                food, workouts and body metrics.
+                <span className="text-primary">fitness tracker</span> for food,
+                workouts and body metrics.
               </h1>
               <p className="max-w-2xl text-sm leading-6 text-[#5F6C61] sm:text-base sm:leading-7">
                 Calculate BMI, BMR, TDEE, body fat percentage and ideal weight.
@@ -353,8 +353,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               ].map(([value, label], index) => (
                 <div
                   key={label}
-                  className={`px-3 py-3 text-center ${index > 0 ? "border-l border-[#E1E7DD]" : ""
-                    }`}
+                  className={`px-3 py-3 text-center ${
+                    index > 0 ? "border-l border-[#E1E7DD]" : ""
+                  }`}
                 >
                   <p
                     className="text-lg font-bold text-primary sm:text-2xl"
@@ -557,7 +558,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
         <footer className="flex flex-col items-center justify-between gap-3 border-t border-[#E1E7DD] py-6 text-center text-xs text-[#6B7580] sm:flex-row sm:text-left">
           <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
-            <span className="font-bold text-[#1F2937]">FitOS v2.0</span>
+            <span className="font-bold text-[#1F2937]">FitOS v2.1.0</span>
             <span>&middot; Free BMI Calculator &amp; Fitness Tracker</span>
           </div>
           <div>

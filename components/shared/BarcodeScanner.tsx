@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,9 +10,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ScanBarcode, Search, UtensilsCrossed, AlertCircle } from "lucide-react";
+import {
+  ScanBarcode,
+  Search,
+  Camera,
+  UtensilsCrossed,
+  AlertCircle,
+  X,
+} from "lucide-react";
 import type { IMealItem, MealType } from "@/types/fitness";
-import { logMeal } from "@/lib/actions/meal.actions";
+import { appendMealItem } from "@/lib/actions/meal.actions";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
@@ -21,6 +28,7 @@ interface BarcodeScannerProps {
   onOpenChange: (open: boolean) => void;
   dateStr?: string;
   defaultMealType?: MealType;
+  onLogged?: () => void | Promise<void>;
 }
 
 interface ScannedProduct {
@@ -36,22 +44,34 @@ interface ScannedProduct {
   image?: string;
 }
 
+type BarcodeDetectorConstructor = new (options?: {
+  formats?: string[];
+}) => {
+  detect: (source: CanvasImageSource) => Promise<Array<{ rawValue?: string }>>;
+};
+
 export default function BarcodeScanner({
   open,
   onOpenChange,
   dateStr,
   defaultMealType = "snack",
+  onLogged,
 }: BarcodeScannerProps) {
   const [barcodeInput, setBarcodeInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [product, setProduct] = useState<ScannedProduct | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [quantity, setQuantity] = useState<number>(1);
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const cameraStreamRef = useRef<MediaStream | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const router = useRouter();
 
   const todayStr = dateStr || new Date().toISOString().split("T")[0];
 
-  const handleLookupBarcode = async (code: string) => {
+  const handleLookupBarcode = useCallback(async (code: string) => {
     const cleanCode = code.trim();
     if (!cleanCode) return;
 
@@ -61,53 +81,30 @@ export default function BarcodeScanner({
       setProduct(null);
 
       const res = await fetch(
-        `https://world.openfoodfacts.org/api/v2/product/${cleanCode}.json`
+        `/api/barcode/product/${encodeURIComponent(cleanCode)}`,
+        { cache: "no-store" },
       );
+      const data = await res.json();
 
-      if (!res.ok) {
+      if (!res.ok || !data.product) {
+        setErrorMsg(
+          data.error ||
+            `No product found for barcode "${cleanCode}". Try searching manually.`,
+        );
         throw new Error("Product not found");
       }
 
-      const data = await res.json();
-
-      if (data.status !== 1 || !data.product) {
-        setErrorMsg(`No product found for barcode "${cleanCode}". Try searching manually.`);
-        return;
-      }
-
-      const p = data.product;
-      const nutriments = p.nutriments || {};
-
-      const calories =
-        Math.round(
-          nutriments["energy-kcal_100g"] ||
-            nutriments["energy-kcal_serving"] ||
-            (nutriments["energy_100g"] ? nutriments["energy_100g"] / 4.184 : 0)
-        ) || 0;
-
-      const protein = Math.round((nutriments["proteins_100g"] || 0) * 10) / 10;
-      const carbs = Math.round((nutriments["carbohydrates_100g"] || 0) * 10) / 10;
-      const fat = Math.round((nutriments["fat_100g"] || 0) * 10) / 10;
-      const fiber = Math.round((nutriments["fiber_100g"] || 0) * 10) / 10;
-
-      setProduct({
-        barcode: cleanCode,
-        name: p.product_name || p.product_name_en || "Scanned Product",
-        brand: p.brands || "",
-        servingSize: p.serving_size || "100g",
-        calories,
-        protein,
-        carbs,
-        fat,
-        fiber,
-        image: p.image_front_small_url || p.image_url || "",
-      });
+      setBarcodeInput(cleanCode);
+      setProduct(data.product);
     } catch {
-      setErrorMsg("Error connecting to OpenFoodFacts barcode database.");
+      setErrorMsg(
+        (current) =>
+          current || "Error connecting to Open Food Facts barcode database.",
+      );
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const handleLogScannedProduct = async () => {
     if (!product) return;
@@ -115,7 +112,9 @@ export default function BarcodeScanner({
     try {
       setLoading(true);
       const item: IMealItem = {
-        name: product.brand ? `${product.brand} - ${product.name}` : product.name,
+        name: product.brand
+          ? `${product.brand} - ${product.name}`
+          : product.name,
         serving: product.servingSize,
         quantity,
         calories: product.calories * quantity,
@@ -125,16 +124,13 @@ export default function BarcodeScanner({
         fiber: product.fiber * quantity,
       };
 
-      await logMeal({
-        date: todayStr,
-        mealType: defaultMealType,
-        items: [item],
-      });
+      await appendMealItem(todayStr, defaultMealType, item);
 
       toast.success(`Logged ${item.name} (${item.calories} kcal)! 📦`);
       onOpenChange(false);
       setProduct(null);
       setBarcodeInput("");
+      await onLogged?.();
       router.refresh();
     } catch {
       toast.error("Failed to log scanned food");
@@ -143,9 +139,123 @@ export default function BarcodeScanner({
     }
   };
 
+  // Camera functions
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: "environment",
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
+      });
+      cameraStreamRef.current = stream;
+      setCameraStream(stream);
+      setCameraOpen(true);
+    } catch {
+      setErrorMsg(
+        "Camera permission denied or not available. Please use manual input.",
+      );
+      toast.error("Camera access denied");
+    }
+  };
+
+  const stopCamera = useCallback(() => {
+    if (cameraStreamRef.current) {
+      cameraStreamRef.current.getTracks().forEach((track) => track.stop());
+      cameraStreamRef.current = null;
+    }
+    setCameraStream(null);
+    setCameraOpen(false);
+    if (videoRef.current) videoRef.current.srcObject = null;
+  }, []);
+
+  const capturePhoto = async () => {
+    if (!canvasRef.current || !videoRef.current) return;
+
+    try {
+      setErrorMsg(null);
+      setLoading(true);
+      const canvas = canvasRef.current;
+      const video = videoRef.current;
+      const width = video.videoWidth;
+      const height = video.videoHeight;
+
+      if (!width || !height) {
+        setErrorMsg("Camera is still starting. Please try again in a moment.");
+        return;
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      ctx?.drawImage(video, 0, 0, width, height);
+
+      const BarcodeDetector = (
+        window as typeof window & {
+          BarcodeDetector?: BarcodeDetectorConstructor;
+        }
+      ).BarcodeDetector;
+
+      if (!BarcodeDetector) {
+        setErrorMsg(
+          "This browser does not support camera barcode detection yet. Please type the barcode manually.",
+        );
+        return;
+      }
+
+      const detector = new BarcodeDetector({
+        formats: ["ean_13", "ean_8", "upc_a", "upc_e", "code_128"],
+      });
+      const codes = await detector.detect(canvas);
+      const detectedCode = codes[0]?.rawValue?.trim();
+
+      if (!detectedCode) {
+        setErrorMsg(
+          "No barcode detected in the photo. Please center the barcode and try again.",
+        );
+        return;
+      }
+
+      stopCamera();
+      await handleLookupBarcode(detectedCode);
+    } catch {
+      setErrorMsg(
+        "Failed to detect barcode. Try typing it manually or use a clearer photo.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      stopCamera();
+    };
+  }, [stopCamera]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!cameraOpen || !cameraStream || !video) return;
+
+    video.srcObject = cameraStream;
+    void video.play().catch(() => {
+      setErrorMsg("Could not start the camera preview. Please try again.");
+    });
+  }, [cameraOpen, cameraStream]);
+
+  // Close scanner when dialog closes
+  useEffect(() => {
+    if (!open) {
+      stopCamera();
+      setProduct(null);
+      setBarcodeInput("");
+    }
+  }, [open, stopCamera]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md rounded-3xl p-5 gap-4">
+      <DialogContent className="sm:max-w-md rounded-3xl p-5 gap-4 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold flex items-center gap-2">
             <ScanBarcode className="w-5 h-5 text-primary" />
@@ -153,33 +263,84 @@ export default function BarcodeScanner({
           </DialogTitle>
         </DialogHeader>
 
-        {/* Input Barcode */}
-        <div className="space-y-2">
-          <Label className="text-xs font-semibold">Enter or Scan Barcode</Label>
-          <div className="flex gap-2">
-            <Input
-              placeholder="e.g. 8901030300001 (Milk, Biscuits, Juice...)"
-              value={barcodeInput}
-              onChange={(e) => setBarcodeInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleLookupBarcode(barcodeInput);
-              }}
-              className="rounded-xl text-sm font-mono"
+        {/* Camera Mode */}
+        {cameraOpen && (
+          <div className="relative rounded-2xl overflow-hidden bg-black aspect-video">
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              className="w-full h-full object-cover"
+              style={{ transform: "scaleX(-1)" }}
             />
+            <canvas ref={canvasRef} className="hidden" />
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-3">
+              <Button
+                onClick={capturePhoto}
+                className="rounded-full w-16 h-16 bg-white text-black shadow-lg"
+              >
+                <Camera className="w-7 h-7" />
+              </Button>
+              <Button
+                variant="outline"
+                onClick={stopCamera}
+                className="rounded-full w-12 h-12 bg-white/90"
+              >
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+            <div className="absolute top-4 left-4 bg-black/70 text-white text-xs px-3 py-1 rounded-full">
+              Point camera at barcode
+            </div>
+          </div>
+        )}
+
+        {/* Manual Input */}
+        {!cameraOpen && (
+          <div className="space-y-2">
+            <Label className="text-xs font-semibold">
+              Enter or Scan Barcode
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                placeholder="e.g. 8901030300001 (Milk, Biscuits, Juice...)"
+                value={barcodeInput}
+                onChange={(e) => setBarcodeInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleLookupBarcode(barcodeInput);
+                }}
+                className="rounded-xl text-sm font-mono"
+              />
+              <Button
+                disabled={loading || !barcodeInput.trim()}
+                onClick={() => handleLookupBarcode(barcodeInput)}
+                className="rounded-xl bg-primary hover:bg-primary/90 text-white font-bold"
+              >
+                {loading ? "..." : <Search className="w-4 h-4" />}
+              </Button>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Powered by OpenFoodFacts global food database. Try barcode numbers
+              on milk, oats, biscuits, or protein powders.
+            </p>
+          </div>
+        )}
+
+        {/* Camera Button */}
+        {!cameraOpen && (
+          <div className="flex gap-2">
             <Button
-              disabled={loading || !barcodeInput.trim()}
-              onClick={() => handleLookupBarcode(barcodeInput)}
-              className="rounded-xl bg-primary hover:bg-primary/90 text-white font-bold"
+              variant="outline"
+              onClick={() => startCamera()}
+              className="flex-1 rounded-xl border-dashed border-2 border-primary/30 hover:bg-primary/5 text-primary font-semibold"
             >
-              {loading ? "..." : <Search className="w-4 h-4" />}
+              <Camera className="w-4 h-4 mr-2" />
+              Camera Scan
             </Button>
           </div>
-          <p className="text-[11px] text-muted-foreground">
-            Powered by OpenFoodFacts global food database. Try barcode numbers on milk, oats, biscuits, or protein powders.
-          </p>
-        </div>
+        )}
 
-        {/* Preset quick test barcodes */}
+        {/* Quick Test Barcodes */}
         <div className="space-y-1 pt-1">
           <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
             Quick Test Barcodes:
@@ -222,9 +383,13 @@ export default function BarcodeScanner({
                 <span className="text-[10px] uppercase font-bold text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-full bg-emerald-500/20">
                   Found Product
                 </span>
-                <h4 className="text-base font-bold tracking-tight mt-1">{product.name}</h4>
+                <h4 className="text-base font-bold tracking-tight mt-1">
+                  {product.name}
+                </h4>
                 {product.brand && (
-                  <p className="text-xs text-muted-foreground">{product.brand}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {product.brand}
+                  </p>
                 )}
               </div>
 
@@ -232,7 +397,9 @@ export default function BarcodeScanner({
                 <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
                   {product.calories * quantity}
                 </span>
-                <span className="text-[10px] text-muted-foreground block">kcal total</span>
+                <span className="text-[10px] text-muted-foreground block">
+                  kcal total
+                </span>
               </div>
             </div>
 
@@ -244,15 +411,21 @@ export default function BarcodeScanner({
               </div>
               <div className="p-1.5 rounded-xl bg-background/60">
                 <p className="text-[10px] text-muted-foreground">Protein</p>
-                <p className="font-bold text-emerald-600">{product.protein * quantity}g</p>
+                <p className="font-bold text-emerald-600">
+                  {product.protein * quantity}g
+                </p>
               </div>
               <div className="p-1.5 rounded-xl bg-background/60">
                 <p className="text-[10px] text-muted-foreground">Carbs</p>
-                <p className="font-bold text-blue-600">{product.carbs * quantity}g</p>
+                <p className="font-bold text-blue-600">
+                  {product.carbs * quantity}g
+                </p>
               </div>
               <div className="p-1.5 rounded-xl bg-background/60">
                 <p className="text-[10px] text-muted-foreground">Fat</p>
-                <p className="font-bold text-purple-600">{product.fat * quantity}g</p>
+                <p className="font-bold text-purple-600">
+                  {product.fat * quantity}g
+                </p>
               </div>
             </div>
 

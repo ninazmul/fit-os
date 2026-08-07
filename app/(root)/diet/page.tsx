@@ -40,7 +40,14 @@ import {
   Bookmark,
   ScanBarcode,
 } from "lucide-react";
-import type { MealType, IFood, IMealItem, FoodCategory, SavedMealCategory, ISavedMeal } from "@/types/fitness";
+import type {
+  MealType,
+  IFood,
+  IMealItem,
+  FoodCategory,
+  SavedMealCategory,
+  ISavedMeal,
+} from "@/types/fitness";
 import {
   getSavedMeals,
   createSavedMeal,
@@ -56,7 +63,7 @@ const AdUnit = dynamic(() => import("@/components/shared/AdUnit"), {
 });
 const BarcodeScanner = dynamic(
   () => import("@/components/shared/BarcodeScanner"),
-  { ssr: false }
+  { ssr: false },
 );
 
 const mealTypes: { type: MealType; label: string; icon: typeof Sun }[] = [
@@ -81,7 +88,8 @@ export default function DietPage() {
   // Save template modal state
   const [saveTemplateModalOpen, setSaveTemplateModalOpen] = useState(false);
   const [templateName, setTemplateName] = useState("");
-  const [templateCategory, setTemplateCategory] = useState<SavedMealCategory>("breakfast");
+  const [templateCategory, setTemplateCategory] =
+    useState<SavedMealCategory>("breakfast");
   const [itemsToSave, setItemsToSave] = useState<IMealItem[]>([]);
 
   // Add meal modal states
@@ -213,7 +221,10 @@ export default function DietPage() {
     setCustomFoodModalOpen(true);
   };
 
-  const handleDeleteCustomFood = async (e: React.MouseEvent, foodId: string) => {
+  const handleDeleteCustomFood = async (
+    e: React.MouseEvent,
+    foodId: string,
+  ) => {
     e.stopPropagation();
     if (!confirm("Are you sure you want to delete this custom food?")) return;
     try {
@@ -257,11 +268,16 @@ export default function DietPage() {
       const foods = await getFoods(searchQuery, selectedCategory);
       setFoodCatalog(foods);
     } catch {
-      toast.error(editingFoodId ? "Failed to update food" : "Failed to create food");
+      toast.error(
+        editingFoodId ? "Failed to update food" : "Failed to create food",
+      );
     }
   };
 
-  const handleLogSavedTemplate = async (templateId: string, mealType: MealType) => {
+  const handleLogSavedTemplate = async (
+    templateId: string,
+    mealType: MealType,
+  ) => {
     try {
       await logSavedMeal(templateId, dateStr, mealType);
       toast.success(`Logged saved meal template to ${mealType}! ⚡`);
@@ -271,7 +287,10 @@ export default function DietPage() {
     }
   };
 
-  const handleOpenSaveTemplateModal = (items: IMealItem[], mealType: MealType) => {
+  const handleOpenSaveTemplateModal = (
+    items: IMealItem[],
+    mealType: MealType,
+  ) => {
     setItemsToSave(items);
     setTemplateName(`${mealType.toUpperCase()} Template`);
     setTemplateCategory(mealType as SavedMealCategory);
@@ -345,6 +364,7 @@ export default function DietPage() {
         open={barcodeOpen}
         onOpenChange={setBarcodeOpen}
         dateStr={dateStr}
+        onLogged={fetchData}
       />
 
       {/* Date Navigation & Title */}
@@ -359,16 +379,6 @@ export default function DietPage() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          {/* Barcode Scanner Button */}
-          <Button
-            variant="outline"
-            onClick={() => setBarcodeOpen(true)}
-            className="rounded-2xl gap-1.5 border-primary/40 text-primary hover:bg-primary/10 text-xs font-bold"
-          >
-            <ScanBarcode className="w-4 h-4" />
-            Scan Barcode
-          </Button>
-
           {/* Date Selector Pill */}
           <div className="flex items-center gap-2 bg-card border border-border/60 p-1.5 rounded-2xl">
             <Button
@@ -403,7 +413,9 @@ export default function DietPage() {
               <Bookmark className="w-3.5 h-3.5 text-primary" />
               Saved Meal Templates ({savedMeals.length})
             </h3>
-            <span className="text-[11px] text-muted-foreground">Tap to log to {format(selectedDate, "MMM d")}</span>
+            <span className="text-[11px] text-muted-foreground">
+              Tap to log to {format(selectedDate, "MMM d")}
+            </span>
           </div>
 
           <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
@@ -419,7 +431,9 @@ export default function DietPage() {
                     </span>
                     <button
                       type="button"
-                      onClick={() => template._id && handleDeleteTemplate(template._id)}
+                      onClick={() =>
+                        template._id && handleDeleteTemplate(template._id)
+                      }
                       className="text-muted-foreground hover:text-red-500 p-0.5"
                       title="Delete template"
                     >
@@ -427,22 +441,31 @@ export default function DietPage() {
                     </button>
                   </div>
 
-                  <h4 className="text-xs font-bold truncate mt-1.5">{template.name}</h4>
+                  <h4 className="text-xs font-bold truncate mt-1.5">
+                    {template.name}
+                  </h4>
                   <p className="text-[10px] text-muted-foreground truncate">
                     {template.items?.map((i) => i.name).join(", ")}
                   </p>
 
                   <div className="flex items-center gap-2 text-[10px] font-semibold mt-1">
-                    <span className="text-primary">{template.totalCalories} kcal</span>
+                    <span className="text-primary">
+                      {template.totalCalories} kcal
+                    </span>
                     <span>&middot;</span>
-                    <span className="text-emerald-600">P: {template.totalProtein}g</span>
+                    <span className="text-emerald-600">
+                      P: {template.totalProtein}g
+                    </span>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-1 pt-1">
                   <Button
                     size="sm"
-                    onClick={() => template._id && handleLogSavedTemplate(template._id, "breakfast")}
+                    onClick={() =>
+                      template._id &&
+                      handleLogSavedTemplate(template._id, "breakfast")
+                    }
                     className="h-7 text-[10px] rounded-xl font-bold bg-primary hover:bg-primary/90 text-white"
                   >
                     + Breakfast
@@ -450,7 +473,10 @@ export default function DietPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => template._id && handleLogSavedTemplate(template._id, "lunch")}
+                    onClick={() =>
+                      template._id &&
+                      handleLogSavedTemplate(template._id, "lunch")
+                    }
                     className="h-7 text-[10px] rounded-xl font-semibold"
                   >
                     + Lunch
@@ -579,6 +605,15 @@ export default function DietPage() {
 
       {/* Meal Types Sections */}
       <div className="space-y-4">
+        {/* Barcode Scanner Button */}
+        <Button
+          variant="outline"
+          onClick={() => setBarcodeOpen(true)}
+          className="w-full rounded-2xl border-dashed border-2 border-primary/30 hover:bg-primary/5 text-primary font-bold gap-2"
+        >
+          <ScanBarcode className="w-4 h-4" />
+          Scan Barcode
+        </Button>
         {mealTypes.map((mType) => {
           const loggedMeal = meals.find((m) => m.mealType === mType.type);
           const Icon = mType.icon;
@@ -609,7 +644,12 @@ export default function DietPage() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => handleOpenSaveTemplateModal(loggedMeal.items, mType.type)}
+                        onClick={() =>
+                          handleOpenSaveTemplateModal(
+                            loggedMeal.items,
+                            mType.type,
+                          )
+                        }
                         className="rounded-xl gap-1 text-xs text-primary hover:bg-primary/10 font-bold"
                       >
                         <Bookmark className="w-3.5 h-3.5" />
@@ -772,7 +812,9 @@ export default function DietPage() {
                         type="button"
                         size="icon"
                         variant="ghost"
-                        onClick={(e) => food._id && handleDeleteCustomFood(e, food._id)}
+                        onClick={(e) =>
+                          food._id && handleDeleteCustomFood(e, food._id)
+                        }
                         className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg"
                         title="Delete custom food"
                       >
@@ -953,7 +995,9 @@ export default function DietPage() {
                   <button
                     key={cat.id}
                     type="button"
-                    onClick={() => setTemplateCategory(cat.id as SavedMealCategory)}
+                    onClick={() =>
+                      setTemplateCategory(cat.id as SavedMealCategory)
+                    }
                     className={`p-2 rounded-xl text-xs font-bold text-left transition-all border ${
                       templateCategory === cat.id
                         ? "bg-primary/10 border-primary text-primary"

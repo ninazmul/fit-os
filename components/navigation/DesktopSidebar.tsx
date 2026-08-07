@@ -122,7 +122,7 @@ export default function DesktopSidebar() {
       {/* Footer */}
       <div className="p-4 border-t border-border">
         <p className="text-[11px] text-muted-foreground text-center">
-          FitOS v2.0 &middot; By{" "}
+          FitOS v2.1.0 &middot; By{" "}
           <a
             href="https://www.artistycode.studio/"
             target="_blank"

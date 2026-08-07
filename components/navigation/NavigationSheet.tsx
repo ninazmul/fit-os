@@ -12,7 +12,10 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { isNavItemActive, navGroups } from "@/components/navigation/DesktopSidebar";
+import {
+  isNavItemActive,
+  navGroups,
+} from "@/components/navigation/DesktopSidebar";
 
 interface NavigationSheetProps {
   open: boolean;
@@ -70,7 +73,7 @@ export default function NavigationSheet({
           </Button>
         </SheetHeader>
 
-        <nav className="flex-1 overflow-y-auto px-3 py-4">
+        <nav className="h-[calc(100vh-120px)] flex-1 overflow-y-auto px-3 py-4">
           <div className="space-y-6">
             {navGroups.map((group) => (
               <section key={group.label}>
@@ -120,6 +123,22 @@ export default function NavigationSheet({
             ))}
           </div>
         </nav>
+        {/* Developer Footer */}
+        <footer className="">
+          <div className="p-4 border-t border-border">
+            <p className="text-[11px] text-muted-foreground text-center">
+              FitOS v2.1.0 &middot; By{" "}
+              <a
+                href="https://www.artistycode.studio/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-foreground transition-colors"
+              >
+                ArtistyCode Studio
+              </a>
+            </p>
+          </div>
+        </footer>
       </SheetContent>
     </Sheet>
   );

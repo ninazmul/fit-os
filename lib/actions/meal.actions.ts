@@ -59,6 +59,49 @@ export async function logMeal(formData: MealLogFormValues) {
   return JSON.parse(JSON.stringify(meal));
 }
 
+export async function appendMealItem(
+  date: string,
+  mealType: MealLogFormValues["mealType"],
+  item: IMealItem,
+) {
+  await connectToDatabase();
+  const user = await currentUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const existingMeal = await MealLog.findOne({
+    clerkId: user.id,
+    date,
+    mealType,
+  }).lean();
+  const existingItems = existingMeal
+    ? ((existingMeal as unknown as { items: IMealItem[] }).items || [])
+    : [];
+  const items = [...existingItems, item];
+  const totals = calcTotals(items);
+
+  const meal = await MealLog.findOneAndUpdate(
+    {
+      clerkId: user.id,
+      date,
+      mealType,
+    },
+    {
+      items,
+      photoUrl: (existingMeal as { photoUrl?: string } | null)?.photoUrl || "",
+      ...totals,
+    },
+    {
+      new: true,
+      upsert: true,
+      setDefaultsOnInsert: true,
+    },
+  );
+
+  revalidatePath("/");
+  revalidatePath("/diet");
+  return JSON.parse(JSON.stringify(meal));
+}
+
 export async function getMealLogsForDate(date: string) {
   await connectToDatabase();
   const user = await currentUser();
