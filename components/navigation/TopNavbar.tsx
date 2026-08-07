@@ -3,48 +3,82 @@
 import { SignedIn, UserButton } from "@clerk/nextjs";
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { format } from "date-fns";
+import { Menu } from "lucide-react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import NavigationSheet from "@/components/navigation/NavigationSheet";
 
 export default function TopNavbar() {
+  const router = useRouter();
+  const [navigationOpen, setNavigationOpen] = useState(false);
+
   return (
-    <header className="sticky top-0 z-40 w-full glass-card border-b border-border/50">
-      <div className="flex items-center justify-between h-14 px-4 md:px-6">
-        {/* Mobile logo */}
-        <div className="flex items-center gap-2 md:hidden">
-          <div className="relative h-8 w-8 rounded-lg bg-white overflow-hidden border border-border/60 shadow-sm">
-            <Image
-              src="/assets/images/logo.png"
-              alt="FitOs Logo"
-              fill
-              className="object-contain p-0.5 bg-white"
-              priority
-            />
+    <>
+      <NavigationSheet
+        open={navigationOpen}
+        onOpenChange={setNavigationOpen}
+      />
+
+      <header className="sticky top-0 z-40 w-full glass-card border-b border-border/50">
+        <div className="grid h-14 grid-cols-[1fr_auto_1fr] items-center px-4 md:flex md:justify-between md:px-6">
+          {/* Mobile navigation */}
+          <div className="flex items-center justify-start md:hidden">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10 rounded-full"
+              onClick={() => setNavigationOpen(true)}
+              aria-label="Open navigation"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
           </div>
-          <span className="text-base font-bold">FitOS</span>
-        </div>
 
-        {/* Desktop greeting */}
-        <div className="hidden md:block">
-          <p className="text-sm text-muted-foreground">
-            {format(new Date(), "EEEE, MMMM d, yyyy")}
-          </p>
-        </div>
+          {/* Mobile logo */}
+          <button
+            type="button"
+            onClick={() => router.push("/")}
+            className="flex items-center gap-2 justify-self-center rounded-xl px-2 py-1 transition-colors hover:bg-accent md:hidden"
+            aria-label="Go to dashboard"
+          >
+            <div className="relative h-8 w-8 overflow-hidden rounded-lg border border-border/60 bg-white shadow-sm">
+              <Image
+                src="/assets/images/logo.png"
+                alt="FitOs Logo"
+                fill
+                className="bg-white object-contain p-0.5"
+                priority
+              />
+            </div>
+            <span className="text-base font-bold">FitOS</span>
+          </button>
 
-        {/* Right side actions */}
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
-          <SignedIn>
-            <UserButton
-              afterSwitchSessionUrl="/"
-              appearance={{
-                elements: {
-                  avatarBox: "w-9 h-9",
-                },
-              }}
-            />
-          </SignedIn>
+          {/* Desktop greeting */}
+          <div className="hidden md:block">
+            <p className="text-sm text-muted-foreground">
+              {format(new Date(), "EEEE, MMMM d, yyyy")}
+            </p>
+          </div>
+
+          {/* Right side actions */}
+          <div className="flex items-center justify-end gap-2">
+            <ThemeToggle />
+            <SignedIn>
+              <UserButton
+                afterSwitchSessionUrl="/"
+                appearance={{
+                  elements: {
+                    avatarBox: "w-9 h-9",
+                  },
+                }}
+              />
+            </SignedIn>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+    </>
   );
 }

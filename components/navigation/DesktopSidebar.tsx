@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const navGroups = [
+export const navGroups = [
   {
     label: "Main",
     items: [
@@ -39,6 +39,10 @@ const navGroups = [
     ],
   },
 ];
+
+export function isNavItemActive(pathname: string, href: string) {
+  return href === "/" ? pathname === "/" : pathname.startsWith(href);
+}
 
 export default function DesktopSidebar() {
   const pathname = usePathname();
@@ -74,10 +78,7 @@ export default function DesktopSidebar() {
               </p>
               <div className="space-y-1">
                 {group.items.map((item) => {
-                  const isActive =
-                    item.href === "/"
-                      ? pathname === "/"
-                      : pathname.startsWith(item.href);
+                  const isActive = isNavItemActive(pathname, item.href);
                   const Icon = item.icon;
 
                   return (
