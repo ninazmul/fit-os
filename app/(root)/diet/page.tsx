@@ -482,7 +482,7 @@ export default function DietPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-4 text-xs font-semibold">
+          <div className="flex items-center gap-4 text-xs font-semibold ml-auto">
             <div className="text-right">
               <p className="text-muted-foreground">Remaining</p>
               <p
@@ -588,7 +588,7 @@ export default function DietPage() {
               key={mType.type}
               className="glass-card p-5 rounded-3xl border border-border/50 space-y-3"
             >
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-1.5">
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
                     <Icon className="w-5 h-5" />
@@ -603,7 +603,7 @@ export default function DietPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 ml-auto">
                   {loggedMeal && loggedMeal.items.length > 0 && (
                     <>
                       <Button
