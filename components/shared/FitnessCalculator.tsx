@@ -114,18 +114,18 @@ export default function FitnessCalculator() {
     if (gender === "male") {
       bf =
         495 /
-          (1.0324 -
-            0.19077 * Math.log10(w - n) +
-            0.15456 * Math.log10(h)) -
+        (1.0324 -
+          0.19077 * Math.log10(w - n) +
+          0.15456 * Math.log10(h)) -
         450;
     } else {
       const hi = parseFloat(hip);
       if (!hi) return;
       bf =
         495 /
-          (1.29579 -
-            0.35004 * Math.log10(w + hi - n) +
-            0.22100 * Math.log10(h)) -
+        (1.29579 -
+          0.35004 * Math.log10(w + hi - n) +
+          0.22100 * Math.log10(h)) -
         450;
     }
     bf = Math.round(bf * 10) / 10;
@@ -178,13 +178,13 @@ export default function FitnessCalculator() {
   };
 
   const inputClass =
-    "w-full rounded-xl border border-[#E9EBEC] bg-white px-3 py-2.5 text-sm font-medium text-[#1F2937] outline-none focus:border-[#4E8B2E] focus:ring-2 focus:ring-[#4E8B2E]/20 transition-all placeholder:text-[#6B7580]/60";
+    "w-full rounded-xl border border-primary/50 bg-white px-3 py-2.5 text-sm font-medium text-[#1F2937] outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-[#6B7580]/60";
   const labelClass = "text-[11px] font-semibold text-[#6B7580] mb-1 block";
 
   return (
-    <section id="fitness-calculator" className="py-10 border-t border-[#E9EBEC]">
+    <section id="fitness-calculator" className="py-10 border-t border-primary/50">
       <div className="text-center max-w-2xl mx-auto space-y-2 mb-8">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EEF6E9] text-[#4E8B2E] text-xs font-semibold">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
           <Calculator className="w-3.5 h-3.5" />
           <span>Free Fitness Calculators</span>
         </div>
@@ -201,7 +201,7 @@ export default function FitnessCalculator() {
         </p>
       </div>
 
-      <div className="max-w-3xl mx-auto p-5 sm:p-6 rounded-3xl border border-[#E9EBEC] bg-white shadow-sm">
+      <div className="max-w-3xl mx-auto p-5 sm:p-6 rounded-3xl border border-primary/50 bg-white shadow-sm">
         {/* Tabs */}
         <div className="flex flex-wrap gap-1.5 mb-6">
           {TABS.map((t) => {
@@ -214,11 +214,10 @@ export default function FitnessCalculator() {
                   setTab(t.id);
                   reset();
                 }}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all ${
-                  active
-                    ? "bg-[#4E8B2E] text-white shadow-sm"
-                    : "bg-[#F1F2F3] text-[#37414A] hover:bg-[#E9EBEC]"
-                }`}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all ${active
+                    ? "bg-primary text-white shadow-sm"
+                    : "bg-[#F1F2F3] text-[#37414A] hover:bg-primary/50"
+                  }`}
               >
                 <Icon className="w-3.5 h-3.5" />
                 {t.label}
@@ -240,11 +239,10 @@ export default function FitnessCalculator() {
                     setGender(g);
                     reset();
                   }}
-                  className={`flex-1 py-2.5 rounded-xl text-xs font-bold capitalize transition-all border ${
-                    gender === g
-                      ? "border-[#4E8B2E] bg-[#EEF6E9] text-[#4E8B2E]"
-                      : "border-[#E9EBEC] bg-white text-[#6B7580] hover:bg-[#F1F2F3]"
-                  }`}
+                  className={`flex-1 py-2.5 rounded-xl text-xs font-bold capitalize transition-all border ${gender === g
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-primary/50 bg-white text-[#6B7580] hover:bg-[#F1F2F3]"
+                    }`}
                 >
                   {g === "male" ? "♂ Male" : "♀ Female"}
                 </button>
@@ -386,7 +384,7 @@ export default function FitnessCalculator() {
           {/* Calculate button */}
           <button
             onClick={handleCalc}
-            className="w-full py-3 rounded-xl bg-[#4E8B2E] text-white font-bold text-sm hover:bg-[#3F7223] transition-all shadow-sm flex items-center justify-center gap-2"
+            className="w-full py-3 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary/80 transition-all shadow-sm flex items-center justify-center gap-2"
           >
             <Calculator className="w-4 h-4" />
             Calculate {TABS.find((t) => t.id === tab)?.label}
@@ -395,7 +393,7 @@ export default function FitnessCalculator() {
 
         {/* Results */}
         {result && (
-          <div className="mt-5 p-4 rounded-2xl bg-[#F7FBF5] border border-[#4E8B2E]/20 space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="mt-5 p-4 rounded-2xl bg-[#F7FBF5] border border-primary/20 space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
             {tab === "bmi" && (
               <>
                 <div className="flex items-center justify-between">
@@ -434,7 +432,7 @@ export default function FitnessCalculator() {
                     Basal Metabolic Rate
                   </span>
                   <span
-                    className="text-3xl font-bold text-[#4E8B2E]"
+                    className="text-3xl font-bold text-primary"
                     style={{ fontFamily: "'IBM Plex Mono', monospace" }}
                   >
                     {result.bmr}
@@ -451,7 +449,7 @@ export default function FitnessCalculator() {
             {tab === "tdee" && (
               <>
                 <div className="grid grid-cols-3 gap-3 text-center">
-                  <div className="p-3 rounded-xl bg-white border border-[#E9EBEC]">
+                  <div className="p-3 rounded-xl bg-white border border-primary/50">
                     <p className="text-[10px] font-semibold text-[#6B7580]">
                       Weight Loss
                     </p>
@@ -462,18 +460,18 @@ export default function FitnessCalculator() {
                     </p>
                     <p className="text-[10px] text-[#6B7580]">kcal/day</p>
                   </div>
-                  <div className="p-3 rounded-xl bg-[#EEF6E9] border border-[#4E8B2E]/20">
-                    <p className="text-[10px] font-semibold text-[#4E8B2E]">
+                  <div className="p-3 rounded-xl bg-primary/10 border border-primary/20">
+                    <p className="text-[10px] font-semibold text-primary">
                       Maintenance
                     </p>
-                    <p className="text-lg font-bold text-[#4E8B2E]"
+                    <p className="text-lg font-bold text-primary"
                       style={{ fontFamily: "'IBM Plex Mono', monospace" }}
                     >
                       {result.tdee}
                     </p>
                     <p className="text-[10px] text-[#6B7580]">kcal/day</p>
                   </div>
-                  <div className="p-3 rounded-xl bg-white border border-[#E9EBEC]">
+                  <div className="p-3 rounded-xl bg-white border border-primary/50">
                     <p className="text-[10px] font-semibold text-[#6B7580]">
                       Weight Gain
                     </p>
@@ -510,11 +508,11 @@ export default function FitnessCalculator() {
                 </p>
                 {result.leanMass && (
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="p-2.5 rounded-xl bg-white border border-[#E9EBEC] text-center">
+                    <div className="p-2.5 rounded-xl bg-white border border-primary/50 text-center">
                       <p className="text-[10px] font-semibold text-[#6B7580]">Lean Mass</p>
-                      <p className="text-base font-bold text-[#4E8B2E]">{result.leanMass} kg</p>
+                      <p className="text-base font-bold text-primary">{result.leanMass} kg</p>
                     </div>
-                    <div className="p-2.5 rounded-xl bg-white border border-[#E9EBEC] text-center">
+                    <div className="p-2.5 rounded-xl bg-white border border-primary/50 text-center">
                       <p className="text-[10px] font-semibold text-[#6B7580]">Fat Mass</p>
                       <p className="text-base font-bold text-amber-600">{result.fatMass} kg</p>
                     </div>
@@ -540,12 +538,12 @@ export default function FitnessCalculator() {
                   ].map((f) => (
                     <div
                       key={f.label}
-                      className="p-2.5 rounded-xl bg-white border border-[#E9EBEC]"
+                      className="p-2.5 rounded-xl bg-white border border-primary/50"
                     >
                       <p className="text-[10px] font-semibold text-[#6B7580]">
                         {f.label}
                       </p>
-                      <p className="text-base font-bold text-[#4E8B2E]">
+                      <p className="text-base font-bold text-primary">
                         {f.val} kg
                       </p>
                     </div>
@@ -561,10 +559,10 @@ export default function FitnessCalculator() {
             )}
 
             {/* CTA */}
-            <div className="pt-2 border-t border-[#4E8B2E]/10">
+            <div className="pt-2 border-t border-primary/10">
               <p className="text-[11px] text-[#6B7580] flex items-center gap-1">
-                <ChevronRight className="w-3 h-3 text-[#4E8B2E]" />
-                Sign up for <strong className="text-[#4E8B2E]">FitOS</strong> to track
+                <ChevronRight className="w-3 h-3 text-primary" />
+                Sign up for <strong className="text-primary">FitOS</strong> to track
                 these metrics daily with personalized AI insights.
               </p>
             </div>
@@ -574,7 +572,7 @@ export default function FitnessCalculator() {
 
       {/* SEO-rich content below calculator */}
       <div className="max-w-3xl mx-auto mt-8 space-y-6 text-xs leading-relaxed text-[#6B7580]">
-        <div className="p-4 rounded-2xl border border-[#E9EBEC] bg-white space-y-2">
+        <div className="p-4 rounded-2xl border border-primary/50 bg-white space-y-2">
           <h3 className="text-sm font-bold text-[#1F2937]">
             What is BMI (Body Mass Index)?
           </h3>
@@ -586,7 +584,7 @@ export default function FitnessCalculator() {
             underweight, normal weight, overweight, or obese.
           </p>
         </div>
-        <div className="p-4 rounded-2xl border border-[#E9EBEC] bg-white space-y-2">
+        <div className="p-4 rounded-2xl border border-primary/50 bg-white space-y-2">
           <h3 className="text-sm font-bold text-[#1F2937]">
             What is BMR (Basal Metabolic Rate)?
           </h3>
@@ -595,10 +593,10 @@ export default function FitnessCalculator() {
             your heart beating, lungs breathing, and organs functioning. FitOS uses the
             <strong> Mifflin-St Jeor equation</strong>, the gold standard recommended by
             the Academy of Nutrition and Dietetics: <strong>BMR = 10 × weight(kg) +
-            6.25 × height(cm) - 5 × age - 161 (female) / + 5 (male)</strong>.
+              6.25 × height(cm) - 5 × age - 161 (female) / + 5 (male)</strong>.
           </p>
         </div>
-        <div className="p-4 rounded-2xl border border-[#E9EBEC] bg-white space-y-2">
+        <div className="p-4 rounded-2xl border border-primary/50 bg-white space-y-2">
           <h3 className="text-sm font-bold text-[#1F2937]">
             What is TDEE (Total Daily Energy Expenditure)?
           </h3>
@@ -610,7 +608,7 @@ export default function FitnessCalculator() {
             maintain, or above TDEE to bulk.
           </p>
         </div>
-        <div className="p-4 rounded-2xl border border-[#E9EBEC] bg-white space-y-2">
+        <div className="p-4 rounded-2xl border border-primary/50 bg-white space-y-2">
           <h3 className="text-sm font-bold text-[#1F2937]">
             How is Body Fat Percentage Calculated?
           </h3>

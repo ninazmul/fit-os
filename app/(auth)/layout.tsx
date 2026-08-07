@@ -223,7 +223,7 @@ const MacroRing = () => (
       cy="60"
       r="52"
       fill="none"
-      stroke="#4E8B2E"
+      stroke="hsl(var(--primary))"
       strokeWidth="10"
       strokeLinecap="round"
       strokeDasharray="326.7"
@@ -269,7 +269,7 @@ const MacroRing = () => (
 const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div
-      className="relative min-h-screen overflow-x-hidden bg-[#F7F9F6]"
+      className="relative min-h-screen overflow-x-hidden bg-white"
       style={{
         color: "#1F2937",
         fontFamily: "'Inter', sans-serif",
@@ -304,7 +304,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 >
                   FitOS
                 </span>
-                <span className="rounded-full border border-[#4E8B2E]/20 bg-[#EEF6E9] px-2 py-0.5 text-[10px] font-semibold text-[#4E8B2E]">
+                <span className="rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
                   v2.0
                 </span>
               </div>
@@ -316,7 +316,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
           <Link
             href="#auth"
-            className="flex shrink-0 items-center gap-1 rounded-full bg-[#4E8B2E] px-3 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-[#3F7223] sm:px-4"
+            className="flex shrink-0 items-center gap-1 rounded-full bg-primary px-3 py-2 text-xs font-bold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 sm:px-4"
           >
             Start <ArrowRight className="h-3.5 w-3.5" />
           </Link>
@@ -324,7 +324,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
         <main className="mb-10 grid gap-5 min-w-0 lg:grid-cols-[minmax(0,1fr)_430px] lg:items-start lg:gap-8">
           <section className="space-y-5 min-w-0 rounded-[2rem] border border-[#E1E7DD] bg-white px-4 py-5 shadow-sm sm:px-6 sm:py-7 lg:min-h-[calc(100vh-8rem)] lg:px-8 lg:py-9">
-            <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-[#4E8B2E]/20 bg-[#EEF6E9] px-3 py-1.5 text-[11px] font-bold text-[#4E8B2E] sm:text-xs">
+            <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-[11px] font-bold text-primary sm:text-xs">
               <Sparkles className="h-3.5 w-3.5 shrink-0" />
               <span>Free calculators plus daily fitness tracking</span>
             </div>
@@ -335,7 +335,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 style={{ fontFamily: "'Space Grotesk', sans-serif" }}
               >
                 FitOS is your free{" "}
-                <span className="text-[#4E8B2E]">fitness tracker</span> for
+                <span className="text-primary">fitness tracker</span> for
                 food, workouts and body metrics.
               </h1>
               <p className="max-w-2xl text-sm leading-6 text-[#5F6C61] sm:text-base sm:leading-7">
@@ -357,7 +357,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                     }`}
                 >
                   <p
-                    className="text-lg font-bold text-[#4E8B2E] sm:text-2xl"
+                    className="text-lg font-bold text-primary sm:text-2xl"
                     style={{ fontFamily: "'IBM Plex Mono', monospace" }}
                   >
                     {value}
@@ -381,8 +381,10 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                     <div
                       className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
                       style={{
-                        background: isGreen ? "#EEF6E9" : "#F1F2F3",
-                        color: isGreen ? "#4E8B2E" : "#37414A",
+                        background: isGreen
+                          ? "hsl(var(--primary) / 0.1)"
+                          : "#F1F2F3",
+                        color: isGreen ? "hsl(var(--primary))" : "#37414A",
                       }}
                     >
                       <Icon className="h-5 w-5" />
@@ -405,9 +407,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 <Link
                   key={page.path}
                   href={page.path}
-                  className="flex shrink-0 items-center gap-2 rounded-full border border-[#DDE6D9] bg-[#F7F9F6] px-3.5 py-2 text-xs font-bold text-[#37414A] transition-colors hover:border-[#4E8B2E]/40 hover:bg-[#EEF6E9]"
+                  className="flex shrink-0 items-center gap-2 rounded-full border border-[#DDE6D9] bg-primary/5 px-3.5 py-2 text-xs font-bold text-[#37414A] transition-colors hover:border-primary/40 hover:bg-primary/10"
                 >
-                  <Zap className="h-3.5 w-3.5 text-[#4E8B2E]" />
+                  <Zap className="h-3.5 w-3.5 text-primary" />
                   {page.path
                     .replace("/", "")
                     .replace(/-/g, " ")
@@ -419,7 +421,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             <div className="flex flex-col gap-3 sm:flex-row">
               <Link
                 href="#auth"
-                className="flex items-center justify-center gap-2 rounded-2xl bg-[#4E8B2E] px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#3F7223]"
+                className="flex items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
               >
                 Start Free <ArrowRight className="h-4 w-4" />
               </Link>
@@ -427,18 +429,18 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 href="#calc"
                 className="flex items-center justify-center gap-2 rounded-2xl border border-[#DDE6D9] bg-white px-5 py-3 text-sm font-bold text-[#37414A] transition-colors hover:bg-[#F1F2F3]"
               >
-                Use Calculators <Zap className="h-4 w-4 text-[#4E8B2E]" />
+                Use Calculators <Zap className="h-4 w-4 text-primary" />
               </Link>
             </div>
           </section>
 
           <aside id="auth" className="lg:sticky lg:top-24 min-w-0">
             <div className="overflow-hidden rounded-xl border border-[#E1E7DD] bg-white p-3 shadow-sm sm:p-4">
-              <div className="mb-3 flex items-center justify-between gap-3 rounded-2xl bg-[#F7F9F6] p-3">
+              <div className="mb-3 flex items-center justify-between gap-3 rounded-2xl bg-primary/5 p-3">
                 <div className="flex items-center gap-3">
                   <MacroRing />
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#4E8B2E]">
+                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
                       Personal OS
                     </p>
                     <p className="text-sm font-bold text-[#1F2937]">
@@ -486,9 +488,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               return (
                 <article
                   key={pillar.title}
-                  className="space-y-2.5 rounded-2xl border border-[#E1E7DD] bg-white p-4 shadow-sm transition-colors hover:border-[#4E8B2E]/30 sm:p-5"
+                  className="space-y-2.5 rounded-2xl border border-[#E1E7DD] bg-white p-4 shadow-sm transition-colors hover:border-primary/30 sm:p-5"
                 >
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#EEF6E9] text-[#4E8B2E]">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
                     <Icon className="h-5 w-5" />
                   </div>
                   <h3 className="text-sm font-bold">{pillar.title}</h3>
@@ -541,7 +543,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                   className="space-y-1.5 rounded-2xl border border-[#E1E7DD] bg-white p-4 shadow-sm"
                 >
                   <h3 className="flex items-center gap-2 text-sm font-bold">
-                    <Activity className="h-3.5 w-3.5 shrink-0 text-[#4E8B2E]" />
+                    <Activity className="h-3.5 w-3.5 shrink-0 text-primary" />
                     {faq.q}
                   </h3>
                   <p className="pl-5 text-xs leading-5 text-[#6B7580]">

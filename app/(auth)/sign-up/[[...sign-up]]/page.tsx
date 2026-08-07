@@ -1,5 +1,6 @@
 import { SignUp } from "@clerk/nextjs";
 import type { Metadata } from "next";
+import { authAppearance } from "../../authAppearance";
 
 export const metadata: Metadata = {
   title: "Create a Free FitOS Account",
@@ -15,7 +16,5 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return (
-    <SignUp />
-  );
+  return <SignUp appearance={authAppearance} />;
 }
