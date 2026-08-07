@@ -61,7 +61,17 @@ export default function DesktopSidebar() {
           />
         </div>
         <div>
-          <h1 className="text-lg font-bold tracking-tight">FitOS</h1>
+          <div className="flex items-center gap-2">
+            <span
+              className="truncate text-lg font-bold tracking-tight"
+              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            >
+              FitOS
+            </span>
+            <span className="rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+              v2.1.0
+            </span>
+          </div>
           <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
             Fitness Tracker
           </p>

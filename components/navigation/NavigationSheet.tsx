@@ -52,9 +52,17 @@ export default function NavigationSheet({
               />
             </div>
             <div>
-              <SheetTitle className="text-lg font-bold tracking-tight">
-                FitOS
-              </SheetTitle>
+              <div className="flex items-center gap-2">
+                <SheetTitle
+                  className="truncate text-lg font-bold tracking-tight"
+                  style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                >
+                  FitOS
+                </SheetTitle>
+                <span className="rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                  v2.1.0
+                </span>
+              </div>
               <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                 Fitness Tracker
               </p>
