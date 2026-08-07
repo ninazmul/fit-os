@@ -348,11 +348,11 @@ export default function ProgressPage() {
 
         {/* Tab 1: Weight */}
         <TabsContent value="weight" className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-1.5">
             <h2 className="text-lg font-bold">Weight Progress Chart</h2>
             <Button
               onClick={() => setWeightModalOpen(true)}
-              className="rounded-xl gap-2 text-xs bg-primary hover:bg-primary/90 font-bold"
+              className="rounded-xl gap-2 text-xs bg-primary hover:bg-primary/90 font-bold ml-auto"
             >
               <Plus className="w-4 h-4" />
               Log Weight
