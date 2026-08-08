@@ -60,7 +60,7 @@ export default function NavigationSheet({
                   FitOS
                 </SheetTitle>
                 <span className="rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
-                  v2.1.0
+                  v2.1.1
                 </span>
               </div>
               <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
@@ -135,7 +135,7 @@ export default function NavigationSheet({
         <footer className="">
           <div className="p-4 border-t border-border">
             <p className="text-[11px] text-muted-foreground text-center">
-              FitOS v2.1.0 &middot; By{" "}
+              FitOS v2.1.1 &middot; By{" "}
               <a
                 href="https://www.artistycode.studio/"
                 target="_blank"
