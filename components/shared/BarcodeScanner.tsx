@@ -97,6 +97,29 @@ function stopMediaStream(stream: MediaStream | null) {
   stream?.getTracks().forEach((track) => track.stop());
 }
 
+/*
+ * Checks whether the device actually has a camera before we ever
+ * try to request permission for one. Without this, a machine with
+ * no camera hardware at all still runs through getUserMedia and
+ * (depending on the browser) can surface a generic init error
+ * instead of a clear "no camera" message.
+ *
+ * Returns `null` when the check itself isn't supported, so callers
+ * can fall back to just attempting getUserMedia as before.
+ */
+async function deviceHasCamera(): Promise<boolean | null> {
+  if (!navigator.mediaDevices?.enumerateDevices) {
+    return null;
+  }
+
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    return devices.some((device) => device.kind === "videoinput");
+  } catch {
+    return null;
+  }
+}
+
 export default function BarcodeScanner({
   open,
   onOpenChange,
@@ -407,6 +430,21 @@ export default function BarcodeScanner({
         detectorRef.current = detector;
 
         // -----------------------------------------
+        // Confirm camera hardware exists before asking
+        // permission for it — avoids a confusing generic
+        // error on devices with no camera at all.
+        // -----------------------------------------
+
+        const hasCamera = await deviceHasCamera();
+
+        if (hasCamera === false) {
+          setErrorMsg(
+            "No camera was found on this device. Please enter the barcode manually."
+          );
+          return;
+        }
+
+        // -----------------------------------------
         // Request camera permission — this is the one call
         // that actually surfaces the browser's permission UI.
         // We deliberately do NOT gate this behind a prior
@@ -437,7 +475,10 @@ export default function BarcodeScanner({
           const messages: Record<string, string> = {
             NotAllowedError:
               "Camera permission was denied. Please allow Camera access for this site in your browser settings, then try again.",
-            NotFoundError: "No camera was found on this device.",
+            NotFoundError:
+              "No camera was found on this device. Please enter the barcode manually.",
+            OverconstrainedError:
+              "No camera on this device matches the required settings. Please enter the barcode manually.",
             NotReadableError:
               "The camera is already being used by another application.",
             SecurityError:
