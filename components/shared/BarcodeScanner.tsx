@@ -57,6 +57,46 @@ type BarcodeDetectorConstructor = new (options?: {
   ) => Promise<Array<{ rawValue?: string }>>;
 };
 
+/*
+ * ---------------------------------------------------------
+ * Module-level constants
+ * (kept out of the component so they aren't re-created
+ * on every render)
+ * ---------------------------------------------------------
+ */
+
+const BARCODE_FORMATS = [
+  "ean_13",
+  "ean_8",
+  "upc_a",
+  "upc_e",
+  "code_128",
+  "code_39",
+  "code_93",
+  "codabar",
+  "itf",
+  "itf_14",
+  "qr_code",
+];
+
+// Minimum time between detector.detect() calls. Running detection on
+// every single animation frame (~60/s) burns battery/CPU for no real
+// benefit — barcodes don't move that fast. ~8 scans/sec is plenty.
+const SCAN_INTERVAL_MS = 120;
+
+const QUICK_TEST_BARCODES = [
+  { label: "Oats", code: "3033710065067" },
+  { label: "Nutella", code: "3017620422003" },
+  { label: "Milk", code: "8712800000497" },
+  { label: "KitKat", code: "5000159461122" },
+] as const;
+
+const QUANTITY_PRESETS = [0.5, 1, 2] as const;
+
+function stopMediaStream(stream: MediaStream | null) {
+  stream?.getTracks().forEach((track) => track.stop());
+}
+
 export default function BarcodeScanner({
   open,
   onOpenChange,
@@ -71,8 +111,7 @@ export default function BarcodeScanner({
   const [quantity, setQuantity] = useState<number>(1);
 
   const [cameraOpen, setCameraOpen] = useState(false);
-  const [facingMode, setFacingMode] =
-    useState<FacingMode>("environment");
+  const [facingMode, setFacingMode] = useState<FacingMode>("environment");
   const [cameraReady, setCameraReady] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -85,11 +124,15 @@ export default function BarcodeScanner({
   const animationFrameRef = useRef<number | null>(null);
   const detectingRef = useRef(false);
   const detectedBarcodeRef = useRef<string | null>(null);
+  const lastScanAtRef = useRef(0);
+
+  // Cancels an in-flight lookup fetch if a new one starts, or the
+  // dialog closes / unmounts while it's still pending.
+  const lookupAbortRef = useRef<AbortController | null>(null);
 
   const router = useRouter();
 
-  const todayStr =
-    dateStr || new Date().toISOString().split("T")[0];
+  const todayStr = dateStr || new Date().toISOString().split("T")[0];
 
   /*
    * ---------------------------------------------------------
@@ -102,6 +145,10 @@ export default function BarcodeScanner({
 
     if (!cleanCode) return;
 
+    lookupAbortRef.current?.abort();
+    const controller = new AbortController();
+    lookupAbortRef.current = controller;
+
     try {
       setLoading(true);
       setErrorMsg(null);
@@ -111,6 +158,7 @@ export default function BarcodeScanner({
         `/api/barcode/product/${encodeURIComponent(cleanCode)}`,
         {
           cache: "no-store",
+          signal: controller.signal,
         }
       );
 
@@ -122,19 +170,23 @@ export default function BarcodeScanner({
           `No product found for barcode "${cleanCode}". Try searching manually.`
         );
 
-        throw new Error("Product not found");
+        return;
       }
 
       setBarcodeInput(cleanCode);
       setProduct(data.product);
-    } catch {
-      setErrorMsg(
-        (current) =>
-          current ||
-          "Error connecting to Open Food Facts barcode database."
-      );
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        // Superseded by a newer lookup — nothing to do.
+        return;
+      }
+
+      setErrorMsg("Error connecting to Open Food Facts barcode database.");
     } finally {
-      setLoading(false);
+      if (lookupAbortRef.current === controller) {
+        setLoading(false);
+        lookupAbortRef.current = null;
+      }
     }
   }, []);
 
@@ -165,9 +217,7 @@ export default function BarcodeScanner({
 
       await appendMealItem(todayStr, defaultMealType, item);
 
-      toast.success(
-        `Logged ${item.name} (${item.calories} kcal)! 📦`
-      );
+      toast.success(`Logged ${item.name} (${item.calories} kcal)! 📦`);
 
       onOpenChange(false);
 
@@ -187,11 +237,14 @@ export default function BarcodeScanner({
 
   /*
    * ---------------------------------------------------------
-   * Stop camera
+   * Shared reset helper — cancels the scan loop and releases
+   * the current stream/video without touching component state.
+   * Used both when fully stopping the camera and right before
+   * starting a new session (e.g. on flip).
    * ---------------------------------------------------------
    */
 
-  const stopCamera = useCallback(() => {
+  const releaseCameraResources = useCallback(() => {
     if (animationFrameRef.current !== null) {
       cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
@@ -199,13 +252,8 @@ export default function BarcodeScanner({
 
     detectingRef.current = false;
 
-    if (cameraStreamRef.current) {
-      cameraStreamRef.current.getTracks().forEach((track) => {
-        track.stop();
-      });
-
-      cameraStreamRef.current = null;
-    }
+    stopMediaStream(cameraStreamRef.current);
+    cameraStreamRef.current = null;
 
     if (videoRef.current) {
       videoRef.current.pause();
@@ -213,10 +261,13 @@ export default function BarcodeScanner({
     }
 
     detectorRef.current = null;
+  }, []);
 
+  const stopCamera = useCallback(() => {
+    releaseCameraResources();
     setCameraReady(false);
     setCameraOpen(false);
-  }, []);
+  }, [releaseCameraResources]);
 
   /*
    * ---------------------------------------------------------
@@ -235,106 +286,78 @@ export default function BarcodeScanner({
       return null;
     }
 
-    return new BarcodeDetector({
-      formats: [
-        "ean_13",
-        "ean_8",
-        "upc_a",
-        "upc_e",
-        "code_128",
-        "code_39",
-        "code_93",
-        "codabar",
-        "itf",
-        "itf_14",
-        "qr_code",
-      ],
-    });
+    return new BarcodeDetector({ formats: BARCODE_FORMATS });
   }, []);
 
   /*
    * ---------------------------------------------------------
-   * Continuous barcode scanning
+   * Continuous barcode scanning (throttled)
    * ---------------------------------------------------------
    */
 
-  const scanFrame = useCallback(async () => {
-    const video = videoRef.current;
-    const detector = detectorRef.current;
+  const scanFrame = useCallback(
+    async (timestamp: number) => {
+      const video = videoRef.current;
+      const detector = detectorRef.current;
 
-    if (!video || !detector) {
-      return;
-    }
+      if (!video || !detector) {
+        return;
+      }
 
-    /*
-     * Don't run another detector call while the previous
-     * detection is still running.
-     */
-    if (detectingRef.current) {
-      animationFrameRef.current =
-        requestAnimationFrame(scanFrame);
+      const dueForScan =
+        timestamp - lastScanAtRef.current >= SCAN_INTERVAL_MS;
 
-      return;
-    }
+      const videoReady =
+        video.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA &&
+        video.videoWidth > 0 &&
+        video.videoHeight > 0;
 
-    /*
-     * Video must actually have usable dimensions.
-     */
-    if (
-      video.readyState < HTMLMediaElement.HAVE_ENOUGH_DATA ||
-      video.videoWidth === 0 ||
-      video.videoHeight === 0
-    ) {
-      animationFrameRef.current =
-        requestAnimationFrame(scanFrame);
+      if (!dueForScan || detectingRef.current || !videoReady) {
+        animationFrameRef.current = requestAnimationFrame(scanFrame);
+        return;
+      }
 
-      return;
-    }
+      lastScanAtRef.current = timestamp;
+      detectingRef.current = true;
 
-    detectingRef.current = true;
+      try {
+        const detectedCodes = await detector.detect(video);
 
-    try {
-      const detectedCodes = await detector.detect(video);
+        const detectedCode = detectedCodes
+          .map((item) => item.rawValue?.trim())
+          .find(Boolean);
 
-      const detectedCode = detectedCodes
-        .map((item) => item.rawValue?.trim())
-        .find(Boolean);
-
-      if (detectedCode) {
-        /*
-         * Avoid processing the same barcode multiple times
-         * while the camera is still seeing it.
-         */
-        if (detectedBarcodeRef.current !== detectedCode) {
+        if (detectedCode && detectedBarcodeRef.current !== detectedCode) {
           detectedBarcodeRef.current = detectedCode;
 
-          /*
-           * Stop camera immediately after successful detection.
-           */
+          // Stop camera immediately after successful detection.
           stopCamera();
 
           await handleLookupBarcode(detectedCode);
 
           return;
         }
+      } catch {
+        /*
+         * BarcodeDetector can occasionally fail on an individual
+         * frame. We intentionally continue scanning instead of
+         * killing the camera session.
+         */
+      } finally {
+        detectingRef.current = false;
       }
-    } catch {
-      /*
-       * BarcodeDetector can occasionally fail on an individual
-       * frame. We intentionally continue scanning instead of
-       * killing the camera session.
-       */
-    } finally {
-      detectingRef.current = false;
-    }
 
-    animationFrameRef.current =
-      requestAnimationFrame(scanFrame);
-  }, [handleLookupBarcode, stopCamera]);
+      animationFrameRef.current = requestAnimationFrame(scanFrame);
+    },
+    [handleLookupBarcode, stopCamera]
+  );
 
   /*
    * ---------------------------------------------------------
-   * Start camera
+   * Start camera — always triggers the browser's permission
+   * prompt via getUserMedia (unless already granted, in which
+   * case the browser resolves immediately with no prompt; that
+   * behavior is controlled by the browser, not this code).
    * ---------------------------------------------------------
    */
 
@@ -345,34 +368,9 @@ export default function BarcodeScanner({
         setProduct(null);
         setCameraReady(false);
 
-        // -----------------------------------------
-        // Cancel previous scanner loop
-        // -----------------------------------------
-
-        if (animationFrameRef.current !== null) {
-          cancelAnimationFrame(animationFrameRef.current);
-          animationFrameRef.current = null;
-        }
-
-        detectingRef.current = false;
+        releaseCameraResources();
         detectedBarcodeRef.current = null;
-
-        // -----------------------------------------
-        // Stop previous camera
-        // -----------------------------------------
-
-        if (cameraStreamRef.current) {
-          cameraStreamRef.current
-            .getTracks()
-            .forEach((track) => track.stop());
-
-          cameraStreamRef.current = null;
-        }
-
-        if (videoRef.current) {
-          videoRef.current.pause();
-          videoRef.current.srcObject = null;
-        }
+        lastScanAtRef.current = 0;
 
         // -----------------------------------------
         // Check browser support
@@ -386,15 +384,9 @@ export default function BarcodeScanner({
         }
 
         if (!navigator.mediaDevices.getUserMedia) {
-          setErrorMsg(
-            "Your browser does not support camera access."
-          );
+          setErrorMsg("Your browser does not support camera access.");
           return;
         }
-
-        // -----------------------------------------
-        // Check secure context
-        // -----------------------------------------
 
         if (!window.isSecureContext) {
           setErrorMsg(
@@ -402,10 +394,6 @@ export default function BarcodeScanner({
           );
           return;
         }
-
-        // -----------------------------------------
-        // Check BarcodeDetector
-        // -----------------------------------------
 
         const detector = createDetector();
 
@@ -419,32 +407,13 @@ export default function BarcodeScanner({
         detectorRef.current = detector;
 
         // -----------------------------------------
-        // Check existing camera permission
-        // -----------------------------------------
-
-        try {
-          if (navigator.permissions?.query) {
-            const permission = await navigator.permissions.query({
-              name: "camera" as PermissionName,
-            });
-
-            if (permission.state === "denied") {
-              setErrorMsg(
-                "Camera permission is blocked for this site. Please allow Camera access in your browser's site settings, then try again."
-              );
-              return;
-            }
-          }
-        } catch {
-          /*
-           * Some browsers don't support querying the camera
-           * permission state. That's fine — getUserMedia()
-           * below will request it normally.
-           */
-        }
-
-        // -----------------------------------------
-        // Request camera permission
+        // Request camera permission — this is the one call
+        // that actually surfaces the browser's permission UI.
+        // We deliberately do NOT gate this behind a prior
+        // permissions.query() check: some browsers report
+        // stale/incorrect states there, and skipping straight
+        // to getUserMedia guarantees the user is always asked
+        // (or, if already granted, the stream just starts).
         // -----------------------------------------
 
         let stream: MediaStream;
@@ -452,18 +421,10 @@ export default function BarcodeScanner({
         try {
           stream = await navigator.mediaDevices.getUserMedia({
             video: {
-              facingMode: {
-                ideal: mode,
-              },
-              width: {
-                ideal: 1280,
-              },
-              height: {
-                ideal: 720,
-              },
-              aspectRatio: {
-                ideal: 16 / 9,
-              },
+              facingMode: { ideal: mode },
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+              aspectRatio: { ideal: 16 / 9 },
             },
             audio: false,
           });
@@ -471,38 +432,25 @@ export default function BarcodeScanner({
           console.error("getUserMedia error:", error);
 
           const cameraError =
-            error instanceof DOMException
-              ? error.name
-              : "";
+            error instanceof DOMException ? error.name : "";
 
-          if (cameraError === "NotAllowedError") {
-            setErrorMsg(
-              "Camera permission was denied. Please allow Camera access for this site in your browser settings, then try again."
-            );
-          } else if (cameraError === "NotFoundError") {
-            setErrorMsg(
-              "No camera was found on this device."
-            );
-          } else if (cameraError === "NotReadableError") {
-            setErrorMsg(
-              "The camera is already being used by another application."
-            );
-          } else if (cameraError === "SecurityError") {
-            setErrorMsg(
-              "Camera access was blocked by the browser's security settings."
-            );
-          } else {
-            setErrorMsg(
-              "Unable to access the camera. Please check your browser permissions and try again."
-            );
-          }
+          const messages: Record<string, string> = {
+            NotAllowedError:
+              "Camera permission was denied. Please allow Camera access for this site in your browser settings, then try again.",
+            NotFoundError: "No camera was found on this device.",
+            NotReadableError:
+              "The camera is already being used by another application.",
+            SecurityError:
+              "Camera access was blocked by the browser's security settings.",
+          };
+
+          setErrorMsg(
+            messages[cameraError] ||
+            "Unable to access the camera. Please check your browser permissions and try again."
+          );
 
           return;
         }
-
-        // -----------------------------------------
-        // Camera permission granted
-        // -----------------------------------------
 
         cameraStreamRef.current = stream;
 
@@ -517,10 +465,7 @@ export default function BarcodeScanner({
           const video = videoRef.current;
 
           if (!video) {
-            stream
-              .getTracks()
-              .forEach((track) => track.stop());
-
+            stopMediaStream(stream);
             cameraStreamRef.current = null;
             return;
           }
@@ -529,55 +474,32 @@ export default function BarcodeScanner({
             video.srcObject = stream;
 
             await new Promise<void>((resolve) => {
-              if (
-                video.readyState >=
-                HTMLMediaElement.HAVE_METADATA
-              ) {
+              if (video.readyState >= HTMLMediaElement.HAVE_METADATA) {
                 resolve();
                 return;
               }
 
               const handleMetadata = () => {
-                video.removeEventListener(
-                  "loadedmetadata",
-                  handleMetadata
-                );
-
+                video.removeEventListener("loadedmetadata", handleMetadata);
                 resolve();
               };
 
-              video.addEventListener(
-                "loadedmetadata",
-                handleMetadata
-              );
+              video.addEventListener("loadedmetadata", handleMetadata);
             });
 
             await video.play();
 
             setCameraReady(true);
 
-            // ---------------------------------------
-            // Start continuous barcode scanner
-            // ---------------------------------------
-
             if (animationFrameRef.current !== null) {
-              cancelAnimationFrame(
-                animationFrameRef.current
-              );
+              cancelAnimationFrame(animationFrameRef.current);
             }
 
-            animationFrameRef.current =
-              requestAnimationFrame(scanFrame);
+            animationFrameRef.current = requestAnimationFrame(scanFrame);
           } catch (error) {
-            console.error(
-              "Video playback error:",
-              error
-            );
+            console.error("Video playback error:", error);
 
-            stream
-              .getTracks()
-              .forEach((track) => track.stop());
-
+            stopMediaStream(stream);
             cameraStreamRef.current = null;
 
             if (videoRef.current) {
@@ -586,23 +508,17 @@ export default function BarcodeScanner({
             }
 
             setCameraReady(false);
-
-            setErrorMsg(
-              "Could not start the camera preview. Please try again."
-            );
+            setErrorMsg("Could not start the camera preview. Please try again.");
           }
         });
       } catch (error) {
         console.error("Camera initialization error:", error);
 
         setCameraReady(false);
-
-        setErrorMsg(
-          "Unable to initialize the camera. Please check your browser permissions."
-        );
+        setErrorMsg("Unable to initialize the camera. Please check your browser permissions.");
       }
     },
-    [createDetector, facingMode, scanFrame]
+    [createDetector, facingMode, releaseCameraResources, scanFrame]
   );
 
   /*
@@ -613,35 +529,46 @@ export default function BarcodeScanner({
 
   const flipCamera = useCallback(async () => {
     const nextMode: FacingMode =
-      facingMode === "environment"
-        ? "user"
-        : "environment";
+      facingMode === "environment" ? "user" : "environment";
 
     await startCamera(nextMode);
   }, [facingMode, startCamera]);
 
+  const openCameraScanner = useCallback(async () => {
+    detectedBarcodeRef.current = null;
+    await startCamera("environment");
+  }, [startCamera]);
+
   /*
    * ---------------------------------------------------------
-   * Start scanner when camera mode opens
+   * Always ask for camera permission as soon as the dialog
+   * opens, instead of waiting for the user to tap a button.
    * ---------------------------------------------------------
    */
 
-  const openCameraScanner = async () => {
-    detectedBarcodeRef.current = null;
-    await startCamera("environment");
-  };
+  useEffect(() => {
+    if (open) {
+      openCameraScanner();
+    }
+    // Intentionally only re-run when `open` flips — not when
+    // openCameraScanner's identity changes — so we don't restart
+    // the camera on every unrelated re-render while the dialog
+    // is already open.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   /*
    * ---------------------------------------------------------
-   * Cleanup
+   * Cleanup on unmount
    * ---------------------------------------------------------
    */
 
   useEffect(() => {
     return () => {
-      stopCamera();
+      releaseCameraResources();
+      lookupAbortRef.current?.abort();
     };
-  }, [stopCamera]);
+  }, [releaseCameraResources]);
 
   /*
    * Close scanner when dialog closes.
@@ -650,6 +577,7 @@ export default function BarcodeScanner({
   useEffect(() => {
     if (!open) {
       stopCamera();
+      lookupAbortRef.current?.abort();
 
       setProduct(null);
       setBarcodeInput("");
@@ -691,45 +619,23 @@ export default function BarcodeScanner({
                 className="w-full h-full object-cover"
               />
 
-              {/* Dark scanner overlay */}
-
               <div className="absolute inset-0 pointer-events-none">
-                {/* Top */}
                 <div className="absolute inset-x-0 top-0 h-[25%] bg-black/45" />
-
-                {/* Bottom */}
                 <div className="absolute inset-x-0 bottom-0 h-[25%] bg-black/45" />
-
-                {/* Left */}
                 <div className="absolute left-0 top-[25%] bottom-[25%] w-[12%] bg-black/45" />
-
-                {/* Right */}
                 <div className="absolute right-0 top-[25%] bottom-[25%] w-[12%] bg-black/45" />
 
-                {/* Scanner frame */}
-
                 <div className="absolute left-[12%] right-[12%] top-[25%] bottom-[25%]">
-                  {/* Top-left */}
                   <span className="absolute left-0 top-0 w-8 h-8 border-l-[3px] border-t-[3px] border-white rounded-tl-xl" />
-
-                  {/* Top-right */}
                   <span className="absolute right-0 top-0 w-8 h-8 border-r-[3px] border-t-[3px] border-white rounded-tr-xl" />
-
-                  {/* Bottom-left */}
                   <span className="absolute left-0 bottom-0 w-8 h-8 border-l-[3px] border-b-[3px] border-white rounded-bl-xl" />
-
-                  {/* Bottom-right */}
                   <span className="absolute right-0 bottom-0 w-8 h-8 border-r-[3px] border-b-[3px] border-white rounded-br-xl" />
-
-                  {/* Animated scan line */}
 
                   {cameraReady && (
                     <div className="absolute left-2 right-2 top-1/2 h-[2px] bg-primary shadow-[0_0_12px_hsl(var(--primary))] animate-pulse" />
                   )}
                 </div>
               </div>
-
-              {/* Status */}
 
               <div className="absolute top-4 left-1/2 -translate-x-1/2">
                 <div className="flex items-center gap-2 rounded-full bg-black/65 backdrop-blur-sm px-3 py-1.5 text-white text-xs font-medium whitespace-nowrap">
@@ -739,7 +645,6 @@ export default function BarcodeScanner({
                         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                         <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
                       </span>
-
                       Scan barcode
                     </>
                   ) : (
@@ -751,8 +656,6 @@ export default function BarcodeScanner({
                 </div>
               </div>
 
-              {/* Flip camera */}
-
               <Button
                 type="button"
                 onClick={flipCamera}
@@ -762,8 +665,6 @@ export default function BarcodeScanner({
               >
                 <RotateCcw className="w-5 h-5" />
               </Button>
-
-              {/* Close camera */}
 
               <Button
                 type="button"
@@ -775,21 +676,16 @@ export default function BarcodeScanner({
                 <X className="w-5 h-5" />
               </Button>
 
-              {/* Scanner icon */}
-
               <div className="absolute bottom-4 left-4">
                 <div className="flex items-center gap-2 rounded-full bg-black/65 backdrop-blur-sm px-3 py-1.5 text-white text-[11px]">
                   <ScanLine className="w-3.5 h-3.5" />
-                  {facingMode === "environment"
-                    ? "Rear camera"
-                    : "Front camera"}
+                  {facingMode === "environment" ? "Rear camera" : "Front camera"}
                 </div>
               </div>
             </div>
 
             <p className="text-center text-[11px] text-muted-foreground">
-              Align the barcode inside the frame. It will scan
-              automatically.
+              Align the barcode inside the frame. It will scan automatically.
             </p>
           </div>
         )}
@@ -808,9 +704,7 @@ export default function BarcodeScanner({
               <Input
                 placeholder="e.g. 8901030300001"
                 value={barcodeInput}
-                onChange={(e) =>
-                  setBarcodeInput(e.target.value)
-                }
+                onChange={(e) => setBarcodeInput(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     handleLookupBarcode(barcodeInput);
@@ -820,12 +714,8 @@ export default function BarcodeScanner({
               />
 
               <Button
-                disabled={
-                  loading || !barcodeInput.trim()
-                }
-                onClick={() =>
-                  handleLookupBarcode(barcodeInput)
-                }
+                disabled={loading || !barcodeInput.trim()}
+                onClick={() => handleLookupBarcode(barcodeInput)}
                 className="rounded-xl bg-primary hover:bg-primary/90 text-white font-bold"
               >
                 {loading ? (
@@ -843,7 +733,7 @@ export default function BarcodeScanner({
         )}
 
         {/* =====================================================
-            CAMERA BUTTON
+            CAMERA BUTTON (retry / reopen)
         ===================================================== */}
 
         {!cameraOpen && (
@@ -869,24 +759,7 @@ export default function BarcodeScanner({
             </p>
 
             <div className="flex flex-wrap gap-1.5">
-              {[
-                {
-                  label: "Oats",
-                  code: "3033710065067",
-                },
-                {
-                  label: "Nutella",
-                  code: "3017620422003",
-                },
-                {
-                  label: "Milk",
-                  code: "8712800000497",
-                },
-                {
-                  label: "KitKat",
-                  code: "5000159461122",
-                },
-              ].map((preset) => (
+              {QUICK_TEST_BARCODES.map((preset) => (
                 <button
                   key={preset.code}
                   type="button"
@@ -910,7 +783,6 @@ export default function BarcodeScanner({
         {errorMsg && (
           <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300 flex items-start gap-2">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-
             <p>{errorMsg}</p>
           </div>
         )}
@@ -932,9 +804,7 @@ export default function BarcodeScanner({
                 </h4>
 
                 {product.brand && (
-                  <p className="text-xs text-muted-foreground">
-                    {product.brand}
-                  </p>
+                  <p className="text-xs text-muted-foreground">{product.brand}</p>
                 )}
               </div>
 
@@ -942,74 +812,53 @@ export default function BarcodeScanner({
                 <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
                   {product.calories * quantity}
                 </span>
-
                 <span className="text-[10px] text-muted-foreground block">
                   kcal total
                 </span>
               </div>
             </div>
 
-            {/* Macros */}
-
             <div className="grid grid-cols-4 gap-1.5 pt-2 border-t border-emerald-500/20 text-center text-xs">
               <div className="p-1.5 rounded-xl bg-background/60">
-                <p className="text-[10px] text-muted-foreground">
-                  Serving
-                </p>
-
-                <p className="font-bold">
-                  {product.servingSize}
-                </p>
+                <p className="text-[10px] text-muted-foreground">Serving</p>
+                <p className="font-bold">{product.servingSize}</p>
               </div>
 
               <div className="p-1.5 rounded-xl bg-background/60">
-                <p className="text-[10px] text-muted-foreground">
-                  Protein
-                </p>
-
+                <p className="text-[10px] text-muted-foreground">Protein</p>
                 <p className="font-bold text-emerald-600">
                   {product.protein * quantity}g
                 </p>
               </div>
 
               <div className="p-1.5 rounded-xl bg-background/60">
-                <p className="text-[10px] text-muted-foreground">
-                  Carbs
-                </p>
-
+                <p className="text-[10px] text-muted-foreground">Carbs</p>
                 <p className="font-bold text-blue-600">
                   {product.carbs * quantity}g
                 </p>
               </div>
 
               <div className="p-1.5 rounded-xl bg-background/60">
-                <p className="text-[10px] text-muted-foreground">
-                  Fat
-                </p>
-
+                <p className="text-[10px] text-muted-foreground">Fat</p>
                 <p className="font-bold text-purple-600">
                   {product.fat * quantity}g
                 </p>
               </div>
             </div>
 
-            {/* Quantity + log */}
-
             <div className="flex items-center justify-between gap-2 pt-2">
               <div className="flex items-center gap-2">
-                <Label className="text-xs font-semibold">
-                  Servings:
-                </Label>
+                <Label className="text-xs font-semibold">Servings:</Label>
 
                 <div className="flex items-center gap-1">
-                  {[0.5, 1, 2].map((q) => (
+                  {QUANTITY_PRESETS.map((q) => (
                     <button
                       key={q}
                       type="button"
                       onClick={() => setQuantity(q)}
                       className={`px-2 py-1 rounded-lg text-xs font-bold transition-all ${quantity === q
-                        ? "bg-emerald-600 text-white"
-                        : "bg-background border border-border text-muted-foreground"
+                          ? "bg-emerald-600 text-white"
+                          : "bg-background border border-border text-muted-foreground"
                         }`}
                     >
                       {q}x
@@ -1028,7 +877,6 @@ export default function BarcodeScanner({
                 ) : (
                   <UtensilsCrossed className="w-3.5 h-3.5" />
                 )}
-
                 Log to {defaultMealType}
               </Button>
             </div>
