@@ -298,18 +298,45 @@ export default function BarcodeScanner({
    * ---------------------------------------------------------
    */
 
-  const createDetector = useCallback(() => {
-    const BarcodeDetector = (
+  const createDetector = useCallback(async () => {
+    const BarcodeDetectorCtor = (
       window as typeof window & {
-        BarcodeDetector?: BarcodeDetectorConstructor;
+        BarcodeDetector?: BarcodeDetectorConstructor & {
+          getSupportedFormats?: () => Promise<string[]>;
+        };
       }
     ).BarcodeDetector;
 
-    if (!BarcodeDetector) {
+    if (!BarcodeDetectorCtor) {
       return null;
     }
 
-    return new BarcodeDetector({ formats: BARCODE_FORMATS });
+    let formats = BARCODE_FORMATS;
+
+    // Narrow to formats the platform actually supports, when it can
+    // tell us. Some platforms otherwise throw on construction if
+    // even one requested format is unsupported (see catch below).
+    if (BarcodeDetectorCtor.getSupportedFormats) {
+      try {
+        const supported = await BarcodeDetectorCtor.getSupportedFormats();
+        const narrowed = BARCODE_FORMATS.filter((format) =>
+          supported.includes(format)
+        );
+
+        if (narrowed.length > 0) {
+          formats = narrowed;
+        }
+      } catch {
+        // Fall through and try with the full format list.
+      }
+    }
+
+    try {
+      return new BarcodeDetectorCtor({ formats });
+    } catch (error) {
+      console.error("BarcodeDetector construction failed:", error);
+      return null;
+    }
   }, []);
 
   /*
@@ -418,7 +445,7 @@ export default function BarcodeScanner({
           return;
         }
 
-        const detector = createDetector();
+        const detector = await createDetector();
 
         if (!detector) {
           setErrorMsg(
