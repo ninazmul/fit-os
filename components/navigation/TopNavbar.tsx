@@ -61,7 +61,7 @@ export default function TopNavbar() {
                 FitOS
               </span>
               <span className="rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
-                v2.1.0
+                v2.1.1
               </span>
             </div>
           </button>
