@@ -1,13 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
-import Script from "next/script";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ThemeProvider } from "@/components/shared/ThemeProvider";
 import { SEO_KEYWORDS, SITE_URL } from "@/lib/seo";
 
 import "./globals.css";
 
-const ADSENSE_CLIENT_ID = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID;
+const ADSENSE_CLIENT_ID =
+    process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID || "ca-pub-1213821838926371";
 const ENABLE_ADSENSE =
     process.env.NODE_ENV === "production" && !!ADSENSE_CLIENT_ID;
 
@@ -28,6 +28,10 @@ export const metadata: Metadata = {
         "FitOS is a free fitness tracker with BMI, BMR, TDEE, body fat and ideal weight calculators, calorie counter, workout tracker and Bangladeshi food nutrition database.",
 
     keywords: SEO_KEYWORDS,
+
+    other: {
+        "google-adsense-account": ADSENSE_CLIENT_ID,
+    },
 
     robots: {
         index: true,
@@ -132,12 +136,10 @@ export default function RootLayout({
             <html lang="en" suppressHydrationWarning>
                 <head>
                     {ENABLE_ADSENSE && (
-                        <Script
-                            id="adsense-auto-ads"
+                        <script
                             async
-                            strategy="afterInteractive"
-                            crossOrigin="anonymous"
                             src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT_ID}`}
+                            crossOrigin="anonymous"
                         />
                     )}
                 </head>
