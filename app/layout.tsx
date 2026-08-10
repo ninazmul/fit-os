@@ -8,8 +8,7 @@ import "./globals.css";
 
 const ADSENSE_CLIENT_ID =
     process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID || "ca-pub-1213821838926371";
-const ENABLE_ADSENSE =
-    process.env.NODE_ENV === "production" && !!ADSENSE_CLIENT_ID;
+const ENABLE_ADSENSE = !!ADSENSE_CLIENT_ID;
 
 const inter = Inter({
     subsets: ["latin"],
