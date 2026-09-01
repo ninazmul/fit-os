@@ -14,6 +14,10 @@ import {
   removeSleepSession,
 } from "@/lib/actions/water-sleep.actions";
 import { getUserProfile } from "@/lib/actions/profile.actions";
+import {
+  generateAIProgressAudit,
+  type AIProgressAuditData,
+} from "@/lib/actions/ai-progress.actions";
 import StatCard from "@/components/shared/StatCard";
 import BodyMeasurementModal from "@/components/shared/BodyMeasurementModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -36,6 +40,12 @@ import {
   Moon,
   Star,
   Clock,
+  RefreshCw,
+  Target,
+  Dumbbell,
+  ChevronRight,
+  Sparkles,
+  Activity,
 } from "lucide-react";
 import { formatTime12h, getLocalDateString } from "@/lib/utils";
 import {
@@ -88,6 +98,8 @@ export default function ProgressPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [profile, setProfile] = useState<any>(null);
   const [, setLoading] = useState(true);
+  const [aiProgressData, setAiProgressData] = useState<AIProgressAuditData | null>(null);
+  const [aiProgressLoading, setAiProgressLoading] = useState(false);
 
   // Weight dialog
   const [weightModalOpen, setWeightModalOpen] = useState(false);
@@ -123,24 +135,38 @@ export default function ProgressPage() {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const [wHist, wStats, mList, sLogs, userProf] = await Promise.all([
+      const [wHist, wStats, mList, sLogs, userProf, aiAudit] = await Promise.all([
         getWeightHistory(60),
         getWeightStats(),
         getBodyMeasurements(10),
         getSleepHistory(14),
         getUserProfile(),
+        generateAIProgressAudit(),
       ]);
       setWeightHistory(wHist);
       setWeightStats(wStats);
       setMeasurements(mList);
       setSleepLogs(sLogs);
       setProfile(userProf);
+      setAiProgressData(aiAudit);
     } catch (err) {
       console.error("Error loading progress:", err);
     } finally {
       setLoading(false);
     }
   }, []);
+
+  const refreshAIProgress = async () => {
+    try {
+      setAiProgressLoading(true);
+      const aiAudit = await generateAIProgressAudit();
+      setAiProgressData(aiAudit);
+    } catch {
+      // silent fail — keep previous data
+    } finally {
+      setAiProgressLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchData();
@@ -231,14 +257,191 @@ export default function ProgressPage() {
   return (
     <div className="space-y-6">
       {/* Title */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          Progress & Body Analytics 📈
-        </h1>
-        <p className="text-xs text-muted-foreground">
-          Monitor weight trends, body circumferences, BMI, and sleep quality
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <Activity className="w-6 h-6 text-primary" />
+            Progress & Body Analytics
+          </h1>
+          <p className="text-xs text-muted-foreground">
+            AI-powered weight trajectory, body recomposition, and sleep recovery analysis
+          </p>
+        </div>
+        <Button
+          onClick={refreshAIProgress}
+          size="sm"
+          disabled={aiProgressLoading}
+          className="rounded-xl gap-1.5 text-xs font-bold bg-primary hover:bg-primary/90"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${aiProgressLoading ? "animate-spin" : ""}`} />
+          {aiProgressLoading ? "Analysing…" : "✨ Refresh AI Audit"}
+        </Button>
       </div>
+
+      {/* AI Progress Banner */}
+      {aiProgressData && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Trajectory Card */}
+          <div className="glass-card p-5 rounded-3xl border border-primary/20 space-y-3 md:col-span-1">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-sm flex items-center gap-2">
+                <Target className="w-4 h-4 text-primary" /> Goal Trajectory
+              </h3>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                aiProgressData.trajectory.plateauRisk === "Low"
+                  ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                  : aiProgressData.trajectory.plateauRisk === "Moderate"
+                  ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                  : "bg-red-500/15 text-red-600 dark:text-red-400"
+              }`}>
+                {aiProgressData.trajectory.plateauRisk} Plateau Risk
+              </span>
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-end gap-1">
+                <span className="text-2xl font-black">
+                  {aiProgressData.trajectory.weeklyVelocityKg > 0 ? "+" : ""}
+                  {aiProgressData.trajectory.weeklyVelocityKg} kg
+                </span>
+                <span className="text-xs text-muted-foreground pb-0.5">/week</span>
+              </div>
+              {aiProgressData.trajectory.daysToGoal && (
+                <p className="text-[11px] text-muted-foreground">
+                  Est. goal in <span className="font-bold text-primary">{aiProgressData.trajectory.daysToGoal} days</span>
+                  {aiProgressData.trajectory.predictedGoalDate && ` (${aiProgressData.trajectory.predictedGoalDate})`}
+                </p>
+              )}
+              <p className="text-[11px] text-muted-foreground leading-relaxed">{aiProgressData.trajectory.assessment}</p>
+            </div>
+            <div className="bg-muted/40 rounded-xl p-2.5 text-[11px] text-muted-foreground border border-border/30">
+              💡 {aiProgressData.trajectory.advice}
+            </div>
+            {aiProgressData.isAIGenerated && (
+              <span className="text-[10px] flex items-center gap-1 text-primary/70">
+                <Sparkles className="w-2.5 h-2.5" /> Gemini AI · {aiProgressData.trajectory.confidencePct}% confidence
+              </span>
+            )}
+          </div>
+
+          {/* Recomposition Card */}
+          <div className="glass-card p-5 rounded-3xl border border-purple-500/20 space-y-3">
+            <h3 className="font-bold text-sm flex items-center gap-2">
+              <Dumbbell className="w-4 h-4 text-purple-500" /> Body Recomposition
+            </h3>
+            <div className="flex items-center gap-2">
+              <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
+                aiProgressData.recomposition.status === "Active Recomposition"
+                  ? "bg-purple-500/15 text-purple-600 dark:text-purple-400"
+                  : aiProgressData.recomposition.status === "Fat Loss Primed"
+                  ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                  : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+              }`}>
+                {aiProgressData.recomposition.status}
+              </span>
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-xs">
+              <div className="p-2 rounded-xl bg-muted/40 text-center">
+                <p className="text-muted-foreground text-[10px]">Waist</p>
+                <p className={`font-bold ${aiProgressData.recomposition.waistTrendCm < 0 ? "text-emerald-500" : aiProgressData.recomposition.waistTrendCm > 0 ? "text-red-400" : "text-muted-foreground"}`}>
+                  {aiProgressData.recomposition.waistTrendCm > 0 ? "+" : ""}{aiProgressData.recomposition.waistTrendCm} cm
+                </p>
+              </div>
+              <div className="p-2 rounded-xl bg-muted/40 text-center">
+                <p className="text-muted-foreground text-[10px]">Chest</p>
+                <p className={`font-bold ${aiProgressData.recomposition.chestTrendCm > 0 ? "text-emerald-500" : "text-muted-foreground"}`}>
+                  {aiProgressData.recomposition.chestTrendCm > 0 ? "+" : ""}{aiProgressData.recomposition.chestTrendCm} cm
+                </p>
+              </div>
+              <div className="p-2 rounded-xl bg-muted/40 text-center">
+                <p className="text-muted-foreground text-[10px]">Hip</p>
+                <p className="font-bold">
+                  {aiProgressData.recomposition.hipTrendCm > 0 ? "+" : ""}{aiProgressData.recomposition.hipTrendCm} cm
+                </p>
+              </div>
+            </div>
+            <p className="text-[11px] text-muted-foreground leading-relaxed">{aiProgressData.recomposition.summary}</p>
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-[10px]">
+                <span className="text-muted-foreground">Muscle Retention Score</span>
+                <span className="font-bold">{aiProgressData.recomposition.muscleRetentionScore}/100</span>
+              </div>
+              <div className="w-full h-1.5 bg-muted/40 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-purple-500 to-primary rounded-full transition-all duration-700"
+                  style={{ width: `${aiProgressData.recomposition.muscleRetentionScore}%` }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Recovery Index Card */}
+          <div className="glass-card p-5 rounded-3xl border border-blue-500/20 space-y-3">
+            <h3 className="font-bold text-sm flex items-center gap-2">
+              <Moon className="w-4 h-4 text-blue-500" /> Recovery Index
+            </h3>
+            <div className="flex items-center gap-3">
+              <div className="relative w-16 h-16">
+                <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+                  <circle cx="50" cy="50" r="38" fill="none" strokeWidth="10" className="stroke-muted/30" />
+                  <circle
+                    cx="50" cy="50" r="38" fill="none" strokeWidth="10"
+                    stroke={aiProgressData.recoveryIndex.score >= 80 ? "#10b981" : aiProgressData.recoveryIndex.score >= 60 ? "#f59e0b" : "#ef4444"}
+                    strokeDasharray={2 * Math.PI * 38}
+                    strokeDashoffset={(2 * Math.PI * 38) * (1 - aiProgressData.recoveryIndex.score / 100)}
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-base font-black">{aiProgressData.recoveryIndex.score}</span>
+                </div>
+              </div>
+              <div>
+                <p className={`text-xs font-bold ${
+                  aiProgressData.recoveryIndex.score >= 80 ? "text-emerald-600 dark:text-emerald-400" :
+                  aiProgressData.recoveryIndex.score >= 60 ? "text-amber-600 dark:text-amber-400" :
+                  "text-red-600 dark:text-red-400"
+                }`}>{aiProgressData.recoveryIndex.readiness}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Recovery Score</p>
+              </div>
+            </div>
+            <p className="text-[11px] text-muted-foreground leading-relaxed">{aiProgressData.recoveryIndex.sleepToWorkoutCorrelation}</p>
+            <div className="bg-blue-500/5 border border-blue-500/20 rounded-xl p-2.5 text-[11px] text-blue-700 dark:text-blue-300">
+              💤 {aiProgressData.recoveryIndex.actionTip}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI Milestones */}
+      {aiProgressData && aiProgressData.milestones.length > 0 && (
+        <div className="glass-card p-5 rounded-3xl border border-border/50 space-y-4">
+          <h2 className="font-bold text-sm flex items-center gap-2">
+            <Star className="w-4 h-4 text-amber-500" /> Goal Milestones
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {aiProgressData.milestones.map((m: { title: string; current: string; target: string; progressPct: number; projectedDate: string }, i: number) => (
+              <div key={i} className="space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-[11px] truncate">{m.title}</span>
+                  <span className="font-black text-primary text-[11px] ml-2 flex-shrink-0">{m.progressPct}%</span>
+                </div>
+                <div className="w-full h-2 bg-muted/40 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-primary to-purple-500 rounded-full transition-all duration-700"
+                    style={{ width: `${m.progressPct}%` }}
+                  />
+                </div>
+                <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                  <span>Now: {m.current}</span>
+                  <ChevronRight className="w-3 h-3" />
+                  <span>Target: {m.target}</span>
+                </div>
+                <p className="text-[10px] text-muted-foreground">Est: {m.projectedDate}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Top Stats Row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">

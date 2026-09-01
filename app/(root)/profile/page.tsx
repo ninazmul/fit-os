@@ -3,6 +3,10 @@
 import { useState, useEffect } from "react";
 import { getFullProfileHealthMetrics } from "@/lib/actions/profile.actions";
 import { getBodyMeasurements } from "@/lib/actions/body-measurement.actions";
+import {
+  generateAIProfileAssessment,
+  type AIProfileAssessmentData,
+} from "@/lib/actions/ai-profile.actions";
 import OnboardingModal from "@/components/shared/OnboardingModal";
 import BodyMeasurementModal from "@/components/shared/BodyMeasurementModal";
 import StatCard from "@/components/shared/StatCard";
@@ -27,6 +31,12 @@ import {
   Info,
   User,
   Calendar,
+  Brain,
+  RefreshCw,
+  Sparkles,
+  Utensils,
+  Dumbbell,
+  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
@@ -97,20 +107,36 @@ export default function ProfilePage() {
   const [, setLoading] = useState(true);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [measurementModalOpen, setMeasurementModalOpen] = useState(false);
+  const [aiAssessment, setAiAssessment] = useState<AIProfileAssessmentData | null>(null);
+  const [aiAssessmentLoading, setAiAssessmentLoading] = useState(false);
 
   const fetchAll = async () => {
     try {
       setLoading(true);
-      const [profileData, history] = await Promise.all([
+      const [profileData, history, aiData] = await Promise.all([
         getFullProfileHealthMetrics(),
         getBodyMeasurements(20),
+        generateAIProfileAssessment(),
       ]);
       setData(profileData);
       setMeasurementsHistory(history);
+      setAiAssessment(aiData);
     } catch (err) {
       console.error("Error loading profile:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const refreshAIAssessment = async () => {
+    try {
+      setAiAssessmentLoading(true);
+      const aiData = await generateAIProfileAssessment();
+      setAiAssessment(aiData);
+    } catch {
+      // silent fail
+    } finally {
+      setAiAssessmentLoading(false);
     }
   };
 
@@ -781,6 +807,179 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
+      </div>
+
+
+      {/* ─── AI Profile Assessment ─── */}
+      <div className="glass-card rounded-3xl border border-primary/20 overflow-hidden">
+        <div className="bg-gradient-to-r from-primary/10 via-transparent to-purple-500/10 px-6 py-4 flex flex-wrap items-center justify-between gap-3 border-b border-border/40">
+          <div className="flex items-center gap-2">
+            <Brain className="w-5 h-5 text-primary" />
+            <div>
+              <h2 className="font-black text-sm">AI Metabolic & Health Assessment</h2>
+              <p className="text-[10px] text-muted-foreground">Powered by Gemini AI · Personalised for your biometrics</p>
+            </div>
+            {aiAssessment?.isAIGenerated && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/20 text-primary font-bold flex items-center gap-1">
+                <Sparkles className="w-2.5 h-2.5" /> Gemini
+              </span>
+            )}
+          </div>
+          <Button
+            onClick={refreshAIAssessment}
+            size="sm"
+            disabled={aiAssessmentLoading}
+            variant="outline"
+            className="rounded-xl gap-1.5 text-xs font-bold border-primary/30 text-primary hover:bg-primary/10"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${aiAssessmentLoading ? "animate-spin" : ""}`} />
+            {aiAssessmentLoading ? "Analysing…" : "Refresh AI"}
+          </Button>
+        </div>
+
+        {aiAssessment ? (
+          <div className="p-6 space-y-6">
+            {/* Metabolic Numbers Row */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                { label: "Basal Metabolic Rate", value: `${aiAssessment.metabolicProfile.bmr}`, unit: "kcal/day", color: "text-amber-600 dark:text-amber-400" },
+                { label: "Total Daily Energy", value: `${aiAssessment.metabolicProfile.tdee}`, unit: "kcal/day", color: "text-primary" },
+                { label: "Est. Body Fat", value: `${aiAssessment.metabolicProfile.bodyFatEstimatePct}`, unit: "%", color: "text-purple-600 dark:text-purple-400" },
+                { label: "Lean Body Mass", value: `${aiAssessment.metabolicProfile.leanMassKg}`, unit: "kg", color: "text-emerald-600 dark:text-emerald-400" },
+              ].map((item) => (
+                <div key={item.label} className="p-3 rounded-2xl bg-muted/40 border border-border/30 space-y-0.5">
+                  <p className="text-[10px] text-muted-foreground">{item.label}</p>
+                  <p className={`text-lg font-black ${item.color}`}>
+                    {item.value}<span className="text-[10px] font-semibold text-muted-foreground ml-0.5">{item.unit}</span>
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {/* Metabolic Summary */}
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-primary/5 to-purple-500/5 border border-primary/15 space-y-2">
+              <p className="text-xs leading-relaxed">{aiAssessment.metabolicProfile.metabolicSummary}</p>
+              <p className="text-[11px] text-muted-foreground italic">
+                💡 {aiAssessment.metabolicProfile.metabolicOptimizationTip}
+              </p>
+            </div>
+
+            {/* Macro Strategy + Workout Strategy + Longevity */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              {/* Macro Strategy */}
+              <div className="space-y-3">
+                <h3 className="font-bold text-xs flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                  <Utensils className="w-3.5 h-3.5" /> AI Macro Strategy
+                </h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { label: "Calories", value: aiAssessment.macroStrategy.recommended.calories, unit: "kcal", color: "text-amber-600 dark:text-amber-400" },
+                    { label: "Protein", value: aiAssessment.macroStrategy.recommended.protein, unit: "g", color: "text-emerald-600 dark:text-emerald-400" },
+                    { label: "Carbs", value: aiAssessment.macroStrategy.recommended.carbs, unit: "g", color: "text-blue-600 dark:text-blue-400" },
+                    { label: "Fat", value: aiAssessment.macroStrategy.recommended.fat, unit: "g", color: "text-purple-600 dark:text-purple-400" },
+                  ].map((m) => (
+                    <div key={m.label} className="p-2.5 rounded-xl bg-muted/40 border border-border/30">
+                      <p className="text-[10px] text-muted-foreground">{m.label}</p>
+                      <p className={`text-base font-black ${m.color}`}>{m.value}<span className="text-[10px] ml-0.5">{m.unit}</span></p>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-[10px] text-muted-foreground leading-relaxed">{aiAssessment.macroStrategy.rationale}</p>
+                <div className="space-y-1.5 text-[11px]">
+                  <div className="p-2 rounded-xl bg-amber-500/5 border border-amber-500/20">
+                    <span className="font-bold text-amber-600 dark:text-amber-400">Pre-Workout: </span>
+                    <span className="text-muted-foreground">{aiAssessment.macroStrategy.timing.preworkout}</span>
+                  </div>
+                  <div className="p-2 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400">Post-Workout: </span>
+                    <span className="text-muted-foreground">{aiAssessment.macroStrategy.timing.postworkout}</span>
+                  </div>
+                  <div className="p-2 rounded-xl bg-blue-500/5 border border-blue-500/20">
+                    <span className="font-bold text-blue-600 dark:text-blue-400">Last Meal: </span>
+                    <span className="text-muted-foreground">{aiAssessment.macroStrategy.timing.lastMeal}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Workout Strategy */}
+              <div className="space-y-3">
+                <h3 className="font-bold text-xs flex items-center gap-1.5 text-purple-600 dark:text-purple-400">
+                  <Dumbbell className="w-3.5 h-3.5" /> Training Blueprint
+                </h3>
+                <div className="p-3 rounded-xl bg-purple-500/5 border border-purple-500/20 space-y-1">
+                  <p className="text-[10px] text-muted-foreground">Recommended Split</p>
+                  <p className="text-sm font-black text-purple-600 dark:text-purple-400">{aiAssessment.workoutStrategy.recommendedSplit}</p>
+                  <span className="text-[10px] bg-purple-500/15 text-purple-600 dark:text-purple-400 px-2 py-0.5 rounded-full font-bold">
+                    {aiAssessment.workoutStrategy.phaseLabel}
+                  </span>
+                </div>
+                <div className="space-y-1">
+                  {aiAssessment.workoutStrategy.weeklyStructure.map((day, i) => (
+                    <div key={i} className="flex items-start gap-2 text-[11px]">
+                      <ChevronRight className="w-3 h-3 text-purple-500 flex-shrink-0 mt-0.5" />
+                      <span className="text-muted-foreground">{day}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-bold text-muted-foreground">Priority Movements</p>
+                  {aiAssessment.workoutStrategy.priorityMovements.slice(0, 4).map((m, i) => (
+                    <div key={i} className="flex items-start gap-1.5 text-[11px]">
+                      <span className="text-primary font-black flex-shrink-0">{i + 1}.</span>
+                      <span className="text-muted-foreground">{m}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="p-2.5 rounded-xl bg-blue-500/5 border border-blue-500/20 text-[11px] text-blue-700 dark:text-blue-300">
+                  🏃 {aiAssessment.workoutStrategy.cardioRecommendation}
+                </div>
+              </div>
+
+              {/* Longevity Roadmap */}
+              <div className="space-y-3">
+                <h3 className="font-bold text-xs flex items-center gap-1.5 text-red-500 dark:text-red-400">
+                  <Heart className="w-3.5 h-3.5" /> Longevity Roadmap
+                </h3>
+                <div className={`p-3 rounded-xl border space-y-1 ${
+                  aiAssessment.longevityRoadmap.cardiovascularRiskLevel === "Low"
+                    ? "bg-emerald-500/5 border-emerald-500/20"
+                    : aiAssessment.longevityRoadmap.cardiovascularRiskLevel === "Moderate"
+                    ? "bg-amber-500/5 border-amber-500/20"
+                    : "bg-red-500/5 border-red-500/20"
+                }`}>
+                  <p className="text-[10px] text-muted-foreground">Cardiovascular Risk</p>
+                  <p className={`text-sm font-black ${
+                    aiAssessment.longevityRoadmap.cardiovascularRiskLevel === "Low"
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : aiAssessment.longevityRoadmap.cardiovascularRiskLevel === "Moderate"
+                      ? "text-amber-600 dark:text-amber-400"
+                      : "text-red-600 dark:text-red-400"
+                  }`}>{aiAssessment.longevityRoadmap.cardiovascularRiskLevel} Risk</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-bold text-muted-foreground">Preventive Habits</p>
+                  {aiAssessment.longevityRoadmap.preventiveHabits.slice(0, 4).map((h, i) => (
+                    <div key={i} className="flex items-start gap-1.5 text-[11px]">
+                      <span className="text-emerald-500 flex-shrink-0 mt-0.5">✓</span>
+                      <span className="text-muted-foreground">{h}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="p-2.5 rounded-xl bg-red-500/5 border border-red-500/20 text-[11px] text-red-700 dark:text-red-300 leading-relaxed">
+                  ❤️ {aiAssessment.longevityRoadmap.wellnessGoal}
+                </div>
+                <p className="text-[10px] text-muted-foreground italic leading-relaxed">
+                  {aiAssessment.longevityRoadmap.lifespan}
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="p-8 text-center text-xs text-muted-foreground">
+            <Brain className="w-8 h-8 mx-auto mb-2 text-primary/40" />
+            AI assessment loading… Complete your profile for a personalised analysis.
+          </div>
+        )}
       </div>
 
       {/* Footer Ad */}
