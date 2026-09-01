@@ -355,6 +355,47 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* AI Intelligence Spotlight Banner */}
+      <div className="glass-card p-4 rounded-3xl border border-primary/25 bg-gradient-to-r from-primary/10 via-purple-500/10 to-emerald-500/10 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-2xl bg-primary/20 text-primary flex items-center justify-center shrink-0">
+            <Sparkles className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black uppercase tracking-wider text-primary font-heading">
+                Gemini AI Intelligence
+              </span>
+              <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold">
+                Live Coaching
+              </span>
+            </div>
+            <p className="text-xs font-bold text-foreground mt-0.5">
+              Personalized macro pacing, goal trajectory & health advice is active.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Link href="/diet">
+            <Button
+              size="sm"
+              variant="outline"
+              className="rounded-xl text-xs font-bold gap-1.5 border-primary/30 text-primary hover:bg-primary/10"
+            >
+              <Sparkles className="w-3.5 h-3.5" /> AI Recipe Estimator
+            </Button>
+          </Link>
+          <Link href="/analytics">
+            <Button
+              size="sm"
+              className="rounded-xl text-xs font-bold gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
+            >
+              Ask AI Coach &rarr;
+            </Button>
+          </Link>
+        </div>
+      </div>
+
       {/* Daily Score & Smart Weight Prediction Grid (⭐⭐⭐⭐⭐ Phase 1) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Daily Score Card (0-100) */}

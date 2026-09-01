@@ -1,20 +1,21 @@
 <div align="center">
 
-# 🌐 FitOs
+# 🌐 FitOS (NutriBD)
 
-### Personal Fitness & Nutrition Tracker
+### AI-Powered Fitness, Nutrition & Health Intelligence Platform
 
 [![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=nextdotjs)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
+[![Google Gemini AI](https://img.shields.io/badge/Google_Gemini-1.5_Flash-8E75B2?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose_8-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
 [![Clerk](https://img.shields.io/badge/Clerk-Authentication-6C47FF?style=for-the-badge&logo=clerk&logoColor=white)](https://clerk.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
-_A full-featured personal fitness companion. Track workouts, nutrition, weight, water, sleep, and body measurements with smart AI insights._
+_A comprehensive, AI-driven personal fitness & nutrition platform. Track meals, workouts, weight, water, sleep, and 9-point body measurements with real-time Google Gemini AI coaching, natural language culinary recipe estimation, barcode scanning, and goal trajectory forecasting._
 
-[Explore Documentation](docs/APP_DOCUMENTATION.md) · [Report Bug](https://github.com/ninazmul/gsen.net/issues) · [Request Feature](https://github.com/ninazmul/gsen.net/issues)
+[Live Demo](https://fitos.artistycode.studio) · [Report Bug](https://github.com/ninazmul/fit-os/issues) · [Request Feature](https://github.com/ninazmul/fit-os/issues)
 
 </div>
 
@@ -23,7 +24,14 @@ _A full-featured personal fitness companion. Track workouts, nutrition, weight, 
 ## 📋 Table of Contents
 
 - [Overview](#-overview)
-- [Key Features](#-key-features)
+- [Key Features & Functional Breakdown](#-key-features--functional-breakdown)
+  - [🤖 AI Health Intelligence Engine](#-ai-health-intelligence-engine-gemini-ai)
+  - [🍽️ Diet & Nutrition Tracker](#-diet--nutrition-tracker)
+  - [💪 Workout & Training Tracker](#-workout--training-tracker)
+  - [📈 Progress, Body Analytics & Recomposition](#-progress-body-analytics--recomposition)
+  - [💤 Sleep & Recovery Tracker](#-sleep--recovery-tracker)
+  - [💧 Hydration Tracker](#-hydration-tracker)
+  - [👤 Profile & Biometric Engine](#-profile--biometric-engine)
 - [System Architecture](#-system-architecture)
 - [Tech Stack](#-tech-stack)
 - [Getting Started](#-getting-started)
@@ -38,63 +46,74 @@ _A full-featured personal fitness companion. Track workouts, nutrition, weight, 
 - [Scripts Reference](#-scripts-reference)
 - [Contributing](#-contributing)
 - [License](#-license)
-- [Contact](#-contact)
+- [Author & Credits](#-author--credits)
 
 ---
 
 ## 🚀 Overview
 
-**FitOs** is built specifically to help individuals achieve their fitness goals. From workout tracking and nutrition logging to weight progress monitoring and body measurement tracking, FitOs streamlines personal fitness management into a single intuitive control panel.
+**FitOS (NutriBD)** is an all-in-one AI fitness and nutrition intelligence platform built for modern lifestyles and localized nutrition (including a comprehensive Bangladeshi & international food database). 
 
-### Why FitOs?
-
-- ⚡ **Automated Billing Pipeline:** Batch generate bills for active subscribers with single-click payment status updates.
-- 📄 **Professional Invoices:** Export and print customizable PDF invoices embedded with your company branding, logo, and terms.
-- 📊 **Real-Time Financial Intelligence:** Interactive charts and breakdown metrics for monthly revenue, dues, expenses, and net profit.
-- 🔒 **Secure Multi-Tenant RBAC:** Clerk authentication paired with MongoDB authorization ensures only verified administrators access sensitive business data.
+It combines **Google Gemini AI** with precision exercise science and metabolic algorithms to provide:
+- **AI Health Score (0–100)** with interactive **Ask AI Coach** Q&A.
+- **Natural Language Recipe Estimation** (parse home-cooked ingredients, cooking oils, batch sizes, and eaten portions into exact macros).
+- **Goal Trajectory & Milestone Forecasting** (real-time velocity calculation and plateau risk detection).
+- **Body Recomposition Matrix** (analyzes 9-point circumference changes vs. weight velocity to track fat loss vs. muscle retention).
+- **Barcode Scanner** & dual-mode portion calculator (multiplier mode and gram-scale mode).
+- **12:00 AM Midnight Day Reset** synced to user's local timezone.
 
 ---
 
-## ✨ Key Features
+## ✨ Key Features & Functional Breakdown
 
-### 📊 Real-Time Analytics & Dashboard
+### 🤖 AI Health Intelligence Engine (Gemini AI)
 
-- **Executive Summaries:** Track active, inactive, and disconnected customer totals.
-- **Financial Metrics:** Instant breakdown of current month's collection, pending dues, operational expenses, and net profit.
-- **Interactive Visualizations:** Revenue vs. Expense trends over time powered by **Recharts**.
-- **Activity Stream:** Real-time log of recent bill payments and operational expense entries.
+- **AI Health & Performance Score (0–100):** Multi-dimensional score evaluating Nutrition (35%), Workouts (25%), Recovery (20%), and Hydration (20%) with performance grade and component sub-rings.
+- **Executive Coach Briefing:** Weekly holistic summary of physical progress, key strengths, and growth areas.
+- **Interactive Ask AI Coach:** Live context-aware Q&A chat assistant with quick prompt pills, tailored specifically to the user's live profile, diet logs, and workout history.
+- **7-Day Action Gameplan:** High-impact, prioritized action checklist for the coming week.
+- **AI-Detected Cross-Metric Correlations:** Surfaces physiological relationships (e.g., Sleep Duration vs. Workout Consistency, Hydration vs. Scale Weight Stability).
+- **Categorized Insights:** Filterable by *Nutrition*, *Training*, *Recovery*, *Longevity*, and *Habits*.
 
-### 👥 Customer Management
+### 🍽️ Diet & Nutrition Tracker
 
-- Full lifecycle management for subscriber accounts (Active, Inactive, Disconnected).
-- Detailed customer profiles: Customer Code, Name, Phone, Email, Physical Address.
-- Technical connection details: Package Name, Monthly Fee, Connection Date, Assigned Router, and IP Address.
-- Quick search, filtering by status, and soft-delete capabilities.
+- **Natural Language AI Recipe Estimator:** Describe any home-cooked dish (ingredients, cooking method, batch size vs. portion eaten) to calculate exact calories, protein, carbs, fat, and fiber.
+- **Dual-Mode Portion & Gram Calculator:** Switch seamlessly between multiplier servings (e.g., $1.5\times$) and exact grams (e.g., eating 20g from a 100g database entry) with auto-proportional scaling.
+- **Barcode Scanner:** Real-time camera barcode scanner with OpenFoodFacts integration and local fallback.
+- **Bangladeshi & Global Food Database:** Curated food items covering traditional curries, rice, lentils, street food, and international items.
+- **Meal Bucketing & Daily Rings:** Breakfast, Lunch, Dinner, and Snacks tracking with real-time calorie and macronutrient progress rings.
+- **Saved & Recent Meals:** One-tap re-logging of frequent meals.
 
-### 💳 Automated Billing & Invoicing
+### 💪 Workout & Training Tracker
 
-- **One-Click Monthly Bill Generation:** Automatically targets all active subscribers for any chosen billing cycle.
-- **Payment Lifecycle Management:** Easily record partial/full payments and update bill states (`Paid` / `Unpaid`).
-- **PDF Invoice Generation & Printing:** Pixel-perfect invoice downloads using `html2canvas` and `jsPDF`.
-- Customizable invoice headers, prefix IDs, tax details, and terms.
+- **Session Logging:** Track workout types (Strength, Cardio, HIIT, Sports, Functional), duration, exercises, sets, reps, weight lifted, and estimated calorie burn.
+- **Consistency Monitor:** Weekly workout frequency counter against profile targets with recovery pacing.
 
-### 💸 Operational Expense Tracking
+### 📈 Progress, Body Analytics & Recomposition
 
-- Categorized expense recording (Bandwidth, Electricity, Staff Salary, Maintenance, Equipment, Rent, Transport, Misc).
-- Date-based expense tracking with category and monthly filtering.
-- Automatic integration into profit & loss reports.
+- **AI Goal Trajectory Forecaster:** Predicts target weight arrival date based on actual weight delta velocity, deficit/surplus, and plateau detection.
+- **AI Body Recomposition Matrix:** Evaluates 9-point circumference delta against scale weight to assess muscle retention vs. fat loss.
+- **9-Point Body Measurement Modal:** Logs Chest, Waist, Hips, Shoulders, Neck, Arm (Bicep), Forearm, Thigh, and Calf with date selector defaulting to today and historical delta badges.
+- **Longitudinal Weight Charts:** 7, 30, and 60-day interactive area charts with moving averages.
 
-### 📈 Reports & Data Export
+### 💤 Sleep & Recovery Tracker
 
-- Comprehensive breakdown for Income, Expenses, Profitability, and Outstanding Dues.
-- **CSV Data Export:** Instant one-click export for financial auditing and external accounting tools.
-- Flexible date range and monthly filtering.
+- **Sleep Session Tracker:** Log bedtime, wake time, duration (including overnight split calculation), and 1–5 star sleep quality.
+- **AI Recovery Index:** Evaluates sleep trends to output readiness scores (*Peak Performance*, *Optimal Recovery*, *Moderate Fatigue*) and training advice.
 
-### ⚙️ Company Settings & Custom Branding
+### 💧 Hydration Tracker
 
-- Configure company identity, logo URL, contact info, and tax registration.
-- Customize invoice prefix tags (e.g., `INV-2026-`) and global currency symbols.
-- Role-based Admin user management to control team access.
+- **Hydration Logging:** Quick-log water presets (+250ml, +500ml) with daily target rings and morning hydration protocols.
+
+### 👤 Profile & Biometric Engine
+
+- **Biometric Calculators:**
+  - **BMI** (Body Mass Index) & Classification
+  - **BMR** (Mifflin-St Jeor) & **TDEE** (Activity Multipliers)
+  - **Ideal Weight Range** (Hamwi formula)
+  - **US Navy Body Fat %** & Lean Body Mass
+  - **WHR** (Waist-to-Hip) & **WHtR** (Waist-to-Height) cardiovascular risk profiling
+- **AI Profile Assessment:** Customized metabolic profile, pre/post-workout nutrient timing blueprint, training split recommendations, and longevity roadmap.
 
 ---
 
@@ -102,33 +121,38 @@ _A full-featured personal fitness companion. Track workouts, nutrition, weight, 
 
 ```mermaid
 graph TD
-    Client[Web Browser Client] -->|HTTP / React 19| AppRouter[Next.js 15 App Router]
+    Client[Next.js 15 Client - React 19] -->|Server Actions| AppRouter[Next.js App Router]
 
-    subgraph Security & Access Control
-        Clerk[Clerk Auth Provider] -->|Verify Token| AppRouter
-        AppRouter -->|Email Whitelist Check| AdminGuard[Admin RBAC Middleware / Action Guard]
+    subgraph Authentication & Security
+        Clerk[Clerk Auth] -->|JWT Session| AppRouter
     end
 
-    subgraph Core Application Layer
-        AppRouter -->|Server Actions| ServerActions[lib/actions]
-        ServerActions --> DashboardActions[Dashboard & Metrics]
-        ServerActions --> CustomerActions[Customer CRUD]
-        ServerActions --> BillActions[Billing & Invoice Engine]
-        ServerActions --> ExpenseActions[Expense Tracker]
+    subgraph AI Intelligence Layer
+        AppRouter -->|Gemini 1.5 / 2.0 Flash| GeminiAPI[Google Gemini API]
+        AppRouter -->|Deterministic Rule Engine| FallbackEngine[Culinary & Metabolic Engine]
     end
 
-    subgraph Data & Storage Layer
-        ServerActions -->|Mongoose ODM| Mongo[(MongoDB Database)]
-        Mongo --> CustomerModel[Customer Schema]
-        Mongo --> BillModel[Bill Schema]
-        Mongo --> ExpenseModel[Expense Schema]
-        Mongo --> SettingModel[Setting Schema]
-        Mongo --> AdminModel[Admin Schema]
+    subgraph Core Server Actions
+        AppRouter --> AIAnalytics[ai-analytics.actions.ts]
+        AppRouter --> AIProgress[ai-progress.actions.ts]
+        AppRouter --> AIProfile[ai-profile.actions.ts]
+        AppRouter --> AIFood[ai-food.actions.ts]
+        AppRouter --> MealActions[meal.actions.ts]
+        AppRouter --> WorkoutActions[workout.actions.ts]
+        AppRouter --> WeightActions[weight.actions.ts]
+        AppRouter --> WaterSleep[water-sleep.actions.ts]
+        AppRouter --> BodyMeas[body-measurement.actions.ts]
     end
 
-    subgraph Output Services
-        BillActions --> PDFGen[jsPDF + html2canvas Engine]
-        ServerActions --> CSVExport[CSV Generator]
+    subgraph Database Layer
+        AIAnalytics & MealActions & WorkoutActions & WeightActions --> MongoDB[(MongoDB / Mongoose 8)]
+        MongoDB --> UserProfileModel[UserProfile Model]
+        MongoDB --> MealLogModel[MealLog Model]
+        MongoDB --> WorkoutLogModel[WorkoutLog Model]
+        MongoDB --> WeightLogModel[WeightLog Model]
+        MongoDB --> SleepLogModel[SleepLog Model]
+        MongoDB --> WaterLogModel[WaterLog Model]
+        MongoDB --> BodyMeasModel[BodyMeasurement Model]
     end
 ```
 
@@ -136,18 +160,18 @@ graph TD
 
 ## 🛠️ Tech Stack
 
-| Domain              | Technology                                                                  | Description                                            |
-| :------------------ | :-------------------------------------------------------------------------- | :----------------------------------------------------- |
-| **Framework**       | [Next.js 15](https://nextjs.org/)                                           | App Router with React Server Components & Turbopack    |
-| **UI Library**      | [React 19](https://react.dev/)                                              | High-performance client components & hooks             |
-| **Language**        | [TypeScript 5](https://www.typescriptlang.org/)                             | Strict type safety across client and server            |
-| **Styling**         | [Tailwind CSS 3.4](https://tailwindcss.com/)                                | Utility-first responsive design & dark mode primitives |
-| **Components**      | [Radix UI Primitives](https://www.radix-ui.com/)                            | Accessible, unstyled UI components                     |
-| **Database**        | [MongoDB](https://www.mongodb.com/) + [Mongoose 8](https://mongoosejs.com/) | Document database with schema validation & indexing    |
-| **Authentication**  | [Clerk Auth](https://clerk.com/)                                            | Passwordless, OAuth, and multi-factor admin login      |
-| **Data Viz**        | [Recharts](https://recharts.org/)                                           | Responsive SVG charts for revenue and expense trends   |
-| **Document Export** | `jsPDF` & `html2canvas`                                                     | Client-side PDF invoice rendering and printing         |
-| **Form Handling**   | `react-hook-form` + `zod`                                                   | Schema-based client and server form validations        |
+| Domain | Technology | Description |
+| :--- | :--- | :--- |
+| **Framework** | [Next.js 15](https://nextjs.org/) | App Router, Server Actions & React Server Components |
+| **UI Library** | [React 19](https://react.dev/) | Client components, hooks, and responsive state |
+| **Language** | [TypeScript 5](https://www.typescriptlang.org/) | 100% strict type safety across client and server |
+| **Styling** | [Tailwind CSS 3.4](https://tailwindcss.com/) | Glassmorphism design system & dark mode tokens |
+| **AI Engine** | [Google Gemini AI](https://ai.google.dev/) | Gemini 1.5 Flash natural language & predictive analysis |
+| **Database** | [MongoDB](https://www.mongodb.com/) + [Mongoose 8](https://mongoosejs.com/) | Cloud document database with indexed schemas |
+| **Authentication** | [Clerk Auth](https://clerk.com/) | Passwordless, OAuth & secure multi-tenant user management |
+| **Charts & Viz** | [Recharts](https://recharts.org/) | Responsive SVG charts for weight, sleep, and macro trends |
+| **Barcode Scanner** | `@zxing/browser` | Camera-based barcode recognition |
+| **Validations** | `zod` | Client & server schema validation |
 
 ---
 
@@ -155,19 +179,18 @@ graph TD
 
 ### Prerequisites
 
-Ensure you have the following installed on your development machine:
-
+Ensure you have the following installed on your machine:
 - **Node.js**: `v18.17.0` or higher (Node v20+ recommended)
 - **npm**: `v9.0.0` or higher
 - **MongoDB**: A running local MongoDB instance or a [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) cluster URI.
-- **Clerk Account**: A free account on [Clerk.com](https://clerk.com) to manage API keys.
+- **Clerk Account**: Free account on [Clerk.com](https://clerk.com) for authentication keys.
+- **Google Gemini API Key** *(Optional for AI features)*: Obtain from [Google AI Studio](https://aistudio.google.com/).
 
 ---
 
 ### Installation
 
 1. **Clone the repository:**
-
    ```bash
    git clone https://github.com/ninazmul/fit-os.git
    cd fit-os
@@ -184,12 +207,6 @@ Ensure you have the following installed on your development machine:
 
 Create a `.env.local` file in the root directory:
 
-```bash
-cp .env.example .env.local
-```
-
-Fill in your configuration credentials:
-
 ```env
 # Clerk Authentication Keys
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
@@ -202,7 +219,13 @@ NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/
 NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/
 
 # Database Connection
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/fit-os?retryWrites=true&w=majority
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/fitos?retryWrites=true&w=majority
+
+# Google Gemini AI API Key (Optional — deterministic fallback active if omitted)
+GEMINI_API_KEY=AIzaSy...
+
+# Public Site URL
+NEXT_PUBLIC_SITE_URL=https://fitos.artistycode.studio
 ```
 
 ---
@@ -210,30 +233,28 @@ MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/fit-os?retryWrit
 ### Running the Application
 
 1. **Start Development Server:**
-
    ```bash
    npm run dev
    ```
+   Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-   The app will start with **Turbopack** enabled at [http://localhost:3000](http://localhost:3000).
-
-2. **Initial Admin Registration:**
-   - Navigate to `http://localhost:3000/sign-in` and register an admin account.
-   - _Note:_ The very first user to sign in automatically becomes the primary Admin in MongoDB. Subsequent sign-ins must be authorized in `/admins`.
+2. **Build for Production:**
+   ```bash
+   npm run build
+   npm run start
+   ```
 
 ---
 
 ## 🔑 Environment Variables
 
-| Variable                              |  Type  | Required | Description                                         |
-| :------------------------------------ | :----: | :------: | :-------------------------------------------------- |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`   | String |   Yes    | Clerk public API key for frontend authentication    |
-| `CLERK_SECRET_KEY`                    | String |   Yes    | Clerk secret key for backend token verification     |
-| `NEXT_PUBLIC_CLERK_SIGN_IN_URL`       | String |   Yes    | Path for sign-in page (`/sign-in`)                  |
-| `NEXT_PUBLIC_CLERK_SIGN_UP_URL`       | String |   Yes    | Path for sign-up page (`/sign-up`)                  |
-| `NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL` | String |   Yes    | Redirect path after successful authentication (`/`) |
-| `NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL` | String |   Yes    | Redirect path after sign-up completion (`/`)        |
-| `MONGODB_URI`                         | String |   Yes    | MongoDB connection string including database name   |
+| Variable | Type | Required | Description |
+| :--- | :---: | :---: | :--- |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | String | Yes | Clerk public API key |
+| `CLERK_SECRET_KEY` | String | Yes | Clerk secret key for token validation |
+| `MONGODB_URI` | String | Yes | MongoDB connection string |
+| `GEMINI_API_KEY` | String | No | Google Gemini API key for AI features |
+| `NEXT_PUBLIC_SITE_URL` | String | No | Canonical site URL for SEO metadata |
 
 ---
 
@@ -243,82 +264,82 @@ MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/fit-os?retryWrit
 fit-os/
 ├── app/
 │   ├── (auth)/              # Public Clerk authentication routes (sign-in, sign-up)
-│   ├── (root)/              # Protected ERP dashboard and module routes
-│   │   ├── billing/         # Monthly bill generation & payment tracking
-│   │   ├── customers/       # Subscriber management & connection details
-│   │   ├── expenses/        # Operational expense recording & categorization
-│   │   ├── reports/         # Financial metrics & CSV data exports
-│   │   ├── settings/        # Invoice formatting & company profile settings
-│   │   ├── admins/          # Admin user RBAC authorization management
-│   │   └── page.tsx         # Executive Overview Dashboard
-│   ├── api/                 # Next.js API endpoints
-│   ├── favicon.ico
-│   ├── globals.css          # Tailwind CSS global styles & custom theme tokens
-│   └── layout.tsx           # Root layout with ClerkProvider & Toast notifications
+│   ├── (root)/              # Core authenticated application modules
+│   │   ├── diet/            # Meal logging, food DB, barcode scanner, recipe AI
+│   │   ├── workout/         # Workout logging & exercise history
+│   │   ├── progress/        # Weight charts, body measurements & AI trajectory
+│   │   ├── analytics/       # AI Health Score, Executive Coach & Ask AI Coach
+│   │   ├── profile/         # Health profile, BMI/BMR/TDEE & AI metabolic audit
+│   │   ├── settings/        # App preferences & About card
+│   │   └── page.tsx         # Real-time Daily Dashboard
+│   ├── api/                 # API endpoints
+│   ├── globals.css          # Tailwind CSS design system tokens & glassmorphism
+│   └── layout.tsx           # Root layout with ClerkProvider, themes & metadata
 ├── components/
-│   ├── ui/                  # Radix UI primitives (Button, Dialog, Select, etc.)
-│   └── shared/              # Shared layouts, Sidebar, Navbar & Modals
-├── docs/
-│   └── APP_DOCUMENTATION.md # Full technical specification and architecture guide
-├── hooks/                   # Reusable React custom hooks
+│   ├── navigation/          # Navbar, DesktopSidebar, NavigationSheet
+│   ├── shared/              # StatCard, BarcodeScanner, BodyMeasurementModal, QuickAdd
+│   └── ui/                  # Radix UI primitives (Button, Dialog, Tabs, etc.)
 ├── lib/
-│   ├── actions/             # Next.js Server Actions (customer, bill, expense, settings)
-│   ├── database/            # Mongoose connection & data models
-│   └── utils.ts             # Formatting helpers (currency, date, classnames)
-├── public/                  # Static assets & brand logos
-├── types/                   # Global TypeScript interface & type definitions
-├── middleware.ts            # Clerk Auth routing guard middleware
-├── next.config.ts           # Next.js build & header configurations
-├── tailwind.config.ts       # Tailwind CSS custom themes & plugin settings
-└── package.json             # Project dependencies & script commands
+│   ├── actions/             # Next.js Server Actions (AI, meals, workouts, weights)
+│   │   ├── ai-analytics.actions.ts  # Health Score, executive briefing, Ask AI Coach
+│   │   ├── ai-progress.actions.ts   # Trajectory forecasting & recomposition
+│   │   ├── ai-profile.actions.ts    # Metabolic profiling & longevity roadmap
+│   │   ├── ai-food.actions.ts       # Natural language recipe parser & macro calculator
+│   │   └── ...                      # Core database CRUD actions
+│   ├── database/            # Mongoose models & database connection
+│   ├── constants.ts         # Centralized branding, versioning & global config
+│   ├── food-portion.ts      # Dual-mode portion & gram quantity calculator
+│   └── utils.ts             # Date formatting & timezone midnight synchronization
+├── types/                   # Global TypeScript definitions
+└── package.json             # Project dependencies & scripts
 ```
 
 ---
 
 ## 🗄️ Database Models
 
-| Model Name     | Description              | Primary Fields                                                                                              |
-| :------------- | :----------------------- | :---------------------------------------------------------------------------------------------------------- |
-| **`Customer`** | Subscriber records       | `customerCode`, `name`, `phone`, `package`, `monthlyFee`, `connectionDate`, `router`, `ipAddress`, `status` |
-| **`Bill`**     | Monthly billing records  | `customer`, `month`, `year`, `amount`, `status` (`Paid`/`Unpaid`), `paidDate`, `paymentMethod`              |
-| **`Expense`**  | Operational expenses     | `title`, `amount`, `category`, `date`, `month`, `year`, `notes`                                             |
-| **`Setting`**  | Company invoice identity | `companyName`, `logoUrl`, `phone`, `email`, `address`, `invoicePrefix`, `currency`                          |
-| **`Admin`**    | Authorized team members  | `clerkId`, `email`, `name`, `role`, `createdAt`                                                             |
+| Model | Description | Key Fields |
+| :--- | :--- | :--- |
+| **`UserProfile`** | Core user biometrics & goals | `clerkId`, `age`, `gender`, `height`, `currentWeight`, `targetWeight`, `goal`, `activityLevel`, `dailyCaloriesGoal`, `dailyProteinGoal`, `waterGoalMl`, `workoutDaysPerWeek` |
+| **`MealLog`** | Daily nutrition logs | `clerkId`, `date`, `mealType`, `items` (`name`, `calories`, `protein`, `carbs`, `fat`, `fiber`, `quantity`, `portionEaten`), `totalCalories`, `totalProtein`, `totalCarbs`, `totalFat` |
+| **`WorkoutLog`** | Training sessions | `clerkId`, `date`, `title`, `workoutType`, `durationMinutes`, `caloriesBurned`, `exercises` (`name`, `sets`, `reps`, `weightKg`) |
+| **`WeightLog`** | Daily scale entries | `clerkId`, `date`, `weight`, `notes` |
+| **`BodyMeasurement`** | 9-point circumference logs | `clerkId`, `date`, `waist`, `chest`, `hip`, `neck`, `shoulder`, `arm`, `forearm`, `thigh`, `calf` |
+| **`SleepLog`** | Sleep & recovery sessions | `clerkId`, `date`, `totalHours`, `sessions` (`sleepTime`, `wakeTime`, `totalHours`, `quality`, `notes`) |
+| **`WaterLog`** | Daily hydration records | `clerkId`, `date`, `totalMl`, `entries` (`amountMl`, `timestamp`) |
+| **`SavedMeal`** | User-saved meal presets | `clerkId`, `name`, `mealType`, `items`, `totalCalories`, `totalProtein`, `totalCarbs`, `totalFat` |
 
 ---
 
 ## 🗺️ Main Application Routes
 
-| Route Path       | Access    | Purpose                                                        |
-| :--------------- | :-------- | :------------------------------------------------------------- |
-| `/`              | Admin     | Executive Overview Dashboard with live metrics & charts        |
-| `/customers`     | Admin     | Search, add, edit, and filter ISP customer accounts            |
-| `/billing`       | Admin     | Monthly billing engine, payment status, and PDF invoice export |
-| `/expenses`      | Admin     | Operational expense logger with category filtering             |
-| `/reports`       | Admin     | Financial P&L breakdown and CSV data exports                   |
-| `/settings`      | Admin     | Configure company branding, invoice prefix, and currency       |
-| `/admins`        | Admin     | Manage administrative access and whitelisted team emails       |
-| `/sign-in`       | Public    | Clerk authentication login portal                              |
-| `/access-denied` | Signed-in | Restricted access page for non-whitelisted users               |
+| Route | Purpose | Key Features |
+| :--- | :--- | :--- |
+| `/` | Daily Dashboard | Quick log, calorie/macro rings, water progress, workout summary |
+| `/diet` | Diet & Nutrition | Barcode scanner, Bangladeshi food DB, AI recipe parser, dual quantity calculator |
+| `/workout` | Workout Tracker | Session logging, exercise history, volume and calorie burn tracking |
+| `/progress` | Progress & Body Analytics | Longitudinal weight charts, 9-point body measurement modal, AI trajectory forecaster |
+| `/analytics` | AI Health Intelligence | AI Health Score (0–100), Executive Coach briefing, Ask AI Coach Q&A, 7-day gameplan |
+| `/profile` | Profile & Metabolism | BMI, BMR, TDEE, WHR, US Navy body fat %, AI metabolic & nutrient timing blueprint |
+| `/settings` | Settings & Info | Theme preferences, application metadata, version information |
 
 ---
 
 ## 📜 Scripts Reference
 
-| Command            | Description                                                               |
-| :----------------- | :------------------------------------------------------------------------ |
-| `npm run dev`      | Starts the Next.js development server with Turbopack at `localhost:3000`. |
-| `npm run build`    | Compiles production assets, runs type check, and checks ESLint rules.     |
-| `npm run start`    | Launches the production Node.js server post-build.                        |
-| `npm run lint`     | Runs ESLint syntax and code quality checks across the codebase.           |
-| `npx tsc --noEmit` | Runs the TypeScript compiler in dry-run mode for type validation.         |
+| Command | Description |
+| :--- | :--- |
+| `npm run dev` | Launches local development server with Turbopack |
+| `npm run build` | Compiles production bundle and runs type validation |
+| `npm run start` | Starts Node.js production server |
+| `npm run lint` | Runs ESLint syntax and code quality checks |
+| `npx tsc --noEmit` | Runs dry-run TypeScript compiler check |
 
 ---
 
 ## 🤝 Contributing
 
-Contributions make the open-source community an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
-
+Contributions are welcome! Please follow these steps:
 1. Fork the Project
 2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
 3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
@@ -329,20 +350,17 @@ Contributions make the open-source community an amazing place to learn, inspire,
 
 ## 📄 License
 
-Distributed under the **MIT License**. See `LICENSE` for more information.
+Distributed under the **MIT License**. See `LICENSE` for details.
 
 ---
 
-## 👤 Author & Contact
+## 👤 Author & Credits
 
-**N. I. Nazmul**
-
-- Email: [nazmulsaw@gmail.com](mailto:nazmulsaw@gmail.com)
+**N. I. Nazmul** — *ArtistyCode Studio*
+- Website: [artistycode.studio](https://www.artistycode.studio/)
 - GitHub: [@ninazmul](https://github.com/ninazmul)
-- Website: [gsen.net](https://gsen.net)
-
----
+- Email: [nazmulsaw@gmail.com](mailto:nazmulsaw@gmail.com)
 
 <div align="center">
-  <sub>Built with ❤️ for fitness enthusiasts.</sub>
+  <sub>Built with ❤️ for health and fitness enthusiasts worldwide.</sub>
 </div>
