@@ -7,10 +7,7 @@ import {
   logWeight,
   deleteWeightLog,
 } from "@/lib/actions/weight.actions";
-import {
-  getBodyMeasurements,
-  logBodyMeasurement,
-} from "@/lib/actions/body-measurement.actions";
+import { getBodyMeasurements } from "@/lib/actions/body-measurement.actions";
 import {
   getSleepHistory,
   addSleepSession,
@@ -18,6 +15,7 @@ import {
 } from "@/lib/actions/water-sleep.actions";
 import { getUserProfile } from "@/lib/actions/profile.actions";
 import StatCard from "@/components/shared/StatCard";
+import BodyMeasurementModal from "@/components/shared/BodyMeasurementModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
@@ -98,11 +96,6 @@ export default function ProgressPage() {
 
   // Body measurement dialog
   const [bodyModalOpen, setBodyModalOpen] = useState(false);
-  const [waist, setWaist] = useState("");
-  const [chest, setChest] = useState("");
-  const [hip, setHip] = useState("");
-  const [arm, setArm] = useState("");
-  const [thigh, setThigh] = useState("");
 
   // Sleep session dialog
   const [sleepModalOpen, setSleepModalOpen] = useState(false);
@@ -169,25 +162,6 @@ export default function ProgressPage() {
       fetchData();
     } catch {
       toast.error("Failed to log weight");
-    }
-  };
-
-  const handleSaveBody = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await logBodyMeasurement({
-        date: todayStr,
-        waist: waist ? Number(waist) : undefined,
-        chest: chest ? Number(chest) : undefined,
-        hip: hip ? Number(hip) : undefined,
-        arm: arm ? Number(arm) : undefined,
-        thigh: thigh ? Number(thigh) : undefined,
-      });
-      toast.success("Body measurements saved!");
-      setBodyModalOpen(false);
-      fetchData();
-    } catch {
-      toast.error("Failed to save measurements");
     }
   };
 
@@ -727,75 +701,12 @@ export default function ProgressPage() {
       </Dialog>
 
       {/* Log Body Measurements Dialog */}
-      <Dialog open={bodyModalOpen} onOpenChange={setBodyModalOpen}>
-        <DialogContent className="sm:max-w-md rounded-2xl p-6 space-y-4">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold">
-              Body Circumferences (cm) 📏
-            </DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSaveBody} className="space-y-3 text-xs">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Waist (cm)</Label>
-                <Input
-                  type="number"
-                  step="0.5"
-                  value={waist}
-                  onChange={(e) => setWaist(e.target.value)}
-                  className="rounded-xl mt-1"
-                />
-              </div>
-              <div>
-                <Label>Chest (cm)</Label>
-                <Input
-                  type="number"
-                  step="0.5"
-                  value={chest}
-                  onChange={(e) => setChest(e.target.value)}
-                  className="rounded-xl mt-1"
-                />
-              </div>
-              <div>
-                <Label>Hip (cm)</Label>
-                <Input
-                  type="number"
-                  step="0.5"
-                  value={hip}
-                  onChange={(e) => setHip(e.target.value)}
-                  className="rounded-xl mt-1"
-                />
-              </div>
-              <div>
-                <Label>Arm (cm)</Label>
-                <Input
-                  type="number"
-                  step="0.5"
-                  value={arm}
-                  onChange={(e) => setArm(e.target.value)}
-                  className="rounded-xl mt-1"
-                />
-              </div>
-              <div>
-                <Label>Thigh (cm)</Label>
-                <Input
-                  type="number"
-                  step="0.5"
-                  value={thigh}
-                  onChange={(e) => setThigh(e.target.value)}
-                  className="rounded-xl mt-1"
-                />
-              </div>
-            </div>
-            <Button
-              type="submit"
-              className="w-full rounded-xl bg-primary hover:bg-primary/90 font-bold mt-2"
-            >
-              Save Measurements
-            </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <BodyMeasurementModal
+        open={bodyModalOpen}
+        onOpenChange={setBodyModalOpen}
+        initialData={measurements[0]}
+        onSuccess={fetchData}
+      />
 
       {/* Log Sleep Dialog */}
       <Dialog open={sleepModalOpen} onOpenChange={setSleepModalOpen}>

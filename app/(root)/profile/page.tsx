@@ -188,8 +188,12 @@ export default function ProfilePage() {
       />
       <BodyMeasurementModal
         open={measurementModalOpen}
-        onOpenChange={setMeasurementModalOpen}
+        onOpenChange={(open) => {
+          setMeasurementModalOpen(open);
+          if (!open) fetchAll();
+        }}
         initialData={latest}
+        onSuccess={fetchAll}
       />
 
       {/* Header Banner */}

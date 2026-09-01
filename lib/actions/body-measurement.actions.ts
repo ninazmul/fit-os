@@ -39,7 +39,7 @@ export async function getBodyMeasurements(limit: number = 10) {
   if (!user) throw new Error("Unauthorized");
 
   const measurements = await BodyMeasurement.find({ clerkId: user.id })
-    .sort({ date: -1 })
+    .sort({ date: -1, updatedAt: -1 })
     .limit(limit)
     .lean();
 
@@ -51,9 +51,9 @@ export async function getLatestBodyMeasurement() {
   const user = await currentUser();
   if (!user) throw new Error("Unauthorized");
 
-  const measurement = await BodyMeasurement.findOne({ clerkId: user.id }).sort({
-    date: -1,
-  }).lean();
+  const measurement = await BodyMeasurement.findOne({ clerkId: user.id })
+    .sort({ date: -1, updatedAt: -1 })
+    .lean();
 
   return measurement ? JSON.parse(JSON.stringify(measurement)) : null;
 }

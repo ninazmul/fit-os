@@ -114,7 +114,7 @@ export async function getFullProfileHealthMetrics() {
   const latestMeasurements = (await BodyMeasurement.findOne({
     clerkId: user.id,
   })
-    .sort({ date: -1 })
+    .sort({ date: -1, updatedAt: -1 })
     .lean()) as IBodyMeasurement | null;
 
   const weight = profile.currentWeight || 0;

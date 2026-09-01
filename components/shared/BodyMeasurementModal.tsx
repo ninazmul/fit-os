@@ -22,6 +22,7 @@ interface BodyMeasurementModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialData?: IBodyMeasurement | null;
+  onSuccess?: () => void;
 }
 
 interface MeasurementField {
@@ -92,6 +93,7 @@ export default function BodyMeasurementModal({
   open,
   onOpenChange,
   initialData,
+  onSuccess,
 }: BodyMeasurementModalProps) {
   const [date, setDate] = useState(getLocalDateString());
   const [measurements, setMeasurements] = useState<Record<string, string>>({});
@@ -100,8 +102,9 @@ export default function BodyMeasurementModal({
 
   useEffect(() => {
     if (!open) return;
+    // Always default date to today so new logs/updates record with current date
+    setDate(getLocalDateString());
     if (initialData) {
-      setDate(initialData.date || getLocalDateString());
       const init: Record<string, string> = {};
       MEASUREMENT_FIELDS.forEach((f) => {
         const val = initialData[f.key];
@@ -111,7 +114,6 @@ export default function BodyMeasurementModal({
       });
       setMeasurements(init);
     } else {
-      setDate(getLocalDateString());
       setMeasurements({});
     }
   }, [open, initialData]);
@@ -147,6 +149,7 @@ export default function BodyMeasurementModal({
 
       await logBodyMeasurement(payload as never);
       toast.success("Body measurements saved successfully! 📏");
+      onSuccess?.();
       onOpenChange(false);
       router.refresh();
     } catch (err) {
@@ -156,6 +159,8 @@ export default function BodyMeasurementModal({
       setLoading(false);
     }
   };
+
+  const isToday = date === getLocalDateString();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -172,8 +177,26 @@ export default function BodyMeasurementModal({
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          <div className="space-y-1">
-            <Label className="text-xs font-semibold">Measurement Date</Label>
+          <div className="space-y-1.5 p-3 rounded-2xl bg-muted/20 border border-border/40">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-semibold">Measurement Date</Label>
+              <div className="flex items-center gap-2">
+                {initialData?.date && (
+                  <span className="text-[10px] text-muted-foreground">
+                    Previous: {initialData.date}
+                  </span>
+                )}
+                {!isToday && (
+                  <button
+                    type="button"
+                    onClick={() => setDate(getLocalDateString())}
+                    className="text-[10px] font-bold text-primary hover:underline"
+                  >
+                    Set to Today
+                  </button>
+                )}
+              </div>
+            </div>
             <Input
               type="date"
               value={date}
