@@ -1,10 +1,10 @@
 <div align="center">
 
-# 🌐 NutriBD
+# 🌐 NutriBD (v2.2.1)
 
 ### AI-Powered Fitness, Nutrition & Health Intelligence Platform
 
-[![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=nextdotjs)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16_(Turbopack)-black?style=for-the-badge&logo=nextdotjs)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
@@ -13,7 +13,7 @@
 [![Clerk](https://img.shields.io/badge/Clerk-Authentication-6C47FF?style=for-the-badge&logo=clerk&logoColor=white)](https://clerk.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
-_A comprehensive, AI-driven personal fitness & nutrition platform for Bangladesh and worldwide. Track meals, workouts, weight, water, sleep, and 9-point body measurements with real-time Google Gemini AI coaching, natural language culinary recipe estimation, barcode scanning, and goal trajectory forecasting._
+_A state-of-the-art, high-performance AI fitness & nutrition intelligence platform tailored for Bangladesh and worldwide. Track meals, workouts, weight, water, sleep, and 9-point body measurements with real-time Google Gemini AI coaching, natural language culinary recipe estimation, camera barcode scanning, and goal trajectory forecasting._
 
 [Live Demo](https://nutribd.com) · [Report Bug](https://github.com/ninazmul/nutribd/issues) · [Request Feature](https://github.com/ninazmul/nutribd/issues)
 
@@ -24,15 +24,19 @@ _A comprehensive, AI-driven personal fitness & nutrition platform for Bangladesh
 ## 📋 Table of Contents
 
 - [Overview](#-overview)
+- [What's New in v2.2.1](#-whats-new-in-v221)
 - [Key Features & Functional Breakdown](#-key-features--functional-breakdown)
-  - [🤖 AI Health Intelligence Engine](#-ai-health-intelligence-engine-gemini-ai)
+  - [🤖 AI Health Intelligence Engine (Gemini AI)](#-ai-health-intelligence-engine-gemini-ai)
   - [🍽️ Diet & Nutrition Tracker](#-diet--nutrition-tracker)
   - [💪 Workout & Training Tracker](#-workout--training-tracker)
   - [📈 Progress, Body Analytics & Recomposition](#-progress-body-analytics--recomposition)
   - [💤 Sleep & Recovery Tracker](#-sleep--recovery-tracker)
   - [💧 Hydration Tracker](#-hydration-tracker)
   - [👤 Profile & Biometric Engine](#-profile--biometric-engine)
-- [System Architecture](#-system-architecture)
+- [⚡ Performance, Indexing & Architecture](#-performance-indexing--architecture)
+  - [Database Indexing Schema](#database-indexing-schema)
+  - [N+1 Query Elimination & DSA](#n1-query-elimination--dsa)
+  - [Lazy Loading & Client Component Optimization](#lazy-loading--client-component-optimization)
 - [Tech Stack](#-tech-stack)
 - [Getting Started](#-getting-started)
   - [Prerequisites](#prerequisites)
@@ -52,7 +56,7 @@ _A comprehensive, AI-driven personal fitness & nutrition platform for Bangladesh
 
 ## 🚀 Overview
 
-**NutriBD** is an all-in-one AI fitness and nutrition intelligence platform built for modern lifestyles and localized nutrition (including a comprehensive Bangladeshi & international food database). 
+**NutriBD** is an all-in-one AI fitness and nutrition intelligence platform built for modern lifestyles and localized nutrition (including a comprehensive Bangladeshi & international food database).
 
 It combines **Google Gemini AI** with precision exercise science and metabolic algorithms to provide:
 - **AI Health Score (0–100)** with interactive **Ask AI Coach** Q&A.
@@ -61,6 +65,16 @@ It combines **Google Gemini AI** with precision exercise science and metabolic a
 - **Body Recomposition Matrix** (analyzes 9-point circumference changes vs. weight velocity to track fat loss vs. muscle retention).
 - **Barcode Scanner** & dual-mode portion calculator (multiplier mode and gram-scale mode).
 - **12:00 AM Midnight Day Reset** synced to user's local timezone.
+- **Sub-150KB First Load JS** with intelligent component lazy loading and compound MongoDB indexing.
+
+---
+
+## ⚡ What's New in v2.2.1
+
+- **Dependency Optimization:** Removed heavy unused dependencies (`html2canvas`, `jspdf`, `xlsx`) and pruned 30+ transitive packages; replaced with zero-dependency browser standards (`Blob`, UTF-8 CSV exports, and native `window.print()`).
+- **Comprehensive MongoDB Compound & Text Indexing:** Tailored compound indexes across all collections (`MealLog`, `WorkoutLog`, `WeightLog`, `Food`, `SavedMeal`, `BodyMeasurement`), eliminating unindexed collscans.
+- **Elimination of N+1 & Unbounded Queries:** Bounded streak tracking to 365 days, added index-backed projection in personal records queries, and scoped weight history queries.
+- **Lazy Loading with Recharts:** Replaced top-level Recharts imports with standalone dynamically loaded components (`WeeklyNutritionChart` & `WeeklyWeightChart`) and skeleton placeholders.
 
 ---
 
@@ -68,7 +82,7 @@ It combines **Google Gemini AI** with precision exercise science and metabolic a
 
 ### 🤖 AI Health Intelligence Engine (Gemini AI)
 
-- **AI Health & Performance Score (0–100):** Multi-dimensional score evaluating Nutrition (35%), Workouts (25%), Recovery (20%), and Hydration (20%) with performance grade and component sub-rings.
+- **AI Health & Performance Score (0–100):** Multi-dimensional score evaluating Nutrition (35%), Workouts (25%), Recovery (20%), and Hydration (20%) with component sub-rings.
 - **Executive Coach Briefing:** Weekly holistic summary of physical progress, key strengths, and growth areas.
 - **Interactive Ask AI Coach:** Live context-aware Q&A chat assistant with quick prompt pills, tailored specifically to the user's live profile, diet logs, and workout history.
 - **7-Day Action Gameplan:** High-impact, prioritized action checklist for the coming week.
@@ -87,91 +101,96 @@ It combines **Google Gemini AI** with precision exercise science and metabolic a
 ### 💪 Workout & Training Tracker
 
 - **Session Logging:** Track workout types (Strength, Cardio, HIIT, Sports, Functional), duration, exercises, sets, reps, weight lifted, and estimated calorie burn.
+- **Personal Records (PRs):** High-speed server action projection calculating personal records across volume ($weight \times reps$) per exercise.
 - **Consistency Monitor:** Weekly workout frequency counter against profile targets with recovery pacing.
 
 ### 📈 Progress, Body Analytics & Recomposition
 
 - **AI Goal Trajectory Forecaster:** Predicts target weight arrival date based on actual weight delta velocity, deficit/surplus, and plateau detection.
 - **AI Body Recomposition Matrix:** Evaluates 9-point circumference delta against scale weight to assess muscle retention vs. fat loss.
-- **9-Point Body Measurement Modal:** Logs Chest, Waist, Hips, Shoulders, Neck, Arm (Bicep), Forearm, Thigh, and Calf with date selector defaulting to today and historical delta badges.
-- **Longitudinal Weight Charts:** 7, 30, and 60-day interactive area charts with moving averages.
+- **9-Point Body Measurement Modal:** Logs Chest, Waist, Hips, Shoulders, Neck, Arm (Bicep), Forearm, Thigh, and Calf with historical delta badges.
+- **Longitudinal Weight Charts:** Interactive 7, 30, and 60-day trend lines with moving averages and linear regression forecasts.
 
 ### 💤 Sleep & Recovery Tracker
 
-- **Sleep Session Tracker:** Log bedtime, wake time, duration (including overnight split calculation), and 1–5 star sleep quality.
-- **AI Recovery Index:** Evaluates sleep trends to output readiness scores (*Peak Performance*, *Optimal Recovery*, *Moderate Fatigue*) and training advice.
+- **Dual-Mode Sleep Tracking:** Log multi-session sleep periods (e.g., night sleep + afternoon power naps) with sleep/wake timestamps, duration, and quality ratings (1–5 stars).
+- **Quality Aggregations:** Calculates rolling sleep averages and correlates recovery quality with workout performance.
 
 ### 💧 Hydration Tracker
 
-- **Hydration Logging:** Quick-log water presets (+250ml, +500ml) with daily target rings and morning hydration protocols.
+- **Quick-Tap Logging:** Presets for 250ml (Cup), 500ml (Bottle), and 1000ml (Large Flask).
+- **Daily Target Rings:** Real-time hydration percentage tracking against personalized daily targets based on body weight.
 
 ### 👤 Profile & Biometric Engine
 
-- **Biometric Calculators:**
-  - **BMI** (Body Mass Index) & Classification
-  - **BMR** (Mifflin-St Jeor) & **TDEE** (Activity Multipliers)
-  - **Ideal Weight Range** (Hamwi formula)
-  - **US Navy Body Fat %** & Lean Body Mass
-  - **WHR** (Waist-to-Hip) & **WHtR** (Waist-to-Height) cardiovascular risk profiling
-- **AI Profile Assessment:** Customized metabolic profile, pre/post-workout nutrient timing blueprint, training split recommendations, and longevity roadmap.
+- **Comprehensive Health Metrics:** Calculates BMI, Mifflin-St Jeor BMR, Activity-Adjusted TDEE, Waist-to-Hip Ratio (WHR), Waist-to-Height Ratio (WHtR), and US Navy Body Fat Percentage.
+- **Adaptive Macro Calculations:** Automatically recalibrates daily calories, protein (2.0g/kg), fat (25%), carbs, and fiber targets whenever weight updates.
 
 ---
 
-## 🏗️ System Architecture
+## ⚡ Performance, Indexing & Architecture
 
-```mermaid
-graph TD
-    Client[Next.js 15 Client - React 19] -->|Server Actions| AppRouter[Next.js App Router]
+### Database Indexing Schema
 
-    subgraph Authentication & Security
-        Clerk[Clerk Auth] -->|JWT Session| AppRouter
-    end
+Every model includes tailored indexes matching the primary queries of the application:
 
-    subgraph AI Intelligence Layer
-        AppRouter -->|Gemini 1.5 / 2.0 Flash| GeminiAPI[Google Gemini API]
-        AppRouter -->|Deterministic Rule Engine| FallbackEngine[Culinary & Metabolic Engine]
-    end
+```typescript
+// MealLog
+MealLogSchema.index({ clerkId: 1, date: 1, mealType: 1 }, { unique: true });
+MealLogSchema.index({ clerkId: 1, date: 1 });
+MealLogSchema.index({ clerkId: 1, createdAt: -1 });
 
-    subgraph Core Server Actions
-        AppRouter --> AIAnalytics[ai-analytics.actions.ts]
-        AppRouter --> AIProgress[ai-progress.actions.ts]
-        AppRouter --> AIProfile[ai-profile.actions.ts]
-        AppRouter --> AIFood[ai-food.actions.ts]
-        AppRouter --> MealActions[meal.actions.ts]
-        AppRouter --> WorkoutActions[workout.actions.ts]
-        AppRouter --> WeightActions[weight.actions.ts]
-        AppRouter --> WaterSleep[water-sleep.actions.ts]
-        AppRouter --> BodyMeas[body-measurement.actions.ts]
-    end
+// Food
+FoodSchema.index({ name: "text" });
+FoodSchema.index({ isCustom: 1, clerkId: 1 });
+FoodSchema.index({ isCustom: 1, category: 1 });
+FoodSchema.index({ name: 1, category: 1 });
 
-    subgraph Database Layer
-        AIAnalytics & MealActions & WorkoutActions & WeightActions --> MongoDB[(MongoDB / Mongoose 8)]
-        MongoDB --> UserProfileModel[UserProfile Model]
-        MongoDB --> MealLogModel[MealLog Model]
-        MongoDB --> WorkoutLogModel[WorkoutLog Model]
-        MongoDB --> WeightLogModel[WeightLog Model]
-        MongoDB --> SleepLogModel[SleepLog Model]
-        MongoDB --> WaterLogModel[WaterLog Model]
-        MongoDB --> BodyMeasModel[BodyMeasurement Model]
-    end
+// WorkoutLog
+WorkoutLogSchema.index({ clerkId: 1, date: -1 });
+WorkoutLogSchema.index({ clerkId: 1, date: 1 });
+WorkoutLogSchema.index({ clerkId: 1, "exercises.exerciseName": 1 });
+
+// WeightLog
+WeightLogSchema.index({ clerkId: 1, date: -1 }, { unique: true });
+WeightLogSchema.index({ clerkId: 1, date: 1 });
+
+// SavedMeal
+SavedMealSchema.index({ clerkId: 1, usageCount: -1, createdAt: -1 });
+
+// BodyMeasurement
+BodyMeasurementSchema.index({ clerkId: 1, date: -1, updatedAt: -1 });
 ```
+
+### N+1 Query Elimination & DSA
+
+- **Bounded Streak Calculation:** Uses a 365-day indexed date cutoff (`date: { $gte: oneYearAgoStr }`) and builds an in-memory `Set<string>` for $O(1)$ consecutive day lookups.
+- **Selective Projection for PRs:** Fetches only `{ "exercises.exerciseName": 1, "exercises.sets.weight": 1, "exercises.sets.reps": 1, date: 1 }` to compute volume records in a single linear pass.
+- **Parallel Multi-Range Stats:** Resolves counts, latest readings, and 30-day windows concurrently via `Promise.all`.
+
+### Lazy Loading & Client Component Optimization
+
+- Heavy charting libraries (`Recharts`, ~250KB) are split out into standalone components (`WeeklyNutritionChart` & `WeeklyWeightChart`) and imported with `next/dynamic({ ssr: false })` + skeleton loaders.
+- Dashboard initial bundle size is minimized (~133 kB First Load JS).
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Domain | Technology | Description |
-| :--- | :--- | :--- |
-| **Framework** | [Next.js 15](https://nextjs.org/) | App Router, Server Actions & React Server Components |
-| **UI Library** | [React 19](https://react.dev/) | Client components, hooks, and responsive state |
-| **Language** | [TypeScript 5](https://www.typescriptlang.org/) | 100% strict type safety across client and server |
-| **Styling** | [Tailwind CSS 3.4](https://tailwindcss.com/) | Glassmorphism design system & dark mode tokens |
-| **AI Engine** | [Google Gemini AI](https://ai.google.dev/) | Gemini 1.5 Flash natural language & predictive analysis |
-| **Database** | [MongoDB](https://www.mongodb.com/) + [Mongoose 8](https://mongoosejs.com/) | Cloud document database with indexed schemas |
-| **Authentication** | [Clerk Auth](https://clerk.com/) | Passwordless, OAuth & secure multi-tenant user management |
-| **Charts & Viz** | [Recharts](https://recharts.org/) | Responsive SVG charts for weight, sleep, and macro trends |
-| **Barcode Scanner** | `@zxing/browser` | Camera-based barcode recognition |
-| **Validations** | `zod` | Client & server schema validation |
+| Layer | Technologies |
+| :--- | :--- |
+| **Framework** | [Next.js 16 (App Router + Turbopack)](https://nextjs.org/) + [React 19](https://react.dev/) |
+| **Language** | [TypeScript 5](https://www.typescriptlang.org/) |
+| **Styling** | [Tailwind CSS 3.4](https://tailwindcss.com/) + CSS Variables Glassmorphism |
+| **UI Components** | [Radix UI Primitives](https://www.radix-ui.com/), [Lucide React](https://lucide.dev/) |
+| **Animation** | [Framer Motion](https://www.framer.com/motion/) |
+| **Charts** | [Recharts 3](https://recharts.org/) (Lazy-Loaded) |
+| **Database & ODM** | [MongoDB](https://www.mongodb.com/) + [Mongoose 8](https://mongoosejs.com/) |
+| **Authentication** | [Clerk Authentication](https://clerk.com/) |
+| **AI Intelligence** | [Google Gemini AI API](https://ai.google.dev/) (`gemini-1.5-flash`) |
+| **Barcode Scanning** | [Html5-Qrcode](https://github.com/mebjas/html5-qrcode) + OpenFoodFacts API |
+| **Form Validation** | [React Hook Form](https://react-hook-form.com/) + [Zod 3](https://zod.dev/) |
+| **PWA Support** | [@ducanh2912/next-pwa](https://github.com/DuCanhDe/next-pwa) |
 
 ---
 
@@ -179,104 +198,78 @@ graph TD
 
 ### Prerequisites
 
-Ensure you have the following installed on your machine:
-- **Node.js**: `v18.17.0` or higher (Node v20+ recommended)
-- **npm**: `v9.0.0` or higher
-- **MongoDB**: A running local MongoDB instance or a [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) cluster URI.
-- **Clerk Account**: Free account on [Clerk.com](https://clerk.com) for authentication keys.
-- **Google Gemini API Key** *(Optional for AI features)*: Obtain from [Google AI Studio](https://aistudio.google.com/).
-
----
+- **Node.js**: `v18.18.0` or higher (Node 20+ recommended)
+- **Package Manager**: `npm` (or `pnpm` / `yarn`)
+- **MongoDB Database**: Local MongoDB instance or free [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) cluster
+- **Clerk Account**: For user management ([clerk.com](https://clerk.com/))
+- **Google AI Studio API Key**: For Gemini AI capabilities ([aistudio.google.com](https://aistudio.google.com/))
 
 ### Installation
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/ninazmul/nutribd.git
-   cd nutribd
-   ```
+```bash
+# 1. Clone the repository
+git clone https://github.com/ninazmul/nutribd.git
+cd nutribd
 
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
----
+# 2. Install dependencies
+npm install
+```
 
 ### Environment Configuration
 
-Create a `.env.local` file in the root directory:
+Create a `.env.local` file in the project root:
 
 ```env
-# Clerk Authentication Keys
+# MongoDB Connection
+MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/nutribd?retryWrites=true&w=majority
+
+# Clerk Authentication
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
 CLERK_SECRET_KEY=sk_test_...
-
-# Clerk Route Redirects
 NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
 NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
 NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/
 NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/
 
-# Database Connection
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/NutriBD?retryWrites=true&w=majority
-
-# Google Gemini AI API Key (Optional — deterministic fallback active if omitted)
+# Google Gemini AI API
 GEMINI_API_KEY=AIzaSy...
 
-# Public Site URL
-NEXT_PUBLIC_SITE_URL=https://NutriBD.artistycode.studio
+# Public Application URL
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+```
+
+### Running the Application
+
+```bash
+# Start local development server
+npm run dev
+
+# Open http://localhost:3000 in your browser
 ```
 
 ---
 
-### Running the Application
+## 📂 Project Structure
 
-1. **Start Development Server:**
-   ```bash
-   npm run dev
-   ```
-   Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-2. **Build for Production:**
-   ```bash
-   npm run build
-   npm run start
-   ```
-
----
-
-## 🔑 Environment Variables
-
-| Variable | Type | Required | Description |
-| :--- | :---: | :---: | :--- |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | String | Yes | Clerk public API key |
-| `CLERK_SECRET_KEY` | String | Yes | Clerk secret key for token validation |
-| `MONGODB_URI` | String | Yes | MongoDB connection string |
-| `GEMINI_API_KEY` | String | No | Google Gemini API key for AI features |
-| `NEXT_PUBLIC_SITE_URL` | String | No | Canonical site URL for SEO metadata |
-
----
-
-## 📁 Project Structure
-
-```text
-nutribd/
+```
+fit-os/
 ├── app/
-│   ├── (auth)/              # Public Clerk authentication routes (sign-in, sign-up)
-│   ├── (root)/              # Core authenticated application modules
-│   │   ├── diet/            # Meal logging, food DB, barcode scanner, recipe AI
-│   │   ├── workout/         # Workout logging & exercise history
-│   │   ├── progress/        # Weight charts, body measurements & AI trajectory
-│   │   ├── analytics/       # AI Health Score, Executive Coach & Ask AI Coach
-│   │   ├── profile/         # Health profile, BMI/BMR/TDEE & AI metabolic audit
-│   │   ├── settings/        # App preferences & About card
-│   │   └── page.tsx         # Real-time Daily Dashboard
-│   ├── api/                 # API endpoints
-│   ├── globals.css          # Tailwind CSS design system tokens & glassmorphism
-│   └── layout.tsx           # Root layout with ClerkProvider, themes & metadata
+│   ├── (auth)/              # Clerk sign-in and sign-up pages
+│   ├── (root)/              # Core authenticated application pages
+│   │   ├── analytics/       # AI Health Score, Executive Briefing, Ask AI Coach
+│   │   ├── diet/            # Meal logging, barcode scan, AI recipe parser
+│   │   ├── profile/         # Biometrics, metabolic profiling, macro adjustments
+│   │   ├── progress/        # Body recomposition, 9-point measurements, weight trends
+│   │   ├── settings/        # App preferences & version details
+│   │   ├── workout/         # Workout logging, PR tracking, exercise history
+│   │   ├── layout.tsx       # Root layout with DesktopSidebar & BottomNav
+│   │   └── page.tsx         # Daily Mission Dashboard
+│   ├── api/                 # Barcode and external integration endpoints
+│   ├── globals.css          # Design system, CSS variables & glassmorphic tokens
+│   └── layout.tsx           # ClerkProvider & ThemeProvider wrapper
 ├── components/
-│   ├── navigation/          # Navbar, DesktopSidebar, NavigationSheet
+│   ├── dashboard/           # Lazy-loaded dashboard charts (WeeklyNutrition, WeeklyWeight)
+│   ├── navigation/          # DesktopSidebar, BottomNav, TopNavbar, NavigationSheet
 │   ├── shared/              # StatCard, BarcodeScanner, BodyMeasurementModal, QuickAdd
 │   └── ui/                  # Radix UI primitives (Button, Dialog, Tabs, etc.)
 ├── lib/
@@ -285,9 +278,13 @@ nutribd/
 │   │   ├── ai-progress.actions.ts   # Trajectory forecasting & recomposition
 │   │   ├── ai-profile.actions.ts    # Metabolic profiling & longevity roadmap
 │   │   ├── ai-food.actions.ts       # Natural language recipe parser & macro calculator
+│   │   ├── dashboard.actions.ts     # Daily aggregations, mission & streak
+│   │   ├── workout.actions.ts       # Workout logging & PR calculations
+│   │   ├── weight.actions.ts        # Weight stats & adaptive macro adjustments
 │   │   └── ...                      # Core database CRUD actions
 │   ├── database/            # Mongoose models & database connection
-│   ├── constants.ts         # Centralized branding, versioning & global config
+│   ├── constants.ts         # Centralized branding, versioning (v2.2.1) & global config
+│   ├── export-utils.ts      # Native zero-dependency CSV and print export utilities
 │   ├── food-portion.ts      # Dual-mode portion & gram quantity calculator
 │   └── utils.ts             # Date formatting & timezone midnight synchronization
 ├── types/                   # Global TypeScript definitions
@@ -298,16 +295,17 @@ nutribd/
 
 ## 🗄️ Database Models
 
-| Model | Description | Key Fields |
+| Model | Description | Key Fields & Indexes |
 | :--- | :--- | :--- |
-| **`UserProfile`** | Core user biometrics & goals | `clerkId`, `age`, `gender`, `height`, `currentWeight`, `targetWeight`, `goal`, `activityLevel`, `dailyCaloriesGoal`, `dailyProteinGoal`, `waterGoalMl`, `workoutDaysPerWeek` |
-| **`MealLog`** | Daily nutrition logs | `clerkId`, `date`, `mealType`, `items` (`name`, `calories`, `protein`, `carbs`, `fat`, `fiber`, `quantity`, `portionEaten`), `totalCalories`, `totalProtein`, `totalCarbs`, `totalFat` |
-| **`WorkoutLog`** | Training sessions | `clerkId`, `date`, `title`, `workoutType`, `durationMinutes`, `caloriesBurned`, `exercises` (`name`, `sets`, `reps`, `weightKg`) |
-| **`WeightLog`** | Daily scale entries | `clerkId`, `date`, `weight`, `notes` |
-| **`BodyMeasurement`** | 9-point circumference logs | `clerkId`, `date`, `waist`, `chest`, `hip`, `neck`, `shoulder`, `arm`, `forearm`, `thigh`, `calf` |
-| **`SleepLog`** | Sleep & recovery sessions | `clerkId`, `date`, `totalHours`, `sessions` (`sleepTime`, `wakeTime`, `totalHours`, `quality`, `notes`) |
-| **`WaterLog`** | Daily hydration records | `clerkId`, `date`, `totalMl`, `entries` (`amountMl`, `timestamp`) |
-| **`SavedMeal`** | User-saved meal presets | `clerkId`, `name`, `mealType`, `items`, `totalCalories`, `totalProtein`, `totalCarbs`, `totalFat` |
+| **`UserProfile`** | Core user biometrics & goals | `clerkId` (unique), `age`, `gender`, `height`, `currentWeight`, `targetWeight`, `goal`, `activityLevel`, `dailyCaloriesGoal`, `dailyProteinGoal`, `waterGoalMl` |
+| **`MealLog`** | Daily nutrition logs | `clerkId`, `date`, `mealType`, `items`, `totalCalories`, `totalProtein`, `totalCarbs`, `totalFat`<br>Indexes: `{ clerkId, date, mealType }` (unique), `{ clerkId, date }`, `{ clerkId, createdAt }` |
+| **`WorkoutLog`** | Training sessions | `clerkId`, `date`, `title`, `workoutType`, `durationMinutes`, `caloriesBurned`, `exercises`<br>Indexes: `{ clerkId, date }`, `{ clerkId, "exercises.exerciseName" }` |
+| **`WeightLog`** | Daily scale entries | `clerkId`, `date`, `weight`, `notes`<br>Indexes: `{ clerkId, date }` (unique), `{ clerkId, date: 1 }` |
+| **`BodyMeasurement`** | 9-point circumference logs | `clerkId`, `date`, `waist`, `chest`, `hip`, `neck`, `shoulder`, `arm`, `forearm`, `thigh`, `calf`<br>Indexes: `{ clerkId, date, updatedAt }` |
+| **`SleepLog`** | Sleep & recovery sessions | `clerkId`, `date`, `totalHours`, `sessions` (`sleepTime`, `wakeTime`, `totalHours`, `quality`, `notes`)<br>Indexes: `{ clerkId, date }` (unique) |
+| **`WaterLog`** | Daily hydration records | `clerkId`, `date`, `totalMl`, `entries` (`amountMl`, `time`)<br>Indexes: `{ clerkId, date }` (unique) |
+| **`Food`** | Food item database | `name`, `category`, `servingSize`, `calories`, `protein`, `carbs`, `fat`, `fiber`, `isCustom`, `clerkId`<br>Indexes: `text(name)`, `{ isCustom, clerkId }`, `{ isCustom, category }` |
+| **`SavedMeal`** | User-saved meal presets | `clerkId`, `name`, `category`, `items`, `totalCalories`, `usageCount`<br>Indexes: `{ clerkId, usageCount, createdAt }` |
 
 ---
 
@@ -315,9 +313,9 @@ nutribd/
 
 | Route | Purpose | Key Features |
 | :--- | :--- | :--- |
-| `/` | Daily Dashboard | Quick log, calorie/macro rings, water progress, workout summary |
+| `/` | Daily Dashboard | Quick log, calorie/macro rings, hydration progress, mission checklist, lazy-loaded charts |
 | `/diet` | Diet & Nutrition | Barcode scanner, Bangladeshi food DB, AI recipe parser, dual quantity calculator |
-| `/workout` | Workout Tracker | Session logging, exercise history, volume and calorie burn tracking |
+| `/workout` | Workout Tracker | Session logging, exercise history, volume and PR tracking |
 | `/progress` | Progress & Body Analytics | Longitudinal weight charts, 9-point body measurement modal, AI trajectory forecaster |
 | `/analytics` | AI Health Intelligence | AI Health Score (0–100), Executive Coach briefing, Ask AI Coach Q&A, 7-day gameplan |
 | `/profile` | Profile & Metabolism | BMI, BMR, TDEE, WHR, US Navy body fat %, AI metabolic & nutrient timing blueprint |
@@ -329,11 +327,10 @@ nutribd/
 
 | Command | Description |
 | :--- | :--- |
-| `npm run dev` | Launches local development server with Turbopack |
+| `npm run dev` | Launches local development server |
 | `npm run build` | Compiles production bundle and runs type validation |
 | `npm run start` | Starts Node.js production server |
 | `npm run lint` | Runs ESLint syntax and code quality checks |
-| `npx tsc --noEmit` | Runs dry-run TypeScript compiler check |
 
 ---
 

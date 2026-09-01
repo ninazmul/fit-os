@@ -1,600 +1,331 @@
-# NutriBD Application Documentation
-
-## Overview
-
-NutriBD is a web application for managing personal fitness and nutrition tracking. Track workouts, nutrition, weight progress, body measurements, and analyze fitness metrics.
-
-The application is built with Next.js App Router, React, TypeScript, Clerk authentication, MongoDB, and Mongoose. Most business operations are implemented as Next.js server actions under `lib/actions`.
-
-## What The App Does
-
-The app covers these main business areas:
-
-- Admin authentication and authorization
-- Customer database management
-- Monthly invoice and bill generation
-- Payment status tracking
-- Invoice download and print support
-- Expense tracking
-- Dashboard metrics and charts
-- Income, expense, profit, and due reports
-- Company settings for invoice identity
-- Admin user management
-
-## User Roles And Access
-
-The app uses Clerk for user authentication and a local MongoDB `Admin` collection for authorization.
-
-Authentication answers: "Who is signed in?"
-
-Authorization answers: "Is this signed-in user allowed to use the ERP?"
-
-The protected app lives under the `(root)` route group. The root layout checks:
-
-1. Whether the user is signed in with Clerk.
-2. Whether the signed-in user's primary email exists in the `Admin` collection.
-3. If there are no admins yet, the first signed-in user is automatically saved as the first admin.
-
-If a user is not signed in, they are redirected to `/sign-in`.
-
-If a signed-in user is not an admin, they are redirected to `/access-denied`.
-
-## Main Routes
-
-### `/`
-
-Dashboard page.
-
-Shows:
-
-- Total customers
-- Active customers
-- Inactive customers
-- Disconnected customers
-- Current month collection
-- Current month due
-- Current month expenses
-- Current month profit
-- Monthly income chart
-- Monthly expenses chart
-- Recent payments
-- Recent expenses
-
-Main files:
-
-- `app/(root)/page.tsx`
-- `app/(root)/components/DashboardClient.tsx`
-- `lib/actions/dashboard.actions.ts`
-
-### `/customers`
-
-Customer management page.
-
-Allows admins to:
-
-- View customers
-- Search customers
-- Filter customers by status
-- Add a customer
-- Edit a customer
-- Soft-delete a customer
-
-Customer fields include:
-
-- Customer code
-- Name
-- Phone
-- Email
-- Address
-- Package name
-- Monthly fee
-- Connection date
-- Router
-- IP address
-- Status
-- Notes
-
-Main files:
-
-- `app/(root)/customers/page.tsx`
-- `app/(root)/customers/components/CustomersClient.tsx`
-- `app/(root)/customers/components/CustomerForm.tsx`
-- `lib/actions/customer.actions.ts`
-- `lib/database/models/customer.model.ts`
-
-### `/billing`
-
-Billing and invoice management page.
-
-Allows admins to:
-
-- View bills
-- Search bills
-- Filter by month, year, and status
-- Generate monthly bills
-- Mark an unpaid bill as paid
-- Download an invoice PDF
-- Print an invoice
-
-Monthly bill generation works by finding active customers and creating one bill per customer for the selected month and year. Existing bills for the same customer, month, and year are skipped.
-
-Bill status can be:
-
-- `Unpaid`
-- `Paid`
-
-Main files:
-
-- `app/(root)/billing/page.tsx`
-- `app/(root)/billing/components/BillingClient.tsx`
-- `app/(root)/billing/components/GenerateBillsForm.tsx`
-- `app/(root)/billing/components/MarkPaidForm.tsx`
-- `app/(root)/components/InvoiceDownloader.tsx`
-- `app/(root)/components/InvoiceTemplate.tsx`
-- `lib/actions/bill.actions.ts`
-- `lib/database/models/bill.model.ts`
-
-### `/expenses`
-
-Expense management page.
-
-Allows admins to:
-
-- View expenses
-- Search expenses
-- Filter by category, month, and year
-- Add an expense
-- Edit an expense
-- Delete an expense
-
-Expense categories:
-
-- Bandwidth
-- Electricity
-- Salary
-- Maintenance
-- Equipment
-- Rent
-- Transport
-- Miscellaneous
-
-Main files:
-
-- `app/(root)/expenses/page.tsx`
-- `app/(root)/expenses/components/ExpensesClient.tsx`
-- `app/(root)/expenses/components/ExpenseForm.tsx`
-- `lib/actions/expense.actions.ts`
-- `lib/database/models/expense.model.ts`
-
-### `/reports`
-
-Financial reports page.
-
-Shows:
-
-- Income report
-- Expense report
-- Profit report
-- Due report
-
-Reports can be filtered by month and year. Income, expense, and due data can be exported as CSV.
-
-Main files:
-
-- `app/(root)/reports/page.tsx`
-- `lib/actions/bill.actions.ts`
-- `lib/actions/expense.actions.ts`
-
-### `/settings`
-
-Company and invoice settings page.
-
-Allows admins to configure:
-
-- Company name
-- Logo URL
-- Phone
-- Email
-- Address
-- Invoice prefix
-- Currency
-
-The billing module uses the invoice prefix when generating invoice numbers.
-
-Main files:
-
-- `app/(root)/settings/page.tsx`
-- `app/(root)/settings/components/SettingsClient.tsx`
-- `lib/actions/setting.actions.ts`
-- `lib/database/models/setting.model.ts`
-
-### `/admins`
-
-Admin management page.
-
-Allows existing admins to:
-
-- View admin users
-- Add another admin by email
-- Remove an admin
-
-An admin cannot remove their own admin record.
-
-Main files:
-
-- `app/(root)/admins/page.tsx`
-- `app/(root)/admins/components/AdminsClient.tsx`
-- `lib/actions/admin.actions.ts`
-- `lib/database/models/admin.model.ts`
-
-### `/sign-in` and `/sign-up`
-
-Authentication pages powered by Clerk.
-
-Main files:
-
-- `app/(auth)/sign-in/[[...sign-in]]/page.tsx`
-- `app/(auth)/sign-up/[[...sign-up]]/page.tsx`
-
-### `/access-denied`
-
-Shown when a signed-in user does not have admin access.
-
-Main file:
-
-- `app/access-denied/page.tsx`
-
-## How The App Works
-
-### Request Flow
-
-1. A user opens the app.
-2. Clerk middleware and protected route logic verify authentication.
-3. The `(root)` layout checks admin authorization.
-4. Server pages load initial data by calling server actions.
-5. Client components render tables, forms, filters, buttons, and charts.
-6. User actions call server actions for database writes.
-7. Server actions connect to MongoDB, read or update data, and revalidate affected routes.
-8. Client components refresh local state by calling the related load function again.
-
-### Server Actions
-
-Server actions are stored in `lib/actions`.
-
-They are responsible for:
-
-- Connecting to MongoDB
-- Validating authorization where needed
-- Creating, reading, updating, and deleting records
-- Revalidating pages after writes
-- Returning serialized data to client components
-
-Action files:
-
-- `admin.actions.ts`
-- `bill.actions.ts`
-- `customer.actions.ts`
-- `dashboard.actions.ts`
-- `expense.actions.ts`
-- `setting.actions.ts`
-- `index.ts`
-
-### Database Connection
-
-The MongoDB connection is defined in `lib/database/index.ts`.
-
-It reads `MONGODB_URI` from environment variables and connects using Mongoose. The connection is cached on the global object so repeated server action calls can reuse the same connection during the server process lifetime.
-
-The app uses the MongoDB database name:
-
-```text
-nutribd
+# NutriBD (FitOS) – Comprehensive Application Documentation
+
+**Version:** 2.2.1  
+**Architecture:** Next.js 16 (App Router + Turbopack), React 19, TypeScript, Mongoose 8, Clerk Authentication, Google Gemini AI  
+**Author:** N. I. Nazmul (ArtistyCode Studio)  
+**Repository:** [github.com/ninazmul/nutribd](https://github.com/ninazmul/nutribd)
+
+---
+
+## Table of Contents
+
+1. [System Overview & Architecture](#1-system-overview--architecture)
+2. [Authentication & User Lifecycle](#2-authentication--user-lifecycle)
+3. [Core Application Modules](#3-core-application-modules)
+   - [Dashboard & Mission Control](#31-dashboard--mission-control)
+   - [Diet & Nutrition Engine](#32-diet--nutrition-engine)
+   - [Workout & Strength Tracker](#33-workout--strength-tracker)
+   - [Progress & Body Recomposition](#34-progress--body-recomposition)
+   - [AI Health Intelligence & Coaching](#35-ai-health-intelligence--coaching)
+   - [Profile & Metabolic Engine](#36-profile--metabolic-engine)
+   - [Hydration & Sleep Recovery](#37-hydration--sleep-recovery)
+4. [Google Gemini AI Integration Architecture](#4-google-gemini-ai-integration-architecture)
+5. [Database Schema, Models & Indexing](#5-database-schema-models--indexing)
+6. [Data Fetching, DSA & Performance Optimizations](#6-data-fetching-dsa--performance-optimizations)
+7. [Client-Side Component & Lazy Loading Strategy](#7-client-side-component--lazy-loading-strategy)
+8. [Export & Utility Infrastructure](#8-export--utility-infrastructure)
+9. [Project Directory & File Structure](#9-project-directory--file-structure)
+10. [Deployment & Environment Setup](#10-deployment--environment-setup)
+
+---
+
+## 1. System Overview & Architecture
+
+NutriBD is a high-performance web platform designed for personal fitness, nutrition tracking, body composition analytics, and real-time AI health coaching. The application is built with a server-first architecture using Next.js App Router, executing business logic within type-safe Server Actions and storing persistent data in MongoDB via Mongoose.
+
+```mermaid
+graph TD
+    Client[Next.js Client Components] -->|Server Actions / API| Server[Next.js 16 Server Layer]
+    Server -->|Auth Session Verification| Clerk[Clerk Auth]
+    Server -->|Mongoose Queries / Aggregations| DB[(MongoDB Database)]
+    Server -->|Contextual Health Prompts| Gemini[Google Gemini 1.5 Flash AI]
+    Server -->|Product Barcode Lookups| OFF[OpenFoodFacts API]
 ```
 
-### Authentication And Authorization
+### Key Architectural Principles:
+1. **Server Actions First**: All data operations (CRUD, AI generation, calculations) execute as Next.js Server Actions (`lib/actions/*.ts`), ensuring client-side bundle isolation for sensitive database models and API keys.
+2. **Zero Unnecessary Client JS**: Heavy charting (Recharts) and modal components are lazy-loaded on demand using `next/dynamic` with skeleton loaders.
+3. **Compound Database Indexing**: Every collection features compound indexes matching actual application query patterns (e.g. `{ clerkId: 1, date: -1 }`), eliminating full table scans.
+4. **Resilient Offline & PWA Support**: Configured with `@ducanh2912/next-pwa` to provide caching and offline fallbacks (`/~offline`).
 
-Clerk handles sign-in, sign-up, sessions, and current user lookup.
+---
 
-The local `Admin` model stores the emails of users allowed into the ERP.
+## 2. Authentication & User Lifecycle
 
-Important behavior:
+### Authentication Provider
+The app uses **Clerk** for user authentication, supporting passwordless email login, Google OAuth, and session token verification.
 
-- `checkIsAdmin()` checks the signed-in Clerk user's primary email.
-- If no admins exist, the current signed-in user becomes the first admin.
-- `addAdmin()`, `removeAdmin()`, and `getAllAdmins()` require the current user to already be an admin.
-
-### Dynamic Rendering
-
-The protected root layout uses Clerk auth and request cookies, so the route segment is marked as dynamic:
-
-```ts
-export const dynamic = "force-dynamic";
+### Protected Routing & Middleware
+The middleware (`middleware.ts`) secures all authenticated routes under `(root)`:
+```typescript
+const isProtectedRoute = createRouteMatcher([
+  "/((?!sign-in|sign-up|fitness-calculator|bmi-calculator|bmr-calculator|tdee-calculator|body-fat-calculator|about|ads.txt|robots.txt|sitemap.xml|manifest.webmanifest|api/uploadthing|api/barcode).*)",
+]);
 ```
 
-This prevents Next.js from trying to prerender authenticated pages statically.
+### Onboarding Flow
+1. When a new user logs in, `getDashboardData()` in `dashboard.actions.ts` searches for an existing `UserProfile` record tied to `clerkId: user.id`.
+2. If no profile exists, `getDashboardData()` returns `{ needsOnboarding: true }`.
+3. The dashboard opens the `OnboardingModal`, prompting for age, gender, height, current weight, target weight, goal, and activity level.
+4. On completion, `createOrUpdateProfile()` automatically calculates BMR, TDEE, macro distribution (calories, protein, carbs, fat, fiber, water goal) and marks `onboardingCompleted: true`.
 
-## Data Models
+---
 
-### Admin
+## 3. Core Application Modules
 
-Stores emails allowed to access the ERP.
+### 3.1 Dashboard & Mission Control (`/`)
+The main dashboard serves as the central cockpit for daily health tracking:
+- **Today's Mission Card**: Dynamic contextual recommendation based on current time and missing logs (e.g., morning weight reminder, hydration milestones, post-workout recovery).
+- **Daily Score (0–100)**: Granular scoring algorithm across 6 health dimensions:
+  - Calorie Target ($\pm 15\%$) = 25 pts
+  - Protein Target ($\ge 80\%$) = 20 pts
+  - Hydration Goal ($\ge 80\%$) = 20 pts
+  - Workout Logged = 15 pts
+  - Sleep Logged ($\ge 6\text{h}$) = 10 pts
+  - Daily Weight Logged = 10 pts
+- **Smart Weight Prediction**: Linear regression forecast analyzing 30-day weight trends to project estimated goal achievement dates.
+- **Stat Cards Grid**: Real-time rings and counters for Weight, Calories, Protein, Water, Workout, and Sleep.
+- **Weekly Charts (Lazy-Loaded)**: `WeeklyNutritionChart` (bar chart for calories & protein) and `WeeklyWeightChart` (gradient area chart for weight fluctuations).
+- **Quick Log Panels**: One-tap logging for water presets (250ml, 500ml, 1000ml) and sleep durations (6h, 7h, 7.5h, 8h).
 
-Fields:
+### 3.2 Diet & Nutrition Engine (`/diet`)
+- **Bangladeshi & Global Food Database**: Hundreds of curated items including traditional curries, rice, lentils, snacks, and international items.
+- **Dual-Mode Portion & Gram Calculator**:
+  - *Multiplier Mode*: Select $0.5\times$, $1\times$, $1.5\times$, $2\times$ servings.
+  - *Gram Mode*: Input exact grams (e.g. eating 65g of a 100g base entry) with automatic proportional calculation across calories, protein, carbs, fat, and fiber.
+- **Barcode Scanner**: Integrated camera scanner querying OpenFoodFacts with fallback to manual entry.
+- **Natural Language AI Recipe Estimator**: Gemini-powered parser converting recipe descriptions (ingredients, cooking oil, batch weight, eaten portion) into precise macro entries.
+- **Meal Classification**: Logs organized into Breakfast, Lunch, Dinner, and Snacks.
+- **Saved Meals (Templates)**: Save frequent multi-item meals for instant one-tap re-logging.
 
-- `email`
-- `createdAt`
-- `updatedAt`
+### 3.3 Workout & Strength Tracker (`/workout`)
+- **Session Logging**: Track split types (Push, Pull, Legs, Upper, Lower, Full Body, Cardio, Custom), duration, calorie burn, and notes.
+- **Exercise & Set Detail**: Log multiple exercises per session with set numbers, reps, lifted weight, and PR flags.
+- **Personal Records Engine (`getPersonalRecords`)**: Evaluates max volume ($weight \times reps$) per exercise across user history using selective projection.
+- **Volume & Consistency Stats**: Calculates total volume lifted, weekly frequency against goals, and workout distribution.
 
-### Customer
+### 3.4 Progress & Body Analytics (`/progress`)
+- **Longitudinal Weight Trajectory**: 7, 30, and 60-day interactive area charts with moving averages and weekly delta velocity.
+- **9-Point Body Measurement Tracking**:
+  - Track Neck, Shoulders, Chest, Waist, Hips, Arms (Biceps), Forearms, Thighs, and Calves.
+  - Historical comparison delta badges comparing latest entries to previous logs.
+- **AI Goal Trajectory Forecaster**: Evaluates weekly loss/gain velocity and predicts milestone dates with plateau detection.
+- **AI Body Recomposition Matrix**: Cross-references circumference shifts against scale weight changes to evaluate whether weight loss represents fat reduction or muscle preservation.
 
-Stores ISP customer details.
+### 3.5 AI Health Intelligence & Coaching (`/analytics`)
+- **AI Health Score (0–100)**: Multi-pillar performance score weighted across Nutrition (35%), Workouts (25%), Recovery (20%), and Hydration (20%).
+- **Executive Coach Briefing**: Personalized weekly summary generated by Gemini AI identifying primary achievements, risks, and recommended pivots.
+- **Interactive Ask AI Coach**: Context-aware chat interface pre-loaded with the user's live profile, recent nutrition logs, and workout history.
+- **7-Day Action Gameplan**: Prioritized weekly action checklist.
+- **Cross-Metric Correlations**: Surfaces physiological insights (e.g., impact of sleep quality on caloric intake or workout performance).
 
-Fields:
+### 3.6 Profile & Metabolic Engine (`/profile`)
+- **Biometric Calculations**:
+  - BMI & BMI Classification.
+  - Mifflin-St Jeor Basal Metabolic Rate (BMR).
+  - Activity-Adjusted Total Daily Energy Expenditure (TDEE).
+  - Waist-to-Hip Ratio (WHR) & Cardiovascular Risk Rating.
+  - Waist-to-Height Ratio (WHtR).
+  - US Navy Circumference-Based Body Fat Percentage.
+  - Lean Body Mass vs. Fat Mass breakdown.
+- **Adaptive Macro Adjustment**: When weight is updated in `logWeight()`, the profile automatically recalculates daily calories, protein (2.0g/kg), fat (25%), and hydration goals.
 
-- `customerCode`
-- `name`
-- `phone`
-- `email`
-- `address`
-- `packageName`
-- `monthlyFee`
-- `connectionDate`
-- `router`
-- `ipAddress`
-- `status`
-- `notes`
-- `isDeleted`
-- `createdAt`
-- `updatedAt`
+### 3.7 Hydration & Sleep Recovery
+- **Hydration Tracking**:
+  - Time-stamped water entry log with one-tap removal.
+  - Real-time progress towards calculated weight-based hydration target (35ml/kg).
+- **Sleep Tracking**:
+  - Multi-session logging (night sleep + naps) with sleep time, wake time, duration, and quality ratings (1–5 stars).
+  - Rolling sleep averages and recovery quality metrics.
 
-Customer status values:
+---
 
-- `Active`
-- `Inactive`
-- `Disconnected`
+## 4. Google Gemini AI Integration Architecture
 
-Customers are soft-deleted by setting `isDeleted` to `true`.
+All AI capabilities run on Google's `gemini-1.5-flash` model via `@google/genai` or direct API calls within secure server actions.
 
-### Bill
+```mermaid
+sequenceDiagram
+    participant UI as Client Component
+    participant Action as Next.js Server Action
+    participant DB as MongoDB
+    participant Gemini as Google Gemini AI API
 
-Stores monthly customer bills.
-
-Fields:
-
-- `customer`
-- `month`
-- `year`
-- `amount`
-- `status`
-- `paymentDate`
-- `paymentMethod`
-- `remarks`
-- `invoiceNumber`
-- `createdAt`
-- `updatedAt`
-
-Bill status values:
-
-- `Paid`
-- `Unpaid`
-
-The schema has a unique index on:
-
-```text
-customer + month + year
+    UI->>Action: triggerAIAnalytics() / askAICoach()
+    Action->>DB: Fetch Profile + 7-Day Multi-Collection Data (Promise.all)
+    DB-->>Action: Lean Data Snapshots
+    Action->>Gemini: Structured Prompt with User Metrics & Context
+    Gemini-->>Action: Structured JSON / Natural Language Response
+    Action-->>UI: Sanitized & Validated Output
 ```
 
-This prevents duplicate monthly bills for the same customer.
+### Server Action Manifest:
+- `lib/actions/ai-analytics.actions.ts`: Computes the comprehensive AI Health Score, Executive Briefing, Ask AI Coach conversations, and Cross-Metric Correlations.
+- `lib/actions/ai-food.actions.ts`: Converts natural language recipes into macro estimations with culinary safety checks.
+- `lib/actions/ai-progress.actions.ts`: Calculates goal trajectory forecasts, milestone predictions, and body recomposition analysis.
+- `lib/actions/ai-profile.actions.ts`: Generates personalized longevity roadmaps and nutrient timing blueprints.
 
-### Expense
+---
 
-Stores business expenses.
+## 5. Database Schema, Models & Indexing
 
-Fields:
+All schemas are defined using Mongoose (`lib/database/models/`). Every schema features explicit compound and text indexes tailored for application queries:
 
-- `title`
-- `category`
-- `amount`
-- `expenseDate`
-- `description`
-- `createdAt`
-- `updatedAt`
+```typescript
+// 1. MealLog (lib/database/models/meal-log.model.ts)
+MealLogSchema.index({ clerkId: 1, date: 1, mealType: 1 }, { unique: true });
+MealLogSchema.index({ clerkId: 1, date: 1 });
+MealLogSchema.index({ clerkId: 1, createdAt: -1 });
 
-### Setting
+// 2. Food (lib/database/models/food.model.ts)
+FoodSchema.index({ name: "text" });
+FoodSchema.index({ isCustom: 1, clerkId: 1 });
+FoodSchema.index({ isCustom: 1, category: 1 });
+FoodSchema.index({ name: 1, category: 1 });
 
-Stores company and invoice settings.
+// 3. WorkoutLog (lib/database/models/workout-log.model.ts)
+WorkoutLogSchema.index({ clerkId: 1, date: -1 });
+WorkoutLogSchema.index({ clerkId: 1, date: 1 });
+WorkoutLogSchema.index({ clerkId: 1, "exercises.exerciseName": 1 });
 
-Fields:
+// 4. WeightLog (lib/database/models/weight-log.model.ts)
+WeightLogSchema.index({ clerkId: 1, date: -1 }, { unique: true });
+WeightLogSchema.index({ clerkId: 1, date: 1 });
 
-- `companyName`
-- `logo`
-- `phone`
-- `email`
-- `address`
-- `invoicePrefix`
-- `currency`
-- `createdAt`
-- `updatedAt`
+// 5. SavedMeal (lib/database/models/saved-meal.model.ts)
+SavedMealSchema.index({ clerkId: 1, usageCount: -1, createdAt: -1 });
 
-If no settings document exists, the app creates one with default values.
+// 6. BodyMeasurement (lib/database/models/body-measurement.model.ts)
+BodyMeasurementSchema.index({ clerkId: 1, date: -1, updatedAt: -1 });
 
-## Core Business Workflows
+// 7. WaterLog (lib/database/models/water-log.model.ts)
+WaterLogSchema.index({ clerkId: 1, date: 1 }, { unique: true });
 
-### First Admin Setup
+// 8. SleepLog (lib/database/models/sleep-log.model.ts)
+SleepLogSchema.index({ clerkId: 1, date: 1 }, { unique: true });
 
-1. Configure Clerk and MongoDB.
-2. Start the app.
-3. Sign in with Clerk.
-4. If the `Admin` collection is empty, the signed-in user's primary email is inserted as the first admin.
-5. That user can then open `/admins` and add more admin emails.
+// 9. UserProfile (lib/database/models/user-profile.model.ts)
+UserProfileSchema.index({ clerkId: 1 }, { unique: true });
+```
 
-### Add A Customer
+---
 
-1. Open `/customers`.
-2. Click `Add Customer`.
-3. Fill in customer details.
-4. Submit the form.
-5. The server creates a customer code like `CUST001`, `CUST002`, and so on.
-6. The customer appears in the customer table.
+## 6. Data Fetching, DSA & Performance Optimizations
 
-### Generate Monthly Bills
+To ensure millisecond response times and eliminate N+1 query bottlenecks, the following algorithmic and data structural optimizations are implemented:
 
-1. Open `/billing`.
-2. Click `Generate Monthly Bills`.
-3. Select month and year.
-4. The server finds active customers.
-5. For each active customer, the app checks whether a bill already exists for that month and year.
-6. If no bill exists, the app creates a new unpaid bill using the customer's monthly fee.
-7. Existing bills are skipped.
-8. The UI shows how many bills were generated and skipped.
+### 1. Bounded Streak Computation ($O(1)$ Hash Set Lookup)
+- **Previous Bottleneck**: Unbounded query fetching every meal and workout log in database history.
+- **Optimization**: Bounded to last 365 days using `{ clerkId: user.id, date: { $gte: oneYearAgoStr } }`. All logged dates are inserted into an in-memory `Set<string>`. Consecutive day streak checks run in $O(1)$ time per day.
 
-### Mark A Bill As Paid
+### 2. High-Speed Personal Records Projection
+- **Optimization**: `getPersonalRecords` uses MongoDB selective projection `{ "exercises.exerciseName": 1, "exercises.sets.weight": 1, "exercises.sets.reps": 1, date: 1 }` to aggregate max volume records in a single pass without loading unnecessary document properties.
 
-1. Open `/billing`.
-2. Find an unpaid bill.
-3. Click `Mark Paid`.
-4. Enter payment date, method, and optional remarks.
-5. The bill status becomes `Paid`.
-6. Payment date and method are saved.
+### 3. Parallelized Multi-Range Weight Statistics
+- **Optimization**: Resolves total entry counts, latest scale weight, and 30-day window logs in a single parallel `Promise.all` invocation, avoiding waterfall network requests.
 
-### Download Or Print An Invoice
+### 4. Zero Unused Packages
+- Removed `html2canvas`, `jspdf`, and `xlsx`, pruning 30+ transitive dependencies from `node_modules` and significantly reducing bundle size.
 
-1. Open `/billing`.
-2. Use the download or print button beside a bill.
-3. The app renders a hidden invoice template.
-4. Download uses `html2canvas` to capture the invoice and `jsPDF` to generate a PDF.
-5. Print opens a print window containing the invoice markup and current styles.
+---
 
-### Record An Expense
+## 7. Client-Side Component & Lazy Loading Strategy
 
-1. Open `/expenses`.
-2. Click `Add Expense`.
-3. Enter title, category, amount, date, and optional description.
-4. Submit the form.
-5. The expense is stored in MongoDB and appears in reports and dashboard totals.
+To optimize First Contentful Paint (FCP) and Largest Contentful Paint (LCP), heavy client modules are dynamically imported using `next/dynamic`:
 
-### Review Reports
+| Component | File Path | Strategy | Fallback |
+| :--- | :--- | :--- | :--- |
+| **`WeeklyNutritionChart`** | `components/dashboard/WeeklyNutritionChart.tsx` | `dynamic(..., { ssr: false })` | Pulse Skeleton Card |
+| **`WeeklyWeightChart`** | `components/dashboard/WeeklyWeightChart.tsx` | `dynamic(..., { ssr: false })` | Pulse Skeleton Card |
+| **`QuickActionModal`** | `components/shared/QuickActionModal.tsx` | `dynamic(..., { ssr: false })` | None (On-demand) |
+| **`OnboardingModal`** | `components/shared/OnboardingModal.tsx` | `dynamic(..., { ssr: false })` | None (On-demand) |
+| **`SearchModal`** | `components/shared/SearchModal.tsx` | `dynamic(..., { ssr: false })` | None (On-demand) |
+| **`AdUnit`** | `components/shared/AdUnit.tsx` | `dynamic(..., { ssr: false })` | None (On-demand) |
 
-1. Open `/reports`.
-2. Select month and year.
-3. Review income, expenses, profit, or due tabs.
-4. Export report tables as CSV where available.
+---
 
-## Environment Variables
+## 8. Export & Utility Infrastructure
 
-Create `.env.local` in the project root.
+### Zero-Dependency Native Browser Exports (`lib/export-utils.ts`)
+- **CSV & Excel Export**: Formats data into standard UTF-8 CSV with byte-order mark (BOM) for native Excel compatibility, creating downloadable in-memory blobs (`URL.createObjectURL(blob)`).
+- **PDF Export**: Employs native browser print engine (`window.print()`) with print stylesheets.
+- **Timezone-Aware Date Handling (`lib/utils.ts`)**: Generates ISO date strings (`YYYY-MM-DD`) strictly in the user's local timezone to prevent midnight rollover misalignments.
+
+---
+
+## 9. Project Directory & File Structure
+
+```
+fit-os/
+├── app/
+│   ├── (auth)/                    # Clerk Sign-in & Sign-up routes
+│   │   ├── sign-in/[[...sign-in]]/page.tsx
+│   │   └── sign-up/[[...sign-up]]/page.tsx
+│   ├── (root)/                    # Authenticated application routes
+│   │   ├── analytics/page.tsx     # AI Health Score & Coaching
+│   │   ├── diet/page.tsx          # Meal logging & barcode scanning
+│   │   ├── profile/page.tsx       # Biometrics & metabolic goals
+│   │   ├── progress/page.tsx      # Weight trends & body measurements
+│   │   ├── settings/page.tsx      # App settings & metadata
+│   │   ├── workout/page.tsx       # Workout logs & PRs
+│   │   ├── layout.tsx             # Authenticated shell layout
+│   │   └── page.tsx               # Main Dashboard page
+│   ├── api/                       # API routes (e.g. barcode product lookup)
+│   ├── globals.css                # Tailwind base styles, theme tokens, animations
+│   └── layout.tsx                 # Root HTML layout with ClerkProvider
+├── components/
+│   ├── dashboard/                 # Lazy-loaded charts (WeeklyNutrition, WeeklyWeight)
+│   ├── navigation/                # DesktopSidebar, BottomNav, TopNavbar
+│   ├── shared/                    # StatCard, ProgressRing, Modals, SkeletonLoaders
+│   └── ui/                        # Radix UI primitives (Button, Dialog, Tabs, etc.)
+├── docs/                          # Architecture & technical documentation
+├── lib/
+│   ├── actions/                   # Server Actions (AI, CRUD, calculations)
+│   ├── database/                  # Mongoose models & DB connection cache
+│   ├── constants.ts               # App branding, versioning & global constants
+│   ├── export-utils.ts            # Native export utilities (CSV / Print)
+│   ├── food-portion.ts            # Dual-mode portion & gram calculator
+│   ├── health-calculations.ts     # Precision BMR, TDEE, Body Fat formulas
+│   ├── utils.ts                   # Date helpers & classname merger
+│   └── weight-prediction.ts       # Linear regression trend analyzer
+├── types/                         # TypeScript interfaces (fitness.d.ts)
+├── validations/                   # Zod schemas (fitness.ts)
+├── middleware.ts                  # Clerk authentication middleware
+├── package.json                   # Dependencies & scripts
+└── tailwind.config.ts             # Tailwind CSS configuration
+```
+
+---
+
+## 10. Deployment & Environment Setup
+
+### Environment Variables Checklist
+Ensure the following variables are configured in `.env.local` or your production hosting environment (Vercel, Railway, AWS):
 
 ```env
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
-CLERK_SECRET_KEY=
+# Database
+MONGODB_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/nutribd?retryWrites=true&w=majority
+
+# Clerk Auth
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_...
 NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
 NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
 NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/
 NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/
-MONGODB_URI=
+
+# Google Gemini AI
+GEMINI_API_KEY=AIzaSy...
+
+# Public Application Metadata
+NEXT_PUBLIC_SITE_URL=https://nutribd.com
 ```
 
-Only variable names are documented here. Do not commit real secrets.
-
-## Installation
-
-Install packages:
-
+### Production Build & Verification
 ```bash
-npm install
-```
-
-Run development server:
-
-```bash
-npm run dev
-```
-
-Build production app:
-
-```bash
+# Type check and production build
 npm run build
-```
 
-Start production server:
-
-```bash
+# Start production server
 npm run start
 ```
-
-Run TypeScript check:
-
-```bash
-npx tsc --noEmit
-```
-
-## Folder Structure
-
-```text
-app/
-  (auth)/
-    sign-in/
-    sign-up/
-  (root)/
-    admins/
-    billing/
-    components/
-    customers/
-    expenses/
-    reports/
-    settings/
-  access-denied/
-components/
-  shared/
-  ui/
-hooks/
-lib/
-  actions/
-  database/
-    models/
-types/
-```
-
-## UI Structure
-
-The app uses a protected dashboard layout with:
-
-- Sidebar navigation
-- Top bar
-- Clerk user button
-- Toast notifications
-- Page-specific tables and forms
-
-The sidebar sections are:
-
-- Overview
-- Management
-- Admin
-- Settings
-
-UI primitives live under `components/ui`. These are reusable components such as buttons, cards, dialogs, forms, inputs, selects, tables, tabs, textarea, sidebar, and tooltips.
-
-## Validation And Feedback
-
-Forms use React Hook Form, and admin email creation uses Zod validation.
-
-User feedback is shown with `react-hot-toast` for success and error states.
-
-## Known Operational Notes
-
-- Authenticated pages must render dynamically because they use Clerk request data and cookies.
-- `npm run build` needs a valid environment configuration.
-- Pages that load database-backed data require `MONGODB_URI` to be reachable.
-- Customer deletion is soft delete.
-- Expense deletion is permanent.
-- Invoice generation happens in the browser because it captures rendered HTML.
-
-## Suggested Future Improvements
-
-- Add pagination controls to customers, bills, and expenses.
-- Add stronger form schemas for all create and update operations.
-- Add role levels beyond basic admin access.
-- Add audit logs for billing, payment, and admin changes.
-- Add import/export for customer data.
-- Add automated tests for server actions.
-- Add metadata `metadataBase` in `app/layout.tsx` for production social images.
