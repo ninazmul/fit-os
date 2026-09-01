@@ -5,8 +5,8 @@
 
 export const APP_CONFIG = {
   name: "NutriBD",
-  version: "v2.1.1",
-  versionRaw: "2.1.1",
+  version: "v2.2.0",
+  versionRaw: "2.2.0",
   tagline: "Smart AI Fitness & Nutrition Platform",
   subTagline: "AI-Powered Nutrition & Health Intelligence for Bangladesh",
   description:
@@ -28,7 +28,7 @@ export const APP_CONFIG = {
     appleTouchIcon: "/assets/icons/apple-touch-icon.png",
   },
   brandPills: {
-    badge: "v2.1.1",
+    badge: "v2.2.0",
     bdBadge: "BD",
     customBadge: "Custom",
   },
