@@ -499,10 +499,10 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 <span>Frequently Asked Questions</span>
               </div>
               <h2 className="text-2xl font-black tracking-tight sm:text-3xl">
-                Everything you need to know about FitOS
+                Everything you need to know about {APP_NAME}
               </h2>
               <p className="text-xs leading-relaxed text-muted-foreground sm:text-sm">
-                Learn how FitOS combines clinical fitness algorithms, intelligent meal tracking, and Gemini AI coaching to help you reach your goals.
+                Learn how {APP_NAME} combines clinical fitness algorithms, intelligent meal tracking, and Gemini AI coaching to help you reach your goals.
               </p>
             </div>
 
@@ -529,6 +529,10 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         <footer className="flex flex-col items-center justify-between gap-4 border-t border-border/60 py-8 text-center text-xs text-muted-foreground sm:flex-row sm:text-left">
           <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
             <span className="font-black text-foreground">{APP_NAME} {APP_VERSION}</span>
+            <span>&middot;</span>
+            <Link href="/about" className="text-pink-600 dark:text-pink-400 font-bold hover:underline">
+              About Us & Donate ❤️
+            </Link>
             <span>&middot;</span>
             <span>{APP_TAGLINE}</span>
           </div>

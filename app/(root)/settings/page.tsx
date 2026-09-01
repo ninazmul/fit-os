@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -12,6 +13,7 @@ import {
   Download,
   Info,
   ExternalLink,
+  Heart,
 } from "lucide-react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
@@ -175,15 +177,24 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <a
-            href={APP_AUTHOR_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground font-medium transition-colors"
-          >
-            <span>Crafted by {APP_AUTHOR}</span>
-            <ExternalLink className="w-3.5 h-3.5" />
-          </a>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link href="/about">
+              <Button size="sm" className="rounded-xl text-xs font-bold gap-1.5 bg-pink-600 hover:bg-pink-700 text-white shadow-sm">
+                <Heart className="w-3.5 h-3.5 fill-current" />
+                About Us & Donate
+              </Button>
+            </Link>
+
+            <a
+              href={APP_AUTHOR_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground font-medium transition-colors px-3 py-2"
+            >
+              <span>Crafted by {APP_AUTHOR}</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          </div>
         </div>
       </div>
 

@@ -12,6 +12,7 @@ import {
   User,
   BarChart3,
   Settings,
+  Heart,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -40,10 +41,11 @@ export const navGroups = [
     ],
   },
   {
-    label: "Account",
+    label: "Platform",
     items: [
       { href: "/profile", label: "Profile", icon: User },
       { href: "/settings", label: "Settings", icon: Settings },
+      { href: "/about", label: "About & Donate", icon: Heart },
     ],
   },
 ];

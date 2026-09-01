@@ -73,6 +73,13 @@ export const publicSeoPages = [
       "Estimate body fat percentage from body measurements using the U.S. Navy method and track body composition progress in NutriBD.",
     priority: 0.9,
   },
+  {
+    path: "/about",
+    title: "About Us & Donate | NutriBD",
+    description:
+      "Learn about NutriBD's mission to provide 100% free AI fitness and nutrition intelligence for Bangladesh and worldwide. Support our development and servers.",
+    priority: 0.8,
+  },
 ] as const;
 
 export function buildPublicPageMetadata(
