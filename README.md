@@ -15,7 +15,7 @@
 
 _A state-of-the-art, high-performance AI fitness & nutrition intelligence platform tailored for Bangladesh and worldwide. Track meals, workouts, weight, water, sleep, and 9-point body measurements with real-time Google Gemini AI coaching, natural language culinary recipe estimation, camera barcode scanning, and goal trajectory forecasting._
 
-[Live Demo](https://nutribd.com) · [Report Bug](https://github.com/ninazmul/nutribd/issues) · [Request Feature](https://github.com/ninazmul/nutribd/issues)
+[Live Demo](https://nutribd.com) · [Report Bug](https://github.com/ninazmul/fit-os.git/issues) · [Request Feature](https://github.com/ninazmul/fit-os.git/issues)
 
 </div>
 
@@ -208,7 +208,7 @@ BodyMeasurementSchema.index({ clerkId: 1, date: -1, updatedAt: -1 });
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/ninazmul/nutribd.git
+git clone https://github.com/ninazmul/fit-os.git.git
 cd nutribd
 
 # 2. Install dependencies

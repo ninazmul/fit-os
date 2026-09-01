@@ -18,7 +18,7 @@ export const APP_CONFIG = {
   links: {
     siteUrl: process.env.NEXT_PUBLIC_SITE_URL || "https://nutribd.com",
     authorUrl: "https://www.artistycode.studio/",
-    github: "https://github.com/ninazmul/nutribd",
+    github: "https://github.com/ninazmul/fit-os.git",
   },
   assets: {
     logo: "/assets/images/logo.png",
