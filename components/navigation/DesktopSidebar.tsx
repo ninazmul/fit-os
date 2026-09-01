@@ -80,8 +80,8 @@ export default function DesktopSidebar() {
               {APP_VERSION}
             </span>
           </div>
-          <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-            Fitness Tracker
+          <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">
+            AI Health & Fitness
           </p>
         </div>
       </div>

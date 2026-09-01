@@ -71,8 +71,8 @@ export default function NavigationSheet({
                   {APP_VERSION}
                 </span>
               </div>
-              <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                Fitness Tracker
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                AI Health & Fitness
               </p>
             </div>
           </div>

@@ -47,7 +47,7 @@ export default function SettingsPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "fitos-export-data.json";
+    a.download = "nutribd-export-data.json";
     a.click();
   };
 
