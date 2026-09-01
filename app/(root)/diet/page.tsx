@@ -831,7 +831,7 @@ export default function DietPage() {
 
       {/* Add Food Modal */}
       <Dialog open={addModalOpen} onOpenChange={setAddModalOpen}>
-        <DialogContent className="sm:max-w-lg rounded-2xl p-6 gap-4">
+        <DialogContent className="w-[95vw] sm:max-w-lg rounded-3xl p-4 sm:p-6 gap-4 max-h-[90vh] overflow-y-auto overflow-x-hidden no-scrollbar">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold flex items-center gap-2">
               <UtensilsCrossed className="w-5 h-5 text-primary" />
@@ -991,7 +991,7 @@ export default function DietPage() {
                   </div>
 
                   {/* Multiplier Quick Presets */}
-                  <div className="flex gap-1.5 overflow-x-auto pb-0.5 text-xs">
+                  <div className="flex gap-1.5 flex-wrap text-xs">
                     {[0.5, 1, 1.5, 2, 3].map((qty) => (
                       <button
                         key={qty}
@@ -1115,7 +1115,7 @@ export default function DietPage() {
           if (!open) resetCustomFoodForm();
         }}
       >
-        <DialogContent className="w-[95vw] sm:max-w-xl rounded-3xl p-4 sm:p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] sm:max-w-xl rounded-3xl p-4 sm:p-6 space-y-4 max-h-[90vh] overflow-y-auto overflow-x-hidden no-scrollbar">
           <DialogHeader className="space-y-1">
             <DialogTitle className="text-base sm:text-lg font-bold flex items-center gap-2">
               <ChefHat className="w-5 h-5 text-primary shrink-0" />
@@ -1448,7 +1448,7 @@ export default function DietPage() {
         open={saveTemplateModalOpen}
         onOpenChange={setSaveTemplateModalOpen}
       >
-        <DialogContent className="sm:max-w-md rounded-3xl p-6 space-y-4">
+        <DialogContent className="w-[95vw] sm:max-w-md rounded-3xl p-4 sm:p-6 space-y-4 max-h-[90vh] overflow-y-auto overflow-x-hidden no-scrollbar">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold flex items-center gap-2">
               <Bookmark className="w-5 h-5 text-primary" />

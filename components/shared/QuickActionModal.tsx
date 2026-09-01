@@ -102,7 +102,7 @@ export default function QuickActionModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md rounded-2xl p-6">
+      <DialogContent className="w-[95vw] sm:max-w-md rounded-3xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto overflow-x-hidden no-scrollbar">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">Quick Log</DialogTitle>
         </DialogHeader>

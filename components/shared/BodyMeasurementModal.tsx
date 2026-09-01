@@ -164,7 +164,7 @@ export default function BodyMeasurementModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] sm:max-w-2xl rounded-3xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto overflow-x-hidden no-scrollbar">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold flex items-center gap-2">
             <Ruler className="w-5 h-5 text-primary" />

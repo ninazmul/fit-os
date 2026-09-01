@@ -76,7 +76,7 @@ export default function SearchModal({ open, onOpenChange }: SearchModalProps) {
       <BarcodeScanner open={barcodeOpen} onOpenChange={setBarcodeOpen} />
 
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-lg rounded-3xl p-4 gap-3">
+        <DialogContent className="w-[95vw] sm:max-w-lg rounded-3xl p-4 gap-3 max-h-[90vh] overflow-y-auto overflow-x-hidden no-scrollbar">
           <DialogHeader className="px-2 pt-2">
             <DialogTitle className="text-base font-bold flex items-center justify-between">
               <span className="flex items-center gap-2">
