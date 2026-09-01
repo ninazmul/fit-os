@@ -2,15 +2,16 @@ import type { Metadata } from "next";
 import { APP_NAME, APP_SITE_URL } from "@/lib/constants";
 
 export const SITE_URL = (
-  APP_SITE_URL || "https://fitos.artistycode.studio"
+  APP_SITE_URL || "https://nutribd.com"
 ).replace(/\/$/, "");
 
 export const SITE_NAME = APP_NAME;
 
 export const SEO_KEYWORDS = [
-  "FitOS",
-  "fitOs",
-  "fitness tracker",
+  "NutriBD",
+  "nutribd",
+  "nutribd.com",
+  "AI fitness tracker",
   "free fitness tracker",
   "BMI calculator",
   "BMR calculator",
@@ -32,44 +33,44 @@ export const SEO_KEYWORDS = [
 export const publicSeoPages = [
   {
     path: "/sign-in",
-    title: "FitOS - Free BMI Calculator, Calorie Counter & Fitness Tracker",
+    title: "NutriBD - Smart AI Fitness & Nutrition Platform",
     description:
-      "Use FitOS for free BMI, BMR, TDEE, body fat and ideal weight calculators, plus a calorie counter, workout tracker and Bangladeshi food nutrition database.",
+      "Use NutriBD for free BMI, BMR, TDEE, body fat calculators, Gemini AI coaching, calorie counter, workout tracker and Bangladeshi food database.",
     priority: 1,
   },
   {
     path: "/fitness-calculator",
-    title: "Free Fitness Calculator - BMI, BMR, TDEE & Body Fat | FitOS",
+    title: "Free Fitness Calculator - BMI, BMR, TDEE & Body Fat | NutriBD",
     description:
-      "Calculate BMI, BMR, TDEE, body fat percentage and ideal weight online for free, then track calories, workouts, water, sleep and body measurements in FitOS.",
+      "Calculate BMI, BMR, TDEE, body fat percentage and ideal weight online for free, then track calories, workouts, water, sleep and body measurements in NutriBD.",
     priority: 0.95,
   },
   {
     path: "/bmi-calculator",
-    title: "Free BMI Calculator Online - Body Mass Index | FitOS",
+    title: "Free BMI Calculator Online - Body Mass Index | NutriBD",
     description:
-      "Calculate your BMI online using height and weight, see your BMI category, healthy BMI range and ideal weight estimate with FitOS.",
+      "Calculate your BMI online using height and weight, see your BMI category, healthy BMI range and ideal weight estimate with NutriBD.",
     priority: 0.9,
   },
   {
     path: "/bmr-calculator",
-    title: "Free BMR Calculator - Basal Metabolic Rate | FitOS",
+    title: "Free BMR Calculator - Basal Metabolic Rate | NutriBD",
     description:
-      "Estimate your basal metabolic rate with the Mifflin-St Jeor formula and use FitOS to turn BMR into daily calorie and macro targets.",
+      "Estimate your basal metabolic rate with the Mifflin-St Jeor formula and use NutriBD to turn BMR into daily calorie and macro targets.",
     priority: 0.9,
   },
   {
     path: "/tdee-calculator",
-    title: "Free TDEE Calculator - Daily Calorie Needs | FitOS",
+    title: "Free TDEE Calculator - Daily Calorie Needs | NutriBD",
     description:
-      "Calculate your total daily energy expenditure, maintenance calories, weight loss calories and weight gain calories with FitOS.",
+      "Calculate your total daily energy expenditure, maintenance calories, weight loss calories and weight gain calories with NutriBD.",
     priority: 0.9,
   },
   {
     path: "/body-fat-calculator",
-    title: "Free Body Fat Percentage Calculator | FitOS",
+    title: "Free Body Fat Percentage Calculator | NutriBD",
     description:
-      "Estimate body fat percentage from body measurements using the U.S. Navy method and track body composition progress in FitOS.",
+      "Estimate body fat percentage from body measurements using the U.S. Navy method and track body composition progress in NutriBD.",
     priority: 0.9,
   },
 ] as const;

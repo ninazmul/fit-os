@@ -11,8 +11,9 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { APP_NAME } from "@/lib/constants";
 
-const INSTALLED_KEY = "fitos-pwa-installed";
+const INSTALLED_KEY = "nutribd-pwa-installed";
 
 export default function AddToHomeScreenPrompt() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -130,13 +131,13 @@ export default function AddToHomeScreenPrompt() {
                 <div className="flex items-center gap-1.5 mb-1">
                   <Sparkles className="w-3.5 h-3.5 text-primary" />
                   <h3 className="text-sm font-bold text-foreground">
-                    Install FitOS App
+                    Install {APP_NAME} App
                   </h3>
                 </div>
                 <p className="text-xs text-muted-foreground leading-relaxed mb-3">
                   {isIOS
-                    ? "Add FitOS to your Home Screen for quick access, offline use, and a full-screen app experience."
-                    : "Install FitOS on your device for one-tap access, offline support, and a native-like experience."}
+                    ? `Add ${APP_NAME} to your Home Screen for quick access, offline use, and a full-screen app experience.`
+                    : `Install ${APP_NAME} on your device for one-tap access, offline support, and a native-like experience.`}
                 </p>
 
                 <div className="flex items-center gap-2">

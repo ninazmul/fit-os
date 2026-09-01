@@ -401,7 +401,7 @@ export async function askAICoach(question: string): Promise<{ answer: string; su
   }
 
   try {
-    const prompt = `You are FitOS AI Coach, a supportive, highly knowledgeable personal fitness, nutrition, and metabolic recovery coach.
+    const prompt = `You are NutriBD AI Coach, a supportive, highly knowledgeable personal fitness, nutrition, and metabolic recovery coach.
 User Profile:
 - Goal: ${profile.goal}
 - Weight: ${profile.currentWeight}kg (Target: ${profile.targetWeight}kg), Height: ${profile.height}cm, Age: ${profile.age}

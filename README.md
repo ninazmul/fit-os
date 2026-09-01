@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🌐 FitOS (NutriBD)
+# 🌐 NutriBD
 
 ### AI-Powered Fitness, Nutrition & Health Intelligence Platform
 
@@ -13,9 +13,9 @@
 [![Clerk](https://img.shields.io/badge/Clerk-Authentication-6C47FF?style=for-the-badge&logo=clerk&logoColor=white)](https://clerk.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
-_A comprehensive, AI-driven personal fitness & nutrition platform. Track meals, workouts, weight, water, sleep, and 9-point body measurements with real-time Google Gemini AI coaching, natural language culinary recipe estimation, barcode scanning, and goal trajectory forecasting._
+_A comprehensive, AI-driven personal fitness & nutrition platform for Bangladesh and worldwide. Track meals, workouts, weight, water, sleep, and 9-point body measurements with real-time Google Gemini AI coaching, natural language culinary recipe estimation, barcode scanning, and goal trajectory forecasting._
 
-[Live Demo](https://fitos.artistycode.studio) · [Report Bug](https://github.com/ninazmul/fit-os/issues) · [Request Feature](https://github.com/ninazmul/fit-os/issues)
+[Live Demo](https://nutribd.com) · [Report Bug](https://github.com/ninazmul/fit-os/issues) · [Request Feature](https://github.com/ninazmul/fit-os/issues)
 
 </div>
 
@@ -52,7 +52,7 @@ _A comprehensive, AI-driven personal fitness & nutrition platform. Track meals, 
 
 ## 🚀 Overview
 
-**FitOS (NutriBD)** is an all-in-one AI fitness and nutrition intelligence platform built for modern lifestyles and localized nutrition (including a comprehensive Bangladeshi & international food database). 
+**NutriBD** is an all-in-one AI fitness and nutrition intelligence platform built for modern lifestyles and localized nutrition (including a comprehensive Bangladeshi & international food database). 
 
 It combines **Google Gemini AI** with precision exercise science and metabolic algorithms to provide:
 - **AI Health Score (0–100)** with interactive **Ask AI Coach** Q&A.

@@ -1,11 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { WifiOff, RefreshCw, Dumbbell } from "lucide-react";
+import { APP_NAME, APP_LOGO, APP_LOGO_ALT } from "@/lib/constants";
 
 export const dynamic = "force-static";
 
 export const metadata = {
-  title: "Offline – FitOS",
+  title: `Offline – ${APP_NAME}`,
   robots: { index: false, follow: false },
 };
 
@@ -22,16 +23,16 @@ export default function Offline() {
           <div className="flex flex-col items-center gap-3">
             <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-md border border-border/60">
               <Image
-                src="/assets/images/logo.png"
-                alt="FitOs Logo"
+                src={APP_LOGO}
+                alt={APP_LOGO_ALT}
                 fill
                 className="object-contain p-0.5 bg-white"
               />
             </div>
             <div className="flex flex-col leading-tight">
-              <h1 className="text-2xl font-bold tracking-tight">FitOS</h1>
+              <h1 className="text-2xl font-bold tracking-tight">{APP_NAME}</h1>
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                Fitness Tracker
+                Fitness & Nutrition Platform
               </p>
             </div>
           </div>
@@ -42,13 +43,13 @@ export default function Offline() {
             </div>
             <h2 className="text-xl font-bold">You&apos;re Offline</h2>
             <p className="text-sm text-muted-foreground max-w-xs">
-              Looks like your internet connection dropped. FitOS will resume tracking as soon as you&apos;re back online.
+              Looks like your internet connection dropped. {APP_NAME} will resume tracking as soon as you&apos;re back online.
             </p>
           </div>
 
           <div className="rounded-2xl border border-border/50 bg-gradient-to-br from-primary/10 via-transparent to-blue-500/10 p-4 text-left space-y-3">
             {[
-              "Close and re-open the FitOS app",
+              `Close and re-open the ${APP_NAME} app`,
               "Turn off Airplane Mode or reconnect to Wi‑Fi",
               "Swipe down and tap the refresh button below",
             ].map((tip, i) => (

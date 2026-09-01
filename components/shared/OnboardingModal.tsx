@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { calculateRecommendedMacros, createOrUpdateProfile } from "@/lib/actions/profile.actions";
 import type { Gender, ActivityLevel, PrimaryGoal } from "@/types/fitness";
+import { APP_NAME } from "@/lib/constants";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
@@ -115,7 +116,7 @@ export default function OnboardingModal({
         unitSystem: "metric",
       });
 
-      toast.success("Profile saved! Welcome to FitOS 💪");
+      toast.success(`Profile saved! Welcome to ${APP_NAME} 💪`);
       onOpenChange(false);
       await onCompleted?.();
       router.refresh();
@@ -131,7 +132,7 @@ export default function OnboardingModal({
       <DialogContent className="sm:max-w-lg rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-primary">
-            {step === 1 ? "Welcome to FitOS! 👋" : "Your Recommended Goals 🎯"}
+            {step === 1 ? `Welcome to ${APP_NAME}! 👋` : "Your Recommended Goals 🎯"}
           </DialogTitle>
           <DialogDescription className="text-xs">
             {step === 1

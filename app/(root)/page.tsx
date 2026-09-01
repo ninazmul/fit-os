@@ -11,6 +11,7 @@ import {
   getSleepLogForDate,
 } from "@/lib/actions/water-sleep.actions";
 import { formatTime12h, getLocalDateString } from "@/lib/utils";
+import { APP_NAME } from "@/lib/constants";
 import dynamic from "next/dynamic";
 import StatCard from "@/components/shared/StatCard";
 import ProgressRing from "@/components/shared/ProgressRing";
@@ -208,7 +209,7 @@ export default function DashboardPage() {
           open={onboardingOpen}
           onOpenChange={setOnboardingOpen}
         />
-        <h2 className="text-xl font-bold">Welcome to FitOS</h2>
+        <h2 className="text-xl font-bold">Welcome to {APP_NAME}</h2>
         <p className="text-sm text-muted-foreground mt-1">
           Please complete your profile onboarding to access your dashboard.
         </p>

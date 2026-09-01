@@ -1,28 +1,28 @@
 /**
  * Application Branding, Versioning & Global Constants
- * Update values here to reflect across the entire FitOS application.
+ * Update values here to reflect across the entire NutriBD application.
  */
 
 export const APP_CONFIG = {
-  name: "FitOS",
+  name: "NutriBD",
   version: "v2.1.1",
   versionRaw: "2.1.1",
-  tagline: "Free BMI Calculator & Fitness Tracker",
-  subTagline: "Personal Fitness & Nutrition Tracker",
+  tagline: "Smart AI Fitness & Nutrition Platform",
+  subTagline: "AI-Powered Nutrition & Health Intelligence for Bangladesh",
   description:
-    "FitOS is a free fitness tracker with BMI, BMR, TDEE, body fat and ideal weight calculators, calorie counter, workout tracker and Bangladeshi food nutrition database.",
+    "NutriBD is an AI-powered fitness and nutrition platform with Google Gemini AI coaching, BMI, BMR, TDEE, body fat calculators, calorie counter, workout tracker and Bangladeshi food database.",
   author: {
     name: "ArtistyCode Studio",
     url: "https://www.artistycode.studio/",
   },
   links: {
-    siteUrl: process.env.NEXT_PUBLIC_SITE_URL || "https://fitos.artistycode.studio",
+    siteUrl: process.env.NEXT_PUBLIC_SITE_URL || "https://nutribd.com",
     authorUrl: "https://www.artistycode.studio/",
     github: "https://github.com/ninazmul/fit-os",
   },
   assets: {
     logo: "/assets/images/logo.png",
-    logoAlt: "FitOS Logo – Free BMI Calculator & Fitness Tracker",
+    logoAlt: "NutriBD Logo – Smart AI Fitness & Nutrition Platform",
     favicon192: "/assets/icons/icon-192.png",
     favicon512: "/assets/icons/icon-512.png",
     appleTouchIcon: "/assets/icons/apple-touch-icon.png",

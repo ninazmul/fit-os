@@ -17,7 +17,7 @@ export default function manifest(): MetadataRoute.Manifest {
       {
         name: "Fitness Calculators",
         short_name: "Calculators",
-        description: "Open FitOS BMI, BMR, TDEE and body fat calculators",
+        description: `Open ${APP_NAME} BMI, BMR, TDEE and body fat calculators`,
         url: "/fitness-calculator",
         icons: [
           {
