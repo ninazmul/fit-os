@@ -16,6 +16,14 @@ import {
   isNavItemActive,
   navGroups,
 } from "@/components/navigation/DesktopSidebar";
+import {
+  APP_NAME,
+  APP_VERSION,
+  APP_AUTHOR,
+  APP_AUTHOR_URL,
+  APP_LOGO,
+  APP_LOGO_ALT,
+} from "@/lib/constants";
 
 interface NavigationSheetProps {
   open: boolean;
@@ -44,8 +52,8 @@ export default function NavigationSheet({
           <div className="flex items-center gap-3">
             <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-border/60 bg-white shadow-sm">
               <Image
-                src="/assets/images/logo.png"
-                alt="FitOs Logo"
+                src={APP_LOGO}
+                alt={APP_LOGO_ALT}
                 fill
                 className="bg-white object-contain p-0.5"
                 priority
@@ -57,10 +65,10 @@ export default function NavigationSheet({
                   className="truncate text-lg font-bold tracking-tight"
                   style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                 >
-                  FitOS
+                  {APP_NAME}
                 </SheetTitle>
                 <span className="rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
-                  v2.1.1
+                  {APP_VERSION}
                 </span>
               </div>
               <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
@@ -135,14 +143,14 @@ export default function NavigationSheet({
         <footer className="">
           <div className="p-4 border-t border-border">
             <p className="text-[11px] text-muted-foreground text-center">
-              FitOS v2.1.1 &middot; By{" "}
+              {APP_NAME} {APP_VERSION} &middot; By{" "}
               <a
-                href="https://www.artistycode.studio/"
+                href={APP_AUTHOR_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="underline hover:text-foreground transition-colors"
               >
-                ArtistyCode Studio
+                {APP_AUTHOR}
               </a>
             </p>
           </div>

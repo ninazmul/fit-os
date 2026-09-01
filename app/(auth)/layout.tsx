@@ -24,6 +24,13 @@ import {
   SITE_NAME,
   SITE_URL,
 } from "@/lib/seo";
+import {
+  APP_NAME,
+  APP_VERSION,
+  APP_TAGLINE,
+  APP_LOGO,
+  APP_LOGO_ALT,
+} from "@/lib/constants";
 
 export const metadata: Metadata = buildPublicPageMetadata("/sign-in");
 
@@ -289,8 +296,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           <Link href="/sign-in" className="flex min-w-0 items-center gap-3">
             <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[#E1E7DD] bg-white">
               <Image
-                src="/assets/images/logo.png"
-                alt="FitOS Logo – Free BMI Calculator & Fitness Tracker"
+                src={APP_LOGO}
+                alt={APP_LOGO_ALT}
                 fill
                 className="object-contain p-0.5"
                 priority
@@ -302,14 +309,14 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                   className="truncate text-lg font-bold tracking-tight"
                   style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                 >
-                  FitOS
+                  {APP_NAME}
                 </span>
                 <span className="rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
-                  v2.1.1
+                  {APP_VERSION}
                 </span>
               </div>
               <p className="truncate text-[11px] font-medium text-[#6B7580]">
-                Free BMI Calculator &amp; Fitness Tracker
+                {APP_TAGLINE}
               </p>
             </div>
           </Link>

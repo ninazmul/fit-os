@@ -14,6 +14,14 @@ import {
   Settings,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  APP_NAME,
+  APP_VERSION,
+  APP_AUTHOR,
+  APP_AUTHOR_URL,
+  APP_LOGO,
+  APP_LOGO_ALT,
+} from "@/lib/constants";
 
 export const navGroups = [
   {
@@ -53,8 +61,8 @@ export default function DesktopSidebar() {
       <div className="flex items-center gap-3 px-6 py-5 border-b border-border">
         <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-white overflow-hidden shadow-sm border border-border/60">
           <Image
-            src="/assets/images/logo.png"
-            alt="FitOs Logo"
+            src={APP_LOGO}
+            alt={APP_LOGO_ALT}
             fill
             className="object-contain p-0.5 bg-white"
             priority
@@ -66,10 +74,10 @@ export default function DesktopSidebar() {
               className="truncate text-lg font-bold tracking-tight"
               style={{ fontFamily: "'Space Grotesk', sans-serif" }}
             >
-              FitOS
+              {APP_NAME}
             </span>
             <span className="rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
-              v2.1.1
+              {APP_VERSION}
             </span>
           </div>
           <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
@@ -132,14 +140,14 @@ export default function DesktopSidebar() {
       {/* Footer */}
       <div className="p-4 border-t border-border">
         <p className="text-[11px] text-muted-foreground text-center">
-          FitOS v2.1.1 &middot; By{" "}
+          {APP_NAME} {APP_VERSION} &middot; By{" "}
           <a
-            href="https://www.artistycode.studio/"
+            href={APP_AUTHOR_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="underline hover:text-foreground transition-colors"
           >
-            ArtistyCode Studio
+            {APP_AUTHOR}
           </a>
         </p>
       </div>

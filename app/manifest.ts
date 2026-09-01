@@ -1,11 +1,11 @@
 import type { MetadataRoute } from "next";
+import { APP_NAME, APP_TAGLINE, APP_DESCRIPTION } from "@/lib/constants";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "FitOS - Free Fitness Tracker & Calculators",
-    short_name: "FitOS",
-    description:
-      "Free BMI, BMR, TDEE, body fat and ideal weight calculators with calorie, macro, workout, water, sleep and body measurement tracking.",
+    name: `${APP_NAME} - ${APP_TAGLINE}`,
+    short_name: APP_NAME,
+    description: APP_DESCRIPTION,
     start_url: "/sign-in",
     display: "standalone",
     orientation: "portrait-primary",

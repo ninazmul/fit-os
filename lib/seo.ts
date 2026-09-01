@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
+import { APP_NAME, APP_SITE_URL } from "@/lib/constants";
 
 export const SITE_URL = (
-  process.env.NEXT_PUBLIC_SITE_URL || "https://fit-os.vercel.app"
+  APP_SITE_URL || "https://fitos.artistycode.studio"
 ).replace(/\/$/, "");
 
-export const SITE_NAME = "FitOS";
+export const SITE_NAME = APP_NAME;
 
 export const SEO_KEYWORDS = [
   "FitOS",

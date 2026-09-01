@@ -10,9 +10,21 @@ import {
   Sun,
   Laptop,
   Download,
+  Info,
+  ExternalLink,
 } from "lucide-react";
+import Image from "next/image";
 import dynamic from "next/dynamic";
 import toast from "react-hot-toast";
+import {
+  APP_NAME,
+  APP_VERSION,
+  APP_TAGLINE,
+  APP_AUTHOR,
+  APP_AUTHOR_URL,
+  APP_LOGO,
+  APP_LOGO_ALT,
+} from "@/lib/constants";
 
 const AdUnit = dynamic(() => import("@/components/shared/AdUnit"), {
   ssr: false,
@@ -24,7 +36,8 @@ export default function SettingsPage() {
   const handleExportData = () => {
     toast.success("Preparing CSV/JSON data export...");
     const dummyData = {
-      app: "FitOS",
+      app: APP_NAME,
+      version: APP_VERSION,
       exportedAt: new Date().toISOString(),
       status: "Success",
     };
@@ -130,6 +143,47 @@ export default function SettingsPage() {
           <Button onClick={handleExportData} className="rounded-xl text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold">
             Export Data
           </Button>
+        </div>
+      </div>
+
+      {/* About Application */}
+      <div className="glass-card p-6 rounded-3xl border border-border/50 space-y-4">
+        <h2 className="text-base font-bold flex items-center gap-2">
+          <Info className="w-5 h-5 text-emerald-500" />
+          About {APP_NAME}
+        </h2>
+
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-2xl bg-muted/40">
+          <div className="flex items-center gap-3">
+            <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border/60 bg-white shadow-sm">
+              <Image
+                src={APP_LOGO}
+                alt={APP_LOGO_ALT}
+                fill
+                className="object-contain p-1"
+                priority
+              />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-base font-bold tracking-tight">{APP_NAME}</span>
+                <span className="rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                  {APP_VERSION}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground">{APP_TAGLINE}</p>
+            </div>
+          </div>
+
+          <a
+            href={APP_AUTHOR_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground font-medium transition-colors"
+          >
+            <span>Crafted by {APP_AUTHOR}</span>
+            <ExternalLink className="w-3.5 h-3.5" />
+          </a>
         </div>
       </div>
 

@@ -9,6 +9,12 @@ import { Menu } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import NavigationSheet from "@/components/navigation/NavigationSheet";
+import {
+  APP_NAME,
+  APP_VERSION,
+  APP_LOGO,
+  APP_LOGO_ALT,
+} from "@/lib/constants";
 
 export default function TopNavbar() {
   const router = useRouter();
@@ -46,8 +52,8 @@ export default function TopNavbar() {
           >
             <div className="relative h-8 w-8 overflow-hidden rounded-lg border border-border/60 bg-white shadow-sm">
               <Image
-                src="/assets/images/logo.png"
-                alt="FitOs Logo"
+                src={APP_LOGO}
+                alt={APP_LOGO_ALT}
                 fill
                 className="bg-white object-contain p-0.5"
                 priority
@@ -58,10 +64,10 @@ export default function TopNavbar() {
                 className="truncate text-lg font-bold tracking-tight"
                 style={{ fontFamily: "'Space Grotesk', sans-serif" }}
               >
-                FitOS
+                {APP_NAME}
               </span>
               <span className="rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
-                v2.1.1
+                {APP_VERSION}
               </span>
             </div>
           </button>

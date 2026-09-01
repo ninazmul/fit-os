@@ -3,6 +3,14 @@ import { Inter } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ThemeProvider } from "@/components/shared/ThemeProvider";
 import { SEO_KEYWORDS, SITE_URL } from "@/lib/seo";
+import {
+    APP_NAME,
+    APP_SUBTAGLINE,
+    APP_TAGLINE,
+    APP_DESCRIPTION,
+    APP_AUTHOR,
+    APP_LOGO,
+} from "@/lib/constants";
 
 import "./globals.css";
 
@@ -19,12 +27,11 @@ const inter = Inter({
 export const metadata: Metadata = {
     metadataBase: new URL(SITE_URL),
     title: {
-        default: "FitOS - Personal Fitness & Nutrition Tracker",
-        template: "%s | FitOS",
+        default: `${APP_NAME} - ${APP_SUBTAGLINE}`,
+        template: `%s | ${APP_NAME}`,
     },
 
-    description:
-        "FitOS is a free fitness tracker with BMI, BMR, TDEE, body fat and ideal weight calculators, calorie counter, workout tracker and Bangladeshi food nutrition database.",
+    description: APP_DESCRIPTION,
 
     keywords: SEO_KEYWORDS,
 
@@ -47,27 +54,27 @@ export const metadata: Metadata = {
     openGraph: {
         type: "website",
         locale: "en_BD",
-        siteName: "FitOS",
-        title: "FitOS - Free BMI Calculator, Calorie Counter & Fitness Tracker",
+        siteName: APP_NAME,
+        title: `${APP_NAME} - ${APP_TAGLINE}`,
         description:
-            "Calculate BMI, BMR, TDEE and body fat, then track calories, workouts, weight, water, sleep and body measurements in FitOS.",
+            "Calculate BMI, BMR, TDEE and body fat, then track calories, workouts, weight, water, sleep and body measurements.",
         url: SITE_URL,
         images: [
             {
-                url: "/assets/images/logo.png",
+                url: APP_LOGO,
                 width: 512,
                 height: 512,
-                alt: "FitOS",
+                alt: APP_NAME,
             },
         ],
     },
 
     twitter: {
         card: "summary_large_image",
-        title: "FitOS - Free BMI Calculator, Calorie Counter & Fitness Tracker",
+        title: `${APP_NAME} - ${APP_TAGLINE}`,
         description:
             "Free fitness tracker with BMI, BMR, TDEE, body fat calculators, calorie counter and workout tracking.",
-        images: ["/assets/images/logo.png"],
+        images: [APP_LOGO],
     },
 
     icons: {
@@ -100,7 +107,7 @@ export const metadata: Metadata = {
     appleWebApp: {
         capable: true,
         statusBarStyle: "default",
-        title: "FitOS",
+        title: APP_NAME,
         startupImage: ["/assets/icons/apple-touch-icon.png"],
     },
 
@@ -110,10 +117,10 @@ export const metadata: Metadata = {
         address: false,
     },
 
-    applicationName: "FitOS",
-    authors: [{ name: "FitOS" }],
-    creator: "FitOS",
-    publisher: "FitOS",
+    applicationName: APP_NAME,
+    authors: [{ name: APP_AUTHOR }],
+    creator: APP_AUTHOR,
+    publisher: APP_AUTHOR,
 };
 
 export const viewport: Viewport = {
