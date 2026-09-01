@@ -21,8 +21,9 @@ type DashboardWaterLog = IWaterLog & { amountMl?: number | string };
 type DashboardSleepLog = ISleepLog & { quality?: number | string };
 
 import { analyzeWeightTrend } from "@/lib/weight-prediction";
+import { getLocalDateString } from "@/lib/utils";
 
-export async function getDashboardData() {
+export async function getDashboardData(dateStr?: string) {
   await connectToDatabase();
   const user = await currentUser();
   if (!user) return null;
@@ -32,7 +33,7 @@ export async function getDashboardData() {
   }).lean()) as IUserProfile | null;
   if (!profile) return { needsOnboarding: true };
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = dateStr || getLocalDateString();
 
   const [meals, weightLog, waterLog, workouts, sleepLog] = (await Promise.all([
     MealLog.find({ clerkId: user.id, date: today }).lean(),
@@ -98,13 +99,13 @@ export async function getDashboardData() {
   // Weekly chart data & weight logs for prediction (last 30 days)
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  const thirtyStr = thirtyDaysAgo.toISOString().split("T")[0];
+  const thirtyStr = getLocalDateString(thirtyDaysAgo);
 
   const weekDates: string[] = [];
   for (let i = 6; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
-    weekDates.push(d.toISOString().split("T")[0]);
+    weekDates.push(getLocalDateString(d));
   }
 
   const [
@@ -175,7 +176,7 @@ export async function getDashboardData() {
   let streak = 0;
   const checkDate = new Date();
   for (let i = 0; i < 365; i++) {
-    const dateStr = checkDate.toISOString().split("T")[0];
+    const dateStr = getLocalDateString(checkDate);
     if (activeDatesSet.has(dateStr)) {
       streak++;
       checkDate.setDate(checkDate.getDate() - 1);

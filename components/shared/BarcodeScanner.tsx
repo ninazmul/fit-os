@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import type { IMealItem, MealType } from "@/types/fitness";
 import { appendMealItem } from "@/lib/actions/meal.actions";
+import { getLocalDateString } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
@@ -155,7 +156,7 @@ export default function BarcodeScanner({
 
   const router = useRouter();
 
-  const todayStr = dateStr || new Date().toISOString().split("T")[0];
+  const todayStr = dateStr || getLocalDateString();
 
   /*
    * ---------------------------------------------------------

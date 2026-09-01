@@ -22,6 +22,7 @@ import {
 import { getRecentFoods } from "@/lib/actions/recent-meals.actions";
 import { addWater } from "@/lib/actions/water-sleep.actions";
 import { appendMealItem } from "@/lib/actions/meal.actions";
+import { getLocalDateString } from "@/lib/utils";
 import type { IMealItem, MealType } from "@/types/fitness";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
@@ -48,7 +49,7 @@ export default function QuickAddSheet({
   const [barcodeOpen, setBarcodeOpen] = useState(false);
   const router = useRouter();
 
-  const todayStr = new Date().toISOString().split("T")[0];
+  const todayStr = getLocalDateString();
 
   useEffect(() => {
     if (open) {

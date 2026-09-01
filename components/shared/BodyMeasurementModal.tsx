@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { logBodyMeasurement } from "@/lib/actions/body-measurement.actions";
+import { getLocalDateString } from "@/lib/utils";
 import type { IBodyMeasurement } from "@/types/fitness";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
@@ -92,9 +93,7 @@ export default function BodyMeasurementModal({
   onOpenChange,
   initialData,
 }: BodyMeasurementModalProps) {
-  const [date, setDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
+  const [date, setDate] = useState(getLocalDateString());
   const [measurements, setMeasurements] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -102,7 +101,7 @@ export default function BodyMeasurementModal({
   useEffect(() => {
     if (!open) return;
     if (initialData) {
-      setDate(initialData.date || new Date().toISOString().split("T")[0]);
+      setDate(initialData.date || getLocalDateString());
       const init: Record<string, string> = {};
       MEASUREMENT_FIELDS.forEach((f) => {
         const val = initialData[f.key];
@@ -112,7 +111,7 @@ export default function BodyMeasurementModal({
       });
       setMeasurements(init);
     } else {
-      setDate(new Date().toISOString().split("T")[0]);
+      setDate(getLocalDateString());
       setMeasurements({});
     }
   }, [open, initialData]);

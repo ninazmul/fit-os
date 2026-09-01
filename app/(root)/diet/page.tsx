@@ -39,6 +39,12 @@ import {
   Apple,
   Bookmark,
   ScanBarcode,
+  Sparkles,
+  Scale,
+  ChefHat,
+  Info,
+  CheckCircle2,
+  Calculator,
 } from "lucide-react";
 import type {
   MealType,
@@ -48,6 +54,16 @@ import type {
   SavedMealCategory,
   ISavedMeal,
 } from "@/types/fitness";
+import {
+  estimateFoodNutritionWithAI,
+  type DetectedIngredient,
+  type AIEstimateResult,
+} from "@/lib/actions/ai-food.actions";
+import {
+  extractGramsFromServing,
+  calculateNutritionByGrams,
+  calculateNutritionByMultiplier,
+} from "@/lib/food-portion";
 import {
   getSavedMeals,
   createSavedMeal,
@@ -100,18 +116,29 @@ export default function DietPage() {
   const [foodCatalog, setFoodCatalog] = useState<IFood[]>([]);
   const [selectedFood, setSelectedFood] = useState<IFood | null>(null);
   const [quantity, setQuantity] = useState<number>(1);
+  const [quantityMode, setQuantityMode] = useState<"multiplier" | "grams">("multiplier");
+  const [eatenGrams, setEatenGrams] = useState<number>(100);
 
   // Custom food modal state
   const [customFoodModalOpen, setCustomFoodModalOpen] = useState(false);
+  const [customTab, setCustomTab] = useState<"ai" | "manual">("ai");
   const [editingFoodId, setEditingFoodId] = useState<string | null>(null);
   const [customName, setCustomName] = useState("");
-  const [customCategory] = useState<FoodCategory>("custom");
-  const [customServing, setCustomServing] = useState("1 plate");
+  const [customCategory, setCustomCategory] = useState<FoodCategory>("custom");
+  const [customServing, setCustomServing] = useState("100g");
   const [customCalories, setCustomCalories] = useState<number>(200);
   const [customProtein, setCustomProtein] = useState<number>(10);
   const [customCarbs, setCustomCarbs] = useState<number>(30);
   const [customFat, setCustomFat] = useState<number>(5);
   const [customFiber, setCustomFiber] = useState<number>(2);
+
+  // AI custom food estimation state
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiCookingMethod, setAiCookingMethod] = useState("pan_fry");
+  const [aiTotalBatch, setAiTotalBatch] = useState("Total cooked: 1 batch (approx 4 portions)");
+  const [aiPortionEaten, setAiPortionEaten] = useState("I ate: 1 portion (25%)");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiResult, setAiResult] = useState<AIEstimateResult | null>(null);
 
   const dateStr = format(selectedDate, "yyyy-MM-dd");
 
@@ -151,23 +178,59 @@ export default function DietPage() {
     fetchCatalog();
   }, [addModalOpen, searchQuery, selectedCategory]);
 
+  // When food is selected, initialize portion grams
+  const handleSelectFood = (food: IFood) => {
+    setSelectedFood(food);
+    const { grams } = extractGramsFromServing(food.servingSize);
+    setEatenGrams(grams || 100);
+    setQuantity(1);
+  };
+
+  // Compute active portion breakdown for currently selected food
+  const currentPortionBreakdown = selectedFood
+    ? quantityMode === "grams"
+      ? calculateNutritionByGrams({
+          baseServingSize: selectedFood.servingSize,
+          baseCalories: selectedFood.calories,
+          baseProtein: selectedFood.protein,
+          baseCarbs: selectedFood.carbs,
+          baseFat: selectedFood.fat,
+          baseFiber: selectedFood.fiber || 0,
+          eatenGrams: eatenGrams,
+        })
+      : calculateNutritionByMultiplier({
+          baseServingSize: selectedFood.servingSize,
+          baseCalories: selectedFood.calories,
+          baseProtein: selectedFood.protein,
+          baseCarbs: selectedFood.carbs,
+          baseFat: selectedFood.fat,
+          baseFiber: selectedFood.fiber || 0,
+          quantity: quantity,
+        })
+    : null;
+
   const handleAddFoodToMeal = async () => {
-    if (!selectedFood) {
+    if (!selectedFood || !currentPortionBreakdown) {
       toast.error("Please select a food item");
       return;
     }
 
     try {
+      const finalQuantity = currentPortionBreakdown.calculatedQuantity;
+
       const newItem: IMealItem = {
         foodId: selectedFood._id,
         name: selectedFood.name,
-        serving: selectedFood.servingSize,
-        quantity,
+        serving:
+          quantityMode === "grams"
+            ? `${eatenGrams}g (of ${selectedFood.servingSize})`
+            : selectedFood.servingSize,
+        quantity: finalQuantity,
         calories: selectedFood.calories,
         protein: selectedFood.protein,
         carbs: selectedFood.carbs,
         fat: selectedFood.fat,
-        fiber: selectedFood.fiber,
+        fiber: selectedFood.fiber || 0,
       };
 
       // Check if meal of this type already exists today
@@ -181,10 +244,13 @@ export default function DietPage() {
         items: updatedItems,
       });
 
-      toast.success(`Added ${selectedFood.name} to ${activeMealType}! 🥗`);
+      toast.success(
+        `Added ${selectedFood.name} (${Math.round(selectedFood.calories * finalQuantity)} kcal) to ${activeMealType}! 🥗`,
+      );
       setAddModalOpen(false);
       setSelectedFood(null);
       setQuantity(1);
+      setQuantityMode("multiplier");
       fetchData();
     } catch {
       toast.error("Failed to add meal");
@@ -194,12 +260,16 @@ export default function DietPage() {
   const resetCustomFoodForm = () => {
     setEditingFoodId(null);
     setCustomName("");
-    setCustomServing("1 plate");
+    setCustomCategory("custom");
+    setCustomServing("100g");
     setCustomCalories(200);
     setCustomProtein(10);
     setCustomCarbs(30);
     setCustomFat(5);
     setCustomFiber(2);
+    setAiPrompt("");
+    setAiResult(null);
+    setCustomTab("ai");
   };
 
   const handleOpenCreateCustomFood = () => {
@@ -212,12 +282,14 @@ export default function DietPage() {
     if (!food._id) return;
     setEditingFoodId(food._id);
     setCustomName(food.name);
+    setCustomCategory(food.category || "custom");
     setCustomServing(food.servingSize);
     setCustomCalories(food.calories);
     setCustomProtein(food.protein);
     setCustomCarbs(food.carbs);
     setCustomFat(food.fat);
     setCustomFiber(food.fiber || 0);
+    setCustomTab("manual");
     setCustomFoodModalOpen(true);
   };
 
@@ -237,6 +309,40 @@ export default function DietPage() {
       setFoodCatalog(foods);
     } catch {
       toast.error("Failed to delete custom food");
+    }
+  };
+
+  const handleRunAIEstimate = async () => {
+    if (!aiPrompt.trim()) {
+      toast.error("Please describe what ingredients you cooked and portion eaten.");
+      return;
+    }
+
+    try {
+      setAiLoading(true);
+      const result = await estimateFoodNutritionWithAI({
+        description: aiPrompt,
+        cookingMethod: aiCookingMethod,
+        cookedPortionTotal: aiTotalBatch,
+        portionEaten: aiPortionEaten,
+      });
+
+      setAiResult(result);
+      setCustomName(result.name);
+      setCustomCategory(result.category);
+      setCustomServing(result.servingSize);
+      setCustomCalories(result.calories);
+      setCustomProtein(result.protein);
+      setCustomCarbs(result.carbs);
+      setCustomFat(result.fat);
+      setCustomFiber(result.fiber);
+
+      toast.success("AI calculated nutritional values! Review and save ✨");
+    } catch (err) {
+      console.error("AI estimation error:", err);
+      toast.error("Failed to calculate with AI. Please check inputs.");
+    } finally {
+      setAiLoading(false);
     }
   };
 
@@ -761,7 +867,7 @@ export default function DietPage() {
             {foodCatalog.map((food) => (
               <div
                 key={food._id}
-                onClick={() => setSelectedFood(food)}
+                onClick={() => handleSelectFood(food)}
                 className={`flex items-center justify-between p-3 rounded-2xl border transition-all cursor-pointer text-xs ${
                   selectedFood?._id === food._id
                     ? "border-primary bg-primary/10 font-medium"
@@ -827,33 +933,181 @@ export default function DietPage() {
             ))}
           </div>
 
-          {/* Quantity selector & Add Button */}
-          {selectedFood && (
-            <div className="pt-3 border-t border-border/50 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-2">
-                <Label className="text-xs">Quantity:</Label>
-                <Input
-                  type="number"
-                  step="0.5"
-                  min="0.5"
-                  value={quantity}
-                  onChange={(e) => setQuantity(Number(e.target.value))}
-                  className="w-20 rounded-xl text-center font-bold"
-                />
+          {/* Quantity & Portion Selector with Grams / Ratio calculation */}
+          {selectedFood && currentPortionBreakdown && (
+            <div className="pt-3 border-t border-border/50 space-y-3">
+              {/* Mode switch */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1 text-xs font-semibold text-muted-foreground">
+                  <Calculator className="w-3.5 h-3.5 text-primary" />
+                  <span>Portion Calculator</span>
+                </div>
+
+                <div className="flex p-0.5 bg-muted rounded-xl text-[11px] font-semibold">
+                  <button
+                    type="button"
+                    onClick={() => setQuantityMode("multiplier")}
+                    className={`px-2.5 py-1 rounded-lg transition-all ${
+                      quantityMode === "multiplier"
+                        ? "bg-background text-primary shadow-xs font-bold"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    🔢 Multiplier
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setQuantityMode("grams")}
+                    className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 ${
+                      quantityMode === "grams"
+                        ? "bg-background text-primary shadow-xs font-bold"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <Scale className="w-3 h-3" />
+                    ⚖️ Grams / Portion
+                  </button>
+                </div>
               </div>
 
-              <Button
-                onClick={handleAddFoodToMeal}
-                className="rounded-xl bg-primary hover:bg-primary/90 text-xs font-bold"
-              >
-                Add {Math.round(selectedFood.calories * quantity)} kcal &rarr;
-              </Button>
+              {/* Mode 1: Multiplier Mode */}
+              {quantityMode === "multiplier" ? (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-xs text-muted-foreground">
+                      Base Serving: <strong className="text-foreground">{selectedFood.servingSize}</strong>
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs">Quantity:</Label>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        min="0.1"
+                        value={quantity}
+                        onChange={(e) => setQuantity(Math.max(0.1, Number(e.target.value)))}
+                        className="w-20 rounded-xl text-center font-bold text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Multiplier Quick Presets */}
+                  <div className="flex gap-1.5 overflow-x-auto pb-0.5 text-xs">
+                    {[0.5, 1, 1.5, 2, 3].map((qty) => (
+                      <button
+                        key={qty}
+                        type="button"
+                        onClick={() => setQuantity(qty)}
+                        className={`px-2 py-1 rounded-lg border text-[11px] font-medium transition-all ${
+                          quantity === qty
+                            ? "border-primary bg-primary/10 text-primary font-bold"
+                            : "border-border/40 text-muted-foreground hover:bg-accent"
+                        }`}
+                      >
+                        {qty}x
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                /* Mode 2: Grams / Weight Portion Calculator */
+                <div className="space-y-2 p-2.5 rounded-2xl bg-muted/40 border border-border/40">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">
+                      Base Food Entry: <strong className="text-foreground">{selectedFood.servingSize}</strong> ({selectedFood.calories} kcal)
+                    </span>
+                    <span className="text-primary font-bold text-[11px]">
+                      {currentPortionBreakdown.calculatedQuantity}x serving
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 space-y-1">
+                      <Label className="text-xs font-semibold flex items-center gap-1">
+                        <Scale className="w-3 h-3 text-primary" />
+                        Amount I ate (grams / ml):
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          type="number"
+                          step="1"
+                          min="1"
+                          placeholder="e.g. 20"
+                          value={eatenGrams}
+                          onChange={(e) => setEatenGrams(Math.max(0, Number(e.target.value)))}
+                          className="rounded-xl font-bold text-base pr-8"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-semibold">
+                          g
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quick Gram Presets */}
+                  <div className="flex gap-1.5 flex-wrap text-xs pt-1">
+                    {[
+                      { g: 20, label: "20g" },
+                      { g: 50, label: "50g" },
+                      { g: 100, label: "100g" },
+                      { g: 150, label: "150g" },
+                      { g: 200, label: "200g" },
+                      {
+                        g: Math.round(currentPortionBreakdown.baseGrams * 0.25),
+                        label: "25% (1/4)",
+                      },
+                      {
+                        g: Math.round(currentPortionBreakdown.baseGrams * 0.5),
+                        label: "50% (1/2)",
+                      },
+                      {
+                        g: currentPortionBreakdown.baseGrams,
+                        label: `Full (${currentPortionBreakdown.baseGrams}g)`,
+                      },
+                    ].map((preset, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setEatenGrams(preset.g)}
+                        className={`px-2 py-0.5 rounded-lg border text-[10px] font-medium transition-all ${
+                          eatenGrams === preset.g
+                            ? "border-primary bg-primary text-white font-bold"
+                            : "border-border/50 bg-background text-muted-foreground hover:border-primary/40"
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Dynamic Live Nutrition Preview Card */}
+              <div className="p-2.5 rounded-2xl bg-primary/5 border border-primary/20 flex items-center justify-between text-xs">
+                <div>
+                  <p className="font-bold text-foreground text-sm">
+                    {currentPortionBreakdown.calories} kcal
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    P: <span className="font-semibold text-emerald-600 dark:text-emerald-400">{currentPortionBreakdown.protein}g</span> &middot;{" "}
+                    C: <span className="font-semibold text-blue-600 dark:text-blue-400">{currentPortionBreakdown.carbs}g</span> &middot;{" "}
+                    F: <span className="font-semibold text-purple-600 dark:text-purple-400">{currentPortionBreakdown.fat}g</span> &middot;{" "}
+                    Fib: <span className="font-semibold text-amber-600 dark:text-amber-400">{currentPortionBreakdown.fiber}g</span>
+                  </p>
+                </div>
+
+                <Button
+                  onClick={handleAddFoodToMeal}
+                  className="rounded-xl bg-primary hover:bg-primary/90 text-xs font-bold px-4 py-2"
+                >
+                  Add to {activeMealType} &rarr;
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
 
-      {/* Custom Food Creation / Edit Modal */}
+      {/* Custom Food Creation / Edit Modal with AI Recipe Estimator */}
       <Dialog
         open={customFoodModalOpen}
         onOpenChange={(open) => {
@@ -861,30 +1115,250 @@ export default function DietPage() {
           if (!open) resetCustomFoodForm();
         }}
       >
-        <DialogContent className="sm:max-w-md rounded-2xl p-6 space-y-4">
+        <DialogContent className="sm:max-w-lg rounded-3xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold">
-              {editingFoodId ? "Edit Custom Food ✏️" : "Create Custom Food 🍳"}
+            <DialogTitle className="text-lg font-bold flex items-center gap-2">
+              <ChefHat className="w-5 h-5 text-primary" />
+              {editingFoodId ? "Edit Custom Food ✏️" : "Custom Food & AI Recipe 🍳"}
             </DialogTitle>
+            <DialogDescription className="text-xs">
+              Describe ingredients, cooking method and portion eaten for instant AI calculation.
+            </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSaveCustomFood} className="space-y-3 text-xs">
+          {/* Mode Switcher: AI Recipe Estimator vs Manual Form */}
+          <div className="grid grid-cols-2 gap-1 p-1 bg-muted rounded-2xl text-xs font-semibold">
+            <button
+              type="button"
+              onClick={() => setCustomTab("ai")}
+              className={`flex items-center justify-center gap-1.5 py-2 rounded-xl transition-all ${
+                customTab === "ai"
+                  ? "bg-primary text-white shadow-sm font-bold"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              ✨ AI Recipe Estimator
+            </button>
+            <button
+              type="button"
+              onClick={() => setCustomTab("manual")}
+              className={`flex items-center justify-center gap-1.5 py-2 rounded-xl transition-all ${
+                customTab === "manual"
+                  ? "bg-background text-primary shadow-sm font-bold"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Pencil className="w-3.5 h-3.5" />
+              📝 Manual Entry
+            </button>
+          </div>
+
+          {/* AI Recipe Mode */}
+          {customTab === "ai" && (
+            <div className="space-y-3.5 text-xs">
+              {/* Quick AI Recipe Prompt Suggestions */}
+              <div>
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-primary" />
+                  Quick Inspiration:
+                </p>
+                <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar text-[10px]">
+                  {[
+                    {
+                      label: "🍗 Chicken Curry (1 of 4 servings)",
+                      text: "500g chicken breast, 2 potatoes (150g), 1 onion, 2 tbsp mustard oil, turmeric, chili powder. Cooked 4 servings in total, I ate 1 serving.",
+                      method: "curry",
+                      portion: "1 portion of 4 (25%)",
+                    },
+                    {
+                      label: "🍳 2-Egg Omelette in Butter",
+                      text: "2 whole eggs, 1 tbsp butter, chopped onions and green chilies. Ate the whole omelette.",
+                      method: "pan_fry",
+                      portion: "All (100%)",
+                    },
+                    {
+                      label: "🍚 Rice & Lentil Dal Bowl",
+                      text: "150g cooked basmati rice with 100g red lentil masoor dal cooked with 1 tsp ghee and cumin.",
+                      method: "boil",
+                      portion: "1 bowl (250g)",
+                    },
+                    {
+                      label: "🥩 Beef Bhuna (150g portion)",
+                      text: "600g lean beef cooked with 2 onions, 2 tbsp oil, ginger garlic paste and spices. Total cooked was ~500g, I ate 150g.",
+                      method: "curry",
+                      portion: "150g out of 500g",
+                    },
+                  ].map((preset, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        setAiPrompt(preset.text);
+                        setAiCookingMethod(preset.method);
+                        setAiPortionEaten(preset.portion);
+                      }}
+                      className="px-2.5 py-1 rounded-xl bg-muted/60 hover:bg-primary/10 hover:text-primary border border-border/40 whitespace-nowrap transition-colors"
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Recipe & Cooking Description Textarea */}
+              <div className="space-y-1">
+                <Label className="font-semibold flex items-center justify-between">
+                  <span>Describe Ingredients & What Was Cooked:</span>
+                  <span className="text-[10px] text-muted-foreground font-normal">
+                    (weights, oil, spices, batch size)
+                  </span>
+                </Label>
+                <textarea
+                  rows={3}
+                  value={aiPrompt}
+                  onChange={(e) => setAiPrompt(e.target.value)}
+                  placeholder="e.g. 200g chicken breast pan fried in 1 tbsp olive oil with 100g broccoli and 1 cup rice. Cooked 2 portions total, I ate 1 portion..."
+                  className="w-full rounded-2xl p-3 bg-muted/40 border border-border/50 focus:border-primary focus:ring-1 focus:ring-primary text-xs outline-none transition-all resize-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <div className="space-y-1">
+                  <Label className="font-semibold">Cooking Method / Oil:</Label>
+                  <select
+                    value={aiCookingMethod}
+                    onChange={(e) => setAiCookingMethod(e.target.value)}
+                    className="w-full rounded-xl p-2.5 bg-muted/40 border border-border/50 text-xs outline-none"
+                  >
+                    <option value="pan_fry">Pan-fried / Sautéed (adds ~5-7g oil)</option>
+                    <option value="deep_fry">Deep-fried / Crispy (adds ~12-15g oil)</option>
+                    <option value="curry">Curry / Stew with Gravy</option>
+                    <option value="bake_roast">Baked / Grilled (light oil)</option>
+                    <option value="boil_steam">Boiled / Steamed (0g added oil)</option>
+                    <option value="raw">Raw / Fresh</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="font-semibold">Total Cooked Batch:</Label>
+                  <Input
+                    placeholder="e.g. 500g or 4 servings"
+                    value={aiTotalBatch}
+                    onChange={(e) => setAiTotalBatch(e.target.value)}
+                    className="rounded-xl text-xs"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="font-semibold">Portion Eaten:</Label>
+                  <Input
+                    placeholder="e.g. 20g of 100g, 1 portion, half"
+                    value={aiPortionEaten}
+                    onChange={(e) => setAiPortionEaten(e.target.value)}
+                    className="rounded-xl text-xs"
+                  />
+                </div>
+              </div>
+
+              {/* AI Calculate Button */}
+              <Button
+                type="button"
+                disabled={aiLoading || !aiPrompt.trim()}
+                onClick={handleRunAIEstimate}
+                className="w-full rounded-2xl py-5 bg-gradient-to-r from-primary to-emerald-600 hover:from-primary/90 hover:to-emerald-700 text-white font-bold text-xs gap-2 shadow-md hover:shadow-lg transition-all"
+              >
+                <Sparkles className="w-4 h-4" />
+                {aiLoading ? "AI is Analyzing Ingredients & Cooking..." : "✨ Calculate Nutrition with AI"}
+              </Button>
+
+              {/* AI Result Card */}
+              {aiResult && (
+                <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 space-y-2.5 animate-in fade-in">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      AI Calculated for Portion Eaten
+                    </span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-800 dark:text-emerald-200">
+                      {Math.round((aiResult.portionEatenRatio || 1) * 100)}% portion
+                    </span>
+                  </div>
+
+                  <p className="text-[11px] text-muted-foreground">
+                    {aiResult.explanation}
+                  </p>
+
+                  {aiResult.detectedIngredients && aiResult.detectedIngredients.length > 0 && (
+                    <div className="pt-1.5 border-t border-emerald-500/20">
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                        Detected Ingredients & Raw Values:
+                      </p>
+                      <div className="flex gap-1.5 flex-wrap">
+                        {aiResult.detectedIngredients.map((ing: DetectedIngredient, i: number) => (
+                          <span
+                            key={i}
+                            className="text-[10px] px-2 py-0.5 rounded-lg bg-background/80 border border-border/40 font-medium"
+                          >
+                            {ing.name} ({ing.amount}) &middot; {ing.calories} kcal
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-4 gap-1.5 pt-1.5 text-center text-xs font-bold border-t border-emerald-500/20">
+                    <div className="p-1.5 rounded-xl bg-background/60">
+                      <span className="text-[10px] text-muted-foreground block">Calories</span>
+                      <span className="text-primary text-sm">{aiResult.calories} kcal</span>
+                    </div>
+                    <div className="p-1.5 rounded-xl bg-background/60">
+                      <span className="text-[10px] text-muted-foreground block">Protein</span>
+                      <span className="text-emerald-600">{aiResult.protein}g</span>
+                    </div>
+                    <div className="p-1.5 rounded-xl bg-background/60">
+                      <span className="text-[10px] text-muted-foreground block">Carbs</span>
+                      <span className="text-blue-600">{aiResult.carbs}g</span>
+                    </div>
+                    <div className="p-1.5 rounded-xl bg-background/60">
+                      <span className="text-[10px] text-muted-foreground block">Fat</span>
+                      <span className="text-purple-600">{aiResult.fat}g</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Form for saving / editing the custom food (populated by AI or manual) */}
+          <form onSubmit={handleSaveCustomFood} className="space-y-3 text-xs pt-1 border-t border-border/40">
+            <div className="flex items-center justify-between">
+              <Label className="font-bold text-xs">
+                {customTab === "ai" ? "Review & Finalize Custom Food Entry:" : "Custom Food Details:"}
+              </Label>
+              {customCategory && (
+                <span className="text-[10px] uppercase font-bold text-primary px-2 py-0.5 rounded-full bg-primary/10">
+                  {customCategory.replace("_", " ")}
+                </span>
+              )}
+            </div>
+
             <div>
               <Label>Food Name</Label>
               <Input
-                placeholder="e.g. Homemade Chicken Wrap"
+                placeholder="e.g. Homemade Chicken Curry (150g)"
                 value={customName}
                 onChange={(e) => setCustomName(e.target.value)}
                 required
-                className="rounded-xl mt-1"
+                className="rounded-xl mt-1 font-semibold"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>Serving Size</Label>
+                <Label>Serving Size (Base)</Label>
                 <Input
-                  placeholder="e.g. 1 roll (200g)"
+                  placeholder="e.g. 100g or 1 portion (150g)"
                   value={customServing}
                   onChange={(e) => setCustomServing(e.target.value)}
                   required
@@ -899,7 +1373,7 @@ export default function DietPage() {
                   value={customCalories}
                   onChange={(e) => setCustomCalories(Number(e.target.value))}
                   required
-                  className="rounded-xl mt-1"
+                  className="rounded-xl mt-1 font-bold text-primary"
                 />
               </div>
             </div>
@@ -909,6 +1383,7 @@ export default function DietPage() {
                 <Label>Protein (g)</Label>
                 <Input
                   type="number"
+                  step="0.1"
                   value={customProtein}
                   onChange={(e) => setCustomProtein(Number(e.target.value))}
                   className="rounded-xl mt-1"
@@ -918,6 +1393,7 @@ export default function DietPage() {
                 <Label>Carbs (g)</Label>
                 <Input
                   type="number"
+                  step="0.1"
                   value={customCarbs}
                   onChange={(e) => setCustomCarbs(Number(e.target.value))}
                   className="rounded-xl mt-1"
@@ -927,6 +1403,7 @@ export default function DietPage() {
                 <Label>Fat (g)</Label>
                 <Input
                   type="number"
+                  step="0.1"
                   value={customFat}
                   onChange={(e) => setCustomFat(Number(e.target.value))}
                   className="rounded-xl mt-1"
@@ -936,6 +1413,7 @@ export default function DietPage() {
                 <Label>Fiber (g)</Label>
                 <Input
                   type="number"
+                  step="0.1"
                   value={customFiber}
                   onChange={(e) => setCustomFiber(Number(e.target.value))}
                   className="rounded-xl mt-1"
@@ -943,11 +1421,23 @@ export default function DietPage() {
               </div>
             </div>
 
+            {/* Portion Test Calculator inside Custom Food Creator */}
+            <div className="p-2.5 rounded-2xl bg-muted/40 border border-border/30 flex items-center justify-between text-[11px]">
+              <span className="text-muted-foreground flex items-center gap-1">
+                <Info className="w-3.5 h-3.5 text-primary" />
+                <span>If user eats <strong>20g</strong> of this food:</span>
+              </span>
+              <span className="font-bold text-primary">
+                {Math.round((customCalories * 20) / (extractGramsFromServing(customServing).grams || 100))} kcal &middot;{" "}
+                {Math.round(((customProtein * 20) / (extractGramsFromServing(customServing).grams || 100)) * 10) / 10}g P
+              </span>
+            </div>
+
             <Button
               type="submit"
-              className="w-full rounded-xl mt-3 bg-primary hover:bg-primary/90 font-bold"
+              className="w-full rounded-2xl py-5 mt-3 bg-primary hover:bg-primary/90 text-white font-bold text-xs"
             >
-              {editingFoodId ? "Update Custom Food" : "Save Custom Food"}
+              {editingFoodId ? "Update Custom Food" : "Save Custom Food 🍳"}
             </Button>
           </form>
         </DialogContent>

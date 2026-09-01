@@ -5,6 +5,7 @@ import WorkoutLog from "@/lib/database/models/workout-log.model";
 import { currentUser } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { workoutLogSchema, type WorkoutLogFormValues } from "@/validations/fitness";
+import { getLocalDateString } from "@/lib/utils";
 
 export async function logWorkout(formData: WorkoutLogFormValues) {
   await connectToDatabase();
@@ -23,7 +24,7 @@ export async function logWorkout(formData: WorkoutLogFormValues) {
 
   const workout = await WorkoutLog.create({
     clerkId: user.id,
-    date: validated.date,
+    date: validated.date || getLocalDateString(),
     title: validated.title,
     workoutType: validated.workoutType,
     exercises: validated.exercises,
@@ -53,7 +54,7 @@ export async function getWorkoutHistory(days: number = 30) {
 
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - days);
-  const startStr = startDate.toISOString().split("T")[0];
+  const startStr = getLocalDateString(startDate);
 
   const logs = await WorkoutLog.find({
     clerkId: user.id,

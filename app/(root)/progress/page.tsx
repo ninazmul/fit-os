@@ -39,7 +39,7 @@ import {
   Star,
   Clock,
 } from "lucide-react";
-import { formatTime12h } from "@/lib/utils";
+import { formatTime12h, getLocalDateString } from "@/lib/utils";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -113,7 +113,7 @@ export default function ProgressPage() {
   const [sleepNotes, setSleepNotes] = useState("");
   const [sleepRemoving, setSleepRemoving] = useState<string | null>(null);
 
-  const todayStr = new Date().toISOString().split("T")[0];
+  const todayStr = getLocalDateString();
 
   const sleepSessionHours = (h: string, w: string) => {
     try {

@@ -10,7 +10,7 @@ import {
   removeSleepSession,
   getSleepLogForDate,
 } from "@/lib/actions/water-sleep.actions";
-import { formatTime12h } from "@/lib/utils";
+import { formatTime12h, getLocalDateString } from "@/lib/utils";
 import dynamic from "next/dynamic";
 import StatCard from "@/components/shared/StatCard";
 import ProgressRing from "@/components/shared/ProgressRing";
@@ -90,7 +90,7 @@ export default function DashboardPage() {
   const [sleepAdding, setSleepAdding] = useState<number | null>(null);
   const [sleepRemoving, setSleepRemoving] = useState<number | null>(null);
 
-  const todayStr = new Date().toISOString().split("T")[0];
+  const todayStr = getLocalDateString();
 
   const fetchWater = useCallback(async () => {
     try {
@@ -113,7 +113,7 @@ export default function DashboardPage() {
   const fetchDashboard = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await getDashboardData();
+      const res = await getDashboardData(todayStr);
       setData(res);
       if (res?.needsOnboarding) {
         setOnboardingOpen(true);
@@ -123,7 +123,7 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [todayStr]);
 
   const fetchAll = useCallback(async () => {
     await Promise.all([fetchDashboard(), fetchWater(), fetchSleep()]);

@@ -9,6 +9,7 @@ import { weightLogSchema, type WeightLogFormValues } from "@/validations/fitness
 import type { IUserProfile, IWeightLog } from "@/types/fitness";
 
 import { calculateRecommendedMacros } from "@/lib/actions/profile.actions";
+import { getLocalDateString } from "@/lib/utils";
 
 export async function logWeight(formData: WeightLogFormValues) {
   await connectToDatabase();
@@ -87,7 +88,7 @@ export async function getWeightHistory(days: number = 30) {
 
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - days);
-  const startStr = startDate.toISOString().split("T")[0];
+  const startStr = getLocalDateString(startDate);
 
   const logs = await WeightLog.find({
     clerkId: user.id,
@@ -109,13 +110,13 @@ export async function getWeightStats() {
     .lean()) as unknown as IWeightLog[];
   if (allLogs.length === 0) return null;
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = getLocalDateString();
   const todayLog = allLogs.find((l) => l.date === today);
 
   // Last 7 days
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-  const sevenStr = sevenDaysAgo.toISOString().split("T")[0];
+  const sevenStr = getLocalDateString(sevenDaysAgo);
   const weekLogs = allLogs.filter((l) => l.date >= sevenStr);
   const weekAvg =
     weekLogs.length > 0
@@ -127,7 +128,7 @@ export async function getWeightStats() {
   // Last 30 days
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  const thirtyStr = thirtyDaysAgo.toISOString().split("T")[0];
+  const thirtyStr = getLocalDateString(thirtyDaysAgo);
   const monthLogs = allLogs.filter((l) => l.date >= thirtyStr);
   const monthAvg =
     monthLogs.length > 0

@@ -28,3 +28,11 @@ export function formatTime12h(time: string): string {
   const hour12 = hour % 12 === 0 ? 12 : hour % 12;
   return `${hour12}:${String(minute).padStart(2, "0")} ${suffix}`;
 }
+
+/** Returns the local date string (YYYY-MM-DD) resetting exactly at 12:00 AM midnight */
+export function getLocalDateString(date: Date = new Date()): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}

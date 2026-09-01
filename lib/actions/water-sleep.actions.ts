@@ -6,6 +6,7 @@ import SleepLog from "@/lib/database/models/sleep-log.model";
 import { currentUser } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { waterEntrySchema, sleepSessionSchema } from "@/validations/fitness";
+import { getLocalDateString } from "@/lib/utils";
 import type { IWaterEntry, ISleepSession } from "@/types/fitness";
 
 function nowHHmm(): string {
@@ -49,7 +50,7 @@ export async function addWater(amountMl: number, date?: string, time?: string) {
     time: time || nowHHmm(),
   });
 
-  const useDate = date || new Date().toISOString().split("T")[0];
+  const useDate = date || getLocalDateString();
 
   const raw = await WaterLog.findOne({
     clerkId: user.id,
@@ -82,7 +83,7 @@ export async function removeWaterEntry(entryIndex: number, date?: string) {
   const user = await currentUser();
   if (!user) throw new Error("Unauthorized");
 
-  const useDate = date || new Date().toISOString().split("T")[0];
+  const useDate = date || getLocalDateString();
   const raw = await WaterLog.findOne({
     clerkId: user.id,
     date: useDate,
@@ -134,7 +135,7 @@ export async function getWaterHistory(days: number = 7) {
 
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - days);
-  const startStr = startDate.toISOString().split("T")[0];
+  const startStr = getLocalDateString(startDate);
 
   const logs = await WaterLog.find({
     clerkId: user.id,
@@ -155,14 +156,17 @@ export async function getWaterHistory(days: number = 7) {
 
 // ───────────────── Sleep ─────────────────
 
-export async function addSleepSession(data: {
-  date?: string;
-  sleepTime: string;
-  wakeTime: string;
-  totalHours: number;
-  quality?: number;
-  notes?: string;
-}) {
+export async function addSleepSession(
+  data: {
+    date?: string;
+    sleepTime: string;
+    wakeTime: string;
+    totalHours: number;
+    quality?: number;
+    notes?: string;
+  },
+  dateOverride?: string,
+) {
   await connectToDatabase();
   const user = await currentUser();
   if (!user) throw new Error("Unauthorized");
@@ -175,7 +179,7 @@ export async function addSleepSession(data: {
     notes: data.notes ?? "",
   });
 
-  const useDate = data.date || new Date().toISOString().split("T")[0];
+  const useDate = dateOverride || data.date || getLocalDateString();
 
   const raw = (await SleepLog.findOne({
     clerkId: user.id,
@@ -208,7 +212,7 @@ export async function removeSleepSession(sessionIndex: number, date?: string) {
   const user = await currentUser();
   if (!user) throw new Error("Unauthorized");
 
-  const useDate = date || new Date().toISOString().split("T")[0];
+  const useDate = date || getLocalDateString();
   const raw = (await SleepLog.findOne({
     clerkId: user.id,
     date: useDate,
@@ -277,7 +281,7 @@ export async function getSleepHistory(days: number = 7) {
 
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - days);
-  const startStr = startDate.toISOString().split("T")[0];
+  const startStr = getLocalDateString(startDate);
 
   const logs = await SleepLog.find({
     clerkId: user.id,

@@ -19,7 +19,7 @@ import {
   Star,
 } from "lucide-react";
 import { addWater, addSleepSession } from "@/lib/actions/water-sleep.actions";
-import { formatTime12h } from "@/lib/utils";
+import { formatTime12h, getLocalDateString } from "@/lib/utils";
 import { logWeight } from "@/lib/actions/weight.actions";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
@@ -59,7 +59,7 @@ export default function QuickActionModal({
   const handleLogWater = async (amount: number) => {
     try {
       setLoading(true);
-      const today = new Date().toISOString().split("T")[0];
+      const today = getLocalDateString();
       await addWater(amount, today);
       toast.success(`Logged ${amount}ml of water! 💧`);
       onOpenChange(false);
@@ -81,7 +81,7 @@ export default function QuickActionModal({
 
     try {
       setLoading(true);
-      const today = new Date().toISOString().split("T")[0];
+      const today = getLocalDateString();
       await logWeight({
         date: today,
         weight: Number(weightVal),
@@ -248,7 +248,7 @@ export default function QuickActionModal({
                   onClick={async () => {
                     try {
                       setLoading(true);
-                      const today = new Date().toISOString().split("T")[0];
+                      const today = getLocalDateString();
                       await addSleepSession({
                         date: today,
                         sleepTime: p.sleep,
@@ -284,7 +284,7 @@ export default function QuickActionModal({
                 e.preventDefault();
                 try {
                   setLoading(true);
-                  const today = new Date().toISOString().split("T")[0];
+                  const today = getLocalDateString();
                   let hrs = 8;
                   try {
                     const [h1, m1] = sleepTime.split(":").map(Number);

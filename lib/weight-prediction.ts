@@ -4,6 +4,7 @@
  */
 
 import type { IWeightPrediction } from "@/types/fitness";
+import { getLocalDateString } from "@/lib/utils";
 
 interface WeightDataPoint {
   date: string; // YYYY-MM-DD
@@ -118,7 +119,7 @@ export function predictGoalDate(
   estimatedDate.setDate(estimatedDate.getDate() + daysFromNow);
 
   return {
-    estimatedDate: estimatedDate.toISOString().split("T")[0],
+    estimatedDate: getLocalDateString(estimatedDate),
     daysToGoal: daysFromNow,
   };
 }

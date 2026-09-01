@@ -18,6 +18,7 @@ import {
   Trash2,
   Calendar,
 } from "lucide-react";
+import { getLocalDateString } from "@/lib/utils";
 import type { WorkoutType, IWorkoutExercise } from "@/types/fitness";
 import dynamic from "next/dynamic";
 import toast from "react-hot-toast";
@@ -109,7 +110,7 @@ export default function WorkoutPage() {
   const handleSaveWorkout = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const today = new Date().toISOString().split("T")[0];
+      const today = getLocalDateString();
       await logWorkout({
         date: today,
         title,
