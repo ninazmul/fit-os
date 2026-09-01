@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 export type AdSize =
   | "auto"
@@ -20,16 +20,17 @@ type AdUnitProps = {
 };
 
 const SIZE_PRESETS: Record<AdSize, { w: number; h: number; format: string }> = {
-  auto: { w: 0, h: 0, format: "fluid" },
-  banner: { w: 468, h: 60, format: "rectangle" },
-  "large-banner": { w: 728, h: 90, format: "rectangle" },
-  leaderboard: { w: 970, h: 90, format: "rectangle" },
+  auto: { w: 0, h: 0, format: "auto" },
+  banner: { w: 468, h: 60, format: "horizontal" },
+  "large-banner": { w: 728, h: 90, format: "horizontal" },
+  leaderboard: { w: 970, h: 90, format: "horizontal" },
   "medium-rectangle": { w: 300, h: 250, format: "rectangle" },
   "large-rectangle": { w: 336, h: 280, format: "rectangle" },
-  "half-page": { w: 300, h: 600, format: "rectangle" },
+  "half-page": { w: 300, h: 600, format: "vertical" },
 };
 
-const ADSENSE_CLIENT_ID = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID;
+const ADSENSE_CLIENT_ID =
+  process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID || "ca-pub-1213821838926371";
 const ADSENSE_DEFAULT_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_ID;
 const IS_DEV = process.env.NODE_ENV !== "production";
 
@@ -43,85 +44,76 @@ export default function AdUnit({
   slotId,
   size = "auto",
   className = "",
-  label,
+  label = "Sponsored",
   maxWidth,
 }: AdUnitProps) {
   const instanceId = useId().replace(/:/g, "");
   const effectiveSlot = (slotId ?? ADSENSE_DEFAULT_SLOT ?? "").trim();
   const effectiveClient = (ADSENSE_CLIENT_ID ?? "").trim();
-  const preset = SIZE_PRESETS[size];
+  const preset = SIZE_PRESETS[size] || SIZE_PRESETS.auto;
   const isResponsive = size === "auto";
   const pushed = useRef(false);
-
-  const shouldRender = !!effectiveClient && !!effectiveSlot && !IS_DEV;
+  const [adFailed, setAdFailed] = useState(false);
 
   useEffect(() => {
-    if (!shouldRender || pushed.current) return;
-    try {
-      (window.adsbygoogle = window.adsbygoogle || []).push({});
-      pushed.current = true;
-    } catch (err) {
-      console.warn("AdSense unit failed to push:", err);
-    }
-  }, [shouldRender, effectiveSlot, effectiveClient, instanceId]);
+    if (!effectiveClient || pushed.current) return;
 
-  if (!shouldRender) {
-    if (IS_DEV) {
-      return (
-        <div
-          className={`mx-auto w-full max-w-5xl ${className}`}
-          aria-hidden="true"
-        >
-          <div
-            className="flex items-center justify-center rounded-2xl border border-dashed border-border/70 bg-muted/30 px-4 py-6 text-xs text-muted-foreground"
-            style={{
-              minHeight: preset.h > 0 ? preset.h : 110,
-              maxWidth: maxWidth ?? (preset.w > 0 ? preset.w : undefined),
-            }}
-          >
-            <span>
-              AdSense {size} {label ? `- ${label}` : ""} is disabled in local
-              dev. Set{" "}
-              <code className="mx-1 rounded bg-background/60 px-1.5 py-0.5 font-mono text-[11px]">
-                NEXT_PUBLIC_ADSENSE_CLIENT_ID
-              </code>{" "}
-              +{" "}
-              <code className="mx-1 rounded bg-background/60 px-1.5 py-0.5 font-mono text-[11px]">
-                NEXT_PUBLIC_ADSENSE_SLOT_ID
-              </code>{" "}
-              in prod.
-            </span>
-          </div>
-        </div>
-      );
+    try {
+      if (typeof window !== "undefined" && window.adsbygoogle) {
+        window.adsbygoogle.push({});
+        pushed.current = true;
+      }
+    } catch (err) {
+      console.warn("AdSense unit initialization notice:", err);
+      setAdFailed(true);
     }
-    return null;
+  }, [effectiveClient, effectiveSlot, instanceId]);
+
+  if (adFailed) return null;
+
+  // In local development, show a subtle preview placeholder if no live ads
+  if (IS_DEV && !effectiveSlot) {
+    return (
+      <div
+        className={`mx-auto w-full my-4 ${className}`}
+        style={{ maxWidth: maxWidth ?? "100%" }}
+        aria-hidden="true"
+      >
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/50 bg-muted/20 px-4 py-4 text-center">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-1">
+            Google AdSense Placement ({size})
+          </p>
+          <p className="text-[11px] text-muted-foreground/80 max-w-md">
+            Active in production with client ID <code className="font-mono text-[10px] bg-muted/60 px-1 py-0.5 rounded text-primary">{effectiveClient}</code>.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div
-      className={`mx-auto w-full ${className}`}
-      style={{ maxWidth: maxWidth ?? (preset.w > 0 ? preset.w : "100%") }}
+      className={`mx-auto w-full my-4 ${className}`}
+      style={{ maxWidth: maxWidth ?? (preset.w > 0 ? `${preset.w}px` : "100%") }}
     >
       {label && (
-        <p className="mb-1.5 text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/60">
+        <p className="mb-1 text-center text-[9px] font-bold uppercase tracking-widest text-muted-foreground/50">
           {label}
         </p>
       )}
-      <div className="flex justify-center overflow-hidden rounded-2xl border border-border/40 bg-card/40 p-1.5 backdrop-blur-sm">
+      <div className="flex justify-center overflow-hidden rounded-2xl border border-border/40 bg-card/30 p-1 backdrop-blur-sm transition-all hover:border-border/60">
         <ins
-          key={`${effectiveSlot}-${instanceId}`}
-          className="adsbygoogle block"
+          key={`${effectiveSlot || "auto"}-${instanceId}`}
+          className="adsbygoogle block w-full"
           style={{
             display: "block",
-            width: isResponsive ? "100%" : preset.w,
-            minHeight: isResponsive ? 90 : preset.h,
+            width: isResponsive ? "100%" : `${preset.w}px`,
+            minHeight: isResponsive ? "90px" : `${preset.h}px`,
           }}
           data-ad-client={effectiveClient}
-          data-ad-slot={effectiveSlot}
-          data-ad-format={isResponsive ? "fluid" : preset.format}
-          data-full-width-responsive={isResponsive ? "true" : undefined}
-          data-ad-layout={isResponsive ? "in-article" : undefined}
+          {...(effectiveSlot ? { "data-ad-slot": effectiveSlot } : {})}
+          data-ad-format={isResponsive ? "auto" : preset.format}
+          data-full-width-responsive={isResponsive ? "true" : "false"}
         />
       </div>
     </div>
