@@ -1,6 +1,6 @@
 # FitOs Product Roadmap – Final Approved Version (Product Advisor Approved)
 
-**Plan created:** /Users/n.i.nazmul/Documents/Working Files/fit-os/.trae/documents/plan-fit-os-product-roadmap-final-2026-08-06.md
+**Plan created:** /Users/n.i.nazmul/Documents/Working Files/nutribd/.trae/documents/plan-nutribd-product-roadmap-final-2026-08-06.md
 
 **Summary**  
 Product advisor fully approved the revised roadmap with 3 strategic changes + 2 new high-priority features (Adaptive Goals, Smart Weight Prediction, Daily Score). Updated Quick Add as absolute center of the app. Dashboard keeps all 6 cards but adds hero "Today's Mission". Saved Meals prioritized over AI. Added adaptive goals, weight prediction, daily score, categorized Bangladeshi foods, barcode scanner. Vision statement added. Mobile-first only. All changes solve retention and daily decision-making.

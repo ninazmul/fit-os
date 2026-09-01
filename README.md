@@ -15,7 +15,7 @@
 
 _A comprehensive, AI-driven personal fitness & nutrition platform for Bangladesh and worldwide. Track meals, workouts, weight, water, sleep, and 9-point body measurements with real-time Google Gemini AI coaching, natural language culinary recipe estimation, barcode scanning, and goal trajectory forecasting._
 
-[Live Demo](https://nutribd.com) · [Report Bug](https://github.com/ninazmul/fit-os/issues) · [Request Feature](https://github.com/ninazmul/fit-os/issues)
+[Live Demo](https://nutribd.com) · [Report Bug](https://github.com/ninazmul/nutribd/issues) · [Request Feature](https://github.com/ninazmul/nutribd/issues)
 
 </div>
 
@@ -192,8 +192,8 @@ Ensure you have the following installed on your machine:
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/ninazmul/fit-os.git
-   cd fit-os
+   git clone https://github.com/ninazmul/nutribd.git
+   cd nutribd
    ```
 
 2. **Install dependencies:**
@@ -261,7 +261,7 @@ NEXT_PUBLIC_SITE_URL=https://fitos.artistycode.studio
 ## 📁 Project Structure
 
 ```text
-fit-os/
+nutribd/
 ├── app/
 │   ├── (auth)/              # Public Clerk authentication routes (sign-in, sign-up)
 │   ├── (root)/              # Core authenticated application modules

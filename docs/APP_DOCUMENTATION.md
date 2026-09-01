@@ -288,7 +288,7 @@ It reads `MONGODB_URI` from environment variables and connects using Mongoose. T
 The app uses the MongoDB database name:
 
 ```text
-fit-os
+nutribd
 ```
 
 ### Authentication And Authorization

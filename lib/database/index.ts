@@ -26,7 +26,7 @@ export const connectToDatabase = async () => {
   cached.promise =
     cached.promise ||
     mongoose.connect(MONGODB_URI, {
-      dbName: "fit-os",
+      dbName: "nutribd",
       bufferCommands: false,
       serverSelectionTimeoutMS: 10000, // wait max 10s for primary
     } as ConnectOptions); // explicitly cast as ConnectOptions
