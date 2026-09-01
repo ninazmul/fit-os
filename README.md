@@ -219,13 +219,13 @@ NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/
 NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/
 
 # Database Connection
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/fitos?retryWrites=true&w=majority
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/NutriBD?retryWrites=true&w=majority
 
 # Google Gemini AI API Key (Optional — deterministic fallback active if omitted)
 GEMINI_API_KEY=AIzaSy...
 
 # Public Site URL
-NEXT_PUBLIC_SITE_URL=https://fitos.artistycode.studio
+NEXT_PUBLIC_SITE_URL=https://NutriBD.artistycode.studio
 ```
 
 ---

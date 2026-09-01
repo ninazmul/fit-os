@@ -116,24 +116,24 @@ const calculatorLinks = publicSeoPages.filter((page) =>
 
 const faqItems = [
   {
-    q: "What is FitOS (NutriBD) and how does it help with fitness tracking?",
-    a: "FitOS is a free, all-in-one personal fitness, nutrition, and health intelligence platform. Powered by Google Gemini AI, it calculates clinical biometrics (BMI, BMR, TDEE, Body Fat %, WHR, Ideal Weight), tracks meals from a 100+ Bengali & global food database, estimates custom recipes using AI, logs workouts, monitors sleep recovery, and tracks 9-point body circumferences.",
+    q: "What is NutriBD (NutriBD) and how does it help with fitness tracking?",
+    a: "NutriBD is a free, all-in-one personal fitness, nutrition, and health intelligence platform. Powered by Google Gemini AI, it calculates clinical biometrics (BMI, BMR, TDEE, Body Fat %, WHR, Ideal Weight), tracks meals from a 100+ Bengali & global food database, estimates custom recipes using AI, logs workouts, monitors sleep recovery, and tracks 9-point body circumferences.",
   },
   {
     q: "How does the AI Recipe Estimator work?",
     a: "Instead of manually calculating individual ingredients, you can type or describe what you cooked in natural language (e.g., '1 bowl chicken curry made with 200g chicken breast, 1 potato, and 1 tbsp mustard oil, ate half'). Gemini AI automatically extracts the raw ingredients, adjusts for cooking oil absorption, and scales the exact calories and macros to the portion you actually ate.",
   },
   {
-    q: "Is FitOS free to use?",
-    a: "Yes! FitOS is 100% free with no paywalls, subscriptions, or credit card requirements. All calculators, AI features, and tracking tools are accessible to everyone.",
+    q: "Is NutriBD free to use?",
+    a: "Yes! NutriBD is 100% free with no paywalls, subscriptions, or credit card requirements. All calculators, AI features, and tracking tools are accessible to everyone.",
   },
   {
-    q: "Can I install FitOS as an app on my phone?",
-    a: "Absolutely. FitOS is a Progressive Web App (PWA). You can tap 'Add to Home Screen' in Safari on iOS or Chrome on Android to install it as a standalone app on your device.",
+    q: "Can I install NutriBD as an app on my phone?",
+    a: "Absolutely. NutriBD is a Progressive Web App (PWA). You can tap 'Add to Home Screen' in Safari on iOS or Chrome on Android to install it as a standalone app on your device.",
   },
   {
-    q: "How does FitOS calculate my daily calories and macros?",
-    a: "FitOS uses the clinically validated Mifflin-St Jeor equation to compute your Basal Metabolic Rate (BMR) and Total Daily Energy Expenditure (TDEE) based on your gender, age, height, current weight, and activity level. It then customizes your daily caloric deficit/surplus and protein distribution according to your specific goal.",
+    q: "How does NutriBD calculate my daily calories and macros?",
+    a: "NutriBD uses the clinically validated Mifflin-St Jeor equation to compute your Basal Metabolic Rate (BMR) and Total Daily Energy Expenditure (TDEE) based on your gender, age, height, current weight, and activity level. It then customizes your daily caloric deficit/surplus and protein distribution according to your specific goal.",
   },
 ];
 
@@ -317,9 +317,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               ].map(([value, label], index) => (
                 <div
                   key={label}
-                  className={`px-3 py-3.5 text-center ${
-                    index > 0 ? "border-l border-border/50" : ""
-                  }`}
+                  className={`px-3 py-3.5 text-center ${index > 0 ? "border-l border-border/50" : ""
+                    }`}
                 >
                   <p className="text-base font-black text-primary sm:text-xl">
                     {value}
@@ -450,7 +449,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               Engineered for Complete Body Intelligence
             </h2>
             <p className="text-xs text-muted-foreground sm:text-sm leading-relaxed">
-              FitOS combines verified exercise science with multimodal Gemini AI to give you real, sustainable results.
+              NutriBD combines verified exercise science with multimodal Gemini AI to give you real, sustainable results.
             </p>
           </div>
 

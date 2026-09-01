@@ -1,4 +1,4 @@
-# FitOs Product Roadmap – Final Approved Version (Product Advisor Approved)
+# NutriBD Product Roadmap – Final Approved Version (Product Advisor Approved)
 
 **Plan created:** /Users/n.i.nazmul/Documents/Working Files/nutribd/.trae/documents/plan-nutribd-product-roadmap-final-2026-08-06.md
 
@@ -52,7 +52,7 @@ Mobile-first Next.js PWA (Next.js 15 App Router, React 19, TypeScript, Tailwind 
 - Gamification = consistency badges only (no XP levels).  
 - No social features until enough daily active users.  
 - Every feature must reduce friction and encourage daily use.  
-- Vision statement: "FitOs is not a calorie tracker. FitOs is a Personal Fitness Operating System that helps users make better health decisions every day through simple, fast, mobile-first experiences."
+- Vision statement: "NutriBD is not a calorie tracker. NutriBD is a Personal Fitness Operating System that helps users make better health decisions every day through simple, fast, mobile-first experiences."
 
 **Verification Steps**  
 - Read this plan file first.  

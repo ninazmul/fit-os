@@ -130,7 +130,7 @@ export default function AnalyticsPage() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
       role: "ai",
-      content: "👋 Hi! I'm your FitOS AI Coach. Ask me anything about your nutrition, training, recovery, or goals — I'll give you personalised, data-backed answers.",
+      content: "👋 Hi! I'm your NutriBD AI Coach. Ask me anything about your nutrition, training, recovery, or goals — I'll give you personalised, data-backed answers.",
       pills: PROMPT_PILLS.slice(0, 3),
     },
   ]);
@@ -307,18 +307,17 @@ export default function AnalyticsPage() {
         <div className="glass-card rounded-3xl border border-primary/20 overflow-hidden">
           <div className="bg-gradient-to-r from-primary/10 to-purple-500/10 px-5 py-3 border-b border-border/40 flex items-center gap-2">
             <Brain className="w-4 h-4 text-primary" />
-            <span className="font-bold text-sm">FitOS AI Coach</span>
+            <span className="font-bold text-sm">NutriBD AI Coach</span>
             <span className="text-[10px] text-muted-foreground ml-auto">Context-aware · Personalised</span>
           </div>
 
           <div className="h-72 overflow-y-auto p-4 space-y-3 scroll-smooth">
             {chatMessages.map((msg, idx) => (
               <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed ${
-                  msg.role === "user"
+                <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed ${msg.role === "user"
                     ? "bg-primary text-primary-foreground rounded-br-sm"
                     : "bg-muted/60 border border-border/40 rounded-bl-sm"
-                }`}>
+                  }`}>
                   <p className="whitespace-pre-line">{msg.content}</p>
                   {msg.pills && msg.pills.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mt-2.5">
@@ -427,11 +426,10 @@ export default function AnalyticsPage() {
               <div key={step.step} className="p-4 rounded-2xl bg-muted/40 border border-border/30 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-black text-muted-foreground">STEP {step.step}</span>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                    step.impact === "High" ? "bg-primary/15 text-primary" :
-                    step.impact === "Quick Win" ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" :
-                    "bg-amber-500/15 text-amber-600 dark:text-amber-400"
-                  }`}>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${step.impact === "High" ? "bg-primary/15 text-primary" :
+                      step.impact === "Quick Win" ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" :
+                        "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                    }`}>
                     {step.impact}
                   </span>
                 </div>
@@ -459,11 +457,10 @@ export default function AnalyticsPage() {
               <button
                 key={filter}
                 onClick={() => setActiveFilter(filter)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold whitespace-nowrap transition-all border ${
-                  activeFilter === filter
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold whitespace-nowrap transition-all border ${activeFilter === filter
                     ? "bg-primary text-primary-foreground border-primary"
                     : "bg-muted/40 text-muted-foreground border-border/40 hover:border-primary/40 hover:text-primary"
-                }`}
+                  }`}
               >
                 <Icon className="w-3 h-3" />
                 {filter.charAt(0).toUpperCase() + filter.slice(1)}
@@ -553,11 +550,10 @@ export default function AnalyticsPage() {
               <div key={i} className="p-4 rounded-2xl bg-purple-500/5 border border-purple-500/20 space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-xs text-purple-700 dark:text-purple-300">{cor.title}</span>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                    cor.confidence === "High"
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${cor.confidence === "High"
                       ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
                       : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
-                  }`}>
+                    }`}>
                     {cor.confidence} Confidence
                   </span>
                 </div>

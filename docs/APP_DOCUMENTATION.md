@@ -1,8 +1,8 @@
-# FitOs Application Documentation
+# NutriBD Application Documentation
 
 ## Overview
 
-FitOs is a web application for managing personal fitness and nutrition tracking. Track workouts, nutrition, weight progress, body measurements, and analyze fitness metrics.
+NutriBD is a web application for managing personal fitness and nutrition tracking. Track workouts, nutrition, weight progress, body measurements, and analyze fitness metrics.
 
 The application is built with Next.js App Router, React, TypeScript, Clerk authentication, MongoDB, and Mongoose. Most business operations are implemented as Next.js server actions under `lib/actions`.
 

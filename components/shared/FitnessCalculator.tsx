@@ -215,8 +215,8 @@ export default function FitnessCalculator() {
                   reset();
                 }}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all ${active
-                    ? "bg-primary text-white shadow-sm"
-                    : "bg-[#F1F2F3] text-[#37414A] hover:bg-primary/50"
+                  ? "bg-primary text-white shadow-sm"
+                  : "bg-[#F1F2F3] text-[#37414A] hover:bg-primary/50"
                   }`}
               >
                 <Icon className="w-3.5 h-3.5" />
@@ -240,8 +240,8 @@ export default function FitnessCalculator() {
                     reset();
                   }}
                   className={`flex-1 py-2.5 rounded-xl text-xs font-bold capitalize transition-all border ${gender === g
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-primary/50 bg-white text-[#6B7580] hover:bg-[#F1F2F3]"
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-primary/50 bg-white text-[#6B7580] hover:bg-[#F1F2F3]"
                     }`}
                 >
                   {g === "male" ? "♂ Male" : "♀ Female"}
@@ -562,7 +562,7 @@ export default function FitnessCalculator() {
             <div className="pt-2 border-t border-primary/10">
               <p className="text-[11px] text-[#6B7580] flex items-center gap-1">
                 <ChevronRight className="w-3 h-3 text-primary" />
-                Sign up for <strong className="text-primary">FitOS</strong> to track
+                Sign up for <strong className="text-primary">NutriBD</strong> to track
                 these metrics daily with personalized AI insights.
               </p>
             </div>
@@ -590,7 +590,7 @@ export default function FitnessCalculator() {
           </h3>
           <p>
             BMR represents the number of calories your body burns at rest — just to keep
-            your heart beating, lungs breathing, and organs functioning. FitOS uses the
+            your heart beating, lungs breathing, and organs functioning. NutriBD uses the
             <strong> Mifflin-St Jeor equation</strong>, the gold standard recommended by
             the Academy of Nutrition and Dietetics: <strong>BMR = 10 × weight(kg) +
               6.25 × height(cm) - 5 × age - 161 (female) / + 5 (male)</strong>.
@@ -613,7 +613,7 @@ export default function FitnessCalculator() {
             How is Body Fat Percentage Calculated?
           </h3>
           <p>
-            FitOS uses the <strong>U.S. Navy Body Fat Formula</strong>, which estimates
+            NutriBD uses the <strong>U.S. Navy Body Fat Formula</strong>, which estimates
             body fat percentage from neck, waist, and hip circumference measurements.
             This method is clinically validated and widely used by military and sports
             organizations. For men: measurements require neck and waist. For women: neck,

@@ -9,7 +9,7 @@ import { seedFoods } from "@/lib/actions/food.actions";
 
 export const dynamic = "force-dynamic";
 
-export default async function FitOSLayout({
+export default async function NutriBDLayout({
   children,
 }: {
   children: React.ReactNode;
