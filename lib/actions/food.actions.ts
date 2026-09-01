@@ -18,21 +18,23 @@ export async function getFoods(query?: string, category?: string) {
   const user = await currentUser();
   if (!user) throw new Error("Unauthorized");
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const filter: any = {
-    $or: [{ isCustom: false }, { clerkId: user.id }],
-  };
+  const conditions: Record<string, unknown>[] = [
+    { $or: [{ isCustom: false }, { clerkId: user.id }] },
+  ];
 
-  if (query) {
-    filter.name = { $regex: query, $options: "i" };
+  if (query && query.trim()) {
+    conditions.push({
+      name: { $regex: query.trim(), $options: "i" },
+    });
   }
 
   if (category && category !== "all") {
-    filter.$or = [
-      { category },
-      { displayCategory: category },
-    ];
+    conditions.push({
+      $or: [{ category }, { displayCategory: category }],
+    });
   }
+
+  const filter = conditions.length === 1 ? conditions[0] : { $and: conditions };
 
   let dbFoods = (await Food.find(filter)
     .select("name category displayCategory servingSize calories protein carbs fat fiber isBangladeshi isCustom")

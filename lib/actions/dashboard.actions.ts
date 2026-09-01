@@ -101,6 +101,10 @@ export async function getDashboardData(dateStr?: string) {
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const thirtyStr = getLocalDateString(thirtyDaysAgo);
 
+  const oneYearAgo = new Date();
+  oneYearAgo.setDate(oneYearAgo.getDate() - 365);
+  const oneYearAgoStr = getLocalDateString(oneYearAgo);
+
   const weekDates: string[] = [];
   for (let i = 6; i >= 0; i--) {
     const d = new Date();
@@ -130,8 +134,8 @@ export async function getDashboardData(dateStr?: string) {
       clerkId: user.id,
       date: { $gte: weekDates[0], $lte: weekDates[6] },
     }).lean(),
-    WorkoutLog.find({ clerkId: user.id }, { date: 1 }).lean(),
-    MealLog.find({ clerkId: user.id }, { date: 1 }).lean(),
+    WorkoutLog.find({ clerkId: user.id, date: { $gte: oneYearAgoStr } }, { date: 1 }).lean(),
+    MealLog.find({ clerkId: user.id, date: { $gte: oneYearAgoStr } }, { date: 1 }).lean(),
     WeightLog.find({
       clerkId: user.id,
       date: { $gte: thirtyStr },

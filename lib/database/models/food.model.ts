@@ -16,13 +16,16 @@ const FoodSchema = new Schema(
     fiber: { type: Number, required: true, default: 0 },
     image: { type: String, default: "" },
     isBangladeshi: { type: Boolean, default: false },
-    isCustom: { type: Boolean, default: false, index: true },
-    clerkId: { type: String, index: true },
+    isCustom: { type: Boolean, default: false },
+    clerkId: { type: String },
   },
   { timestamps: true }
 );
 
+// Indexes for fast lookup and search
+FoodSchema.index({ name: "text" });
 FoodSchema.index({ isCustom: 1, clerkId: 1 });
+FoodSchema.index({ isCustom: 1, category: 1 });
 FoodSchema.index({ name: 1, category: 1 });
 
 const Food = models.Food || model("Food", FoodSchema);

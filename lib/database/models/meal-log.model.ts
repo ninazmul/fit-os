@@ -14,8 +14,9 @@ const MealItemSchema = new Schema({
 
 const MealLogSchema = new Schema(
   {
-    clerkId: { type: String, required: true, index: true },
-    date: { type: String, required: true, index: true }, // YYYY-MM-DD
+    // Single-field indexes removed — subsumed by compound indexes below
+    clerkId: { type: String, required: true },
+    date: { type: String, required: true }, // YYYY-MM-DD
     mealType: {
       type: String,
       enum: ["breakfast", "lunch", "dinner", "snack"],
@@ -32,7 +33,12 @@ const MealLogSchema = new Schema(
   { timestamps: true }
 );
 
-MealLogSchema.index({ clerkId: 1, date: 1, mealType: 1 });
+// Primary upsert key: logMeal / appendMealItem / getDailyNutritionSummary
+MealLogSchema.index({ clerkId: 1, date: 1, mealType: 1 }, { unique: true });
+// Range queries: getMealLogsForRange, dashboard weekly, insights, AI actions
+MealLogSchema.index({ clerkId: 1, date: 1 });
+// Recent-foods query: MealLog.find({clerkId}).sort({createdAt:-1}).limit(20)
+MealLogSchema.index({ clerkId: 1, createdAt: -1 });
 
 const MealLog = models.MealLog || model("MealLog", MealLogSchema);
 

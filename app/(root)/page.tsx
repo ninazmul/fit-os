@@ -31,6 +31,28 @@ const SearchModal = dynamic(() => import("@/components/shared/SearchModal"), {
 const AdUnit = dynamic(() => import("@/components/shared/AdUnit"), {
   ssr: false,
 });
+const WeeklyNutritionChart = dynamic(
+  () => import("@/components/dashboard/WeeklyNutritionChart"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-60 w-full rounded-2xl bg-muted/20 animate-pulse flex items-center justify-center text-xs text-muted-foreground">
+        Loading chart...
+      </div>
+    ),
+  },
+);
+const WeeklyWeightChart = dynamic(
+  () => import("@/components/dashboard/WeeklyWeightChart"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-52 w-full rounded-2xl bg-muted/20 animate-pulse flex items-center justify-center text-xs text-muted-foreground">
+        Loading chart...
+      </div>
+    ),
+  },
+);
 import { Button } from "@/components/ui/button";
 import {
   Flame,
@@ -54,17 +76,6 @@ import {
   Compass,
   Calendar,
 } from "lucide-react";
-import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-} from "recharts";
 import Link from "next/link";
 import toast from "react-hot-toast";
 
@@ -945,45 +956,7 @@ export default function DashboardPage() {
             </Link>
           </div>
 
-          <div className="h-60 w-full pt-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={charts.weeklyCalories}
-                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-              >
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  vertical={false}
-                  opacity={0.15}
-                />
-                <XAxis
-                  dataKey="day"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 11 }}
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 11 }}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "var(--chart-tooltip-bg)",
-                    borderColor: "var(--chart-tooltip-border)",
-                    borderRadius: "12px",
-                    fontSize: "12px",
-                  }}
-                />
-                <Bar
-                  dataKey="calories"
-                  fill="hsl(152, 58%, 42%)"
-                  radius={[6, 6, 0, 0]}
-                  name="Calories (kcal)"
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          <WeeklyNutritionChart data={charts.weeklyCalories} />
         </div>
       </div>
 
@@ -1052,55 +1025,7 @@ export default function DashboardPage() {
           </div>
 
           {charts.weeklyWeight.length > 0 ? (
-            <div className="h-52 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart
-                  data={charts.weeklyWeight}
-                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                >
-                  <defs>
-                    <linearGradient id="weightGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#a78bfa" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="#a78bfa" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    vertical={false}
-                    opacity={0.15}
-                  />
-                  <XAxis
-                    dataKey="day"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 11 }}
-                  />
-                  <YAxis
-                    domain={["dataMin - 1", "dataMax + 1"]}
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 11 }}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "var(--chart-tooltip-bg)",
-                      borderColor: "var(--chart-tooltip-border)",
-                      borderRadius: "12px",
-                      fontSize: "12px",
-                    }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="weight"
-                    stroke="#8b5cf6"
-                    strokeWidth={3}
-                    fillOpacity={1}
-                    fill="url(#weightGrad)"
-                    name="Weight (kg)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
+            <WeeklyWeightChart data={charts.weeklyWeight} />
           ) : (
             <div className="text-center py-12 text-xs text-muted-foreground">
               No weight logs recorded this week. Tap &quot;Quick Log&quot; to

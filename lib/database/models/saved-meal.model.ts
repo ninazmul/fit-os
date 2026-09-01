@@ -17,7 +17,7 @@ const SavedMealItemSchema = new Schema(
 
 const SavedMealSchema = new Schema(
   {
-    clerkId: { type: String, required: true, index: true },
+    clerkId: { type: String, required: true },
     name: { type: String, required: true },
     category: {
       type: String,
@@ -44,8 +44,8 @@ const SavedMealSchema = new Schema(
   { timestamps: true }
 );
 
-// Compound index for efficient querying
-SavedMealSchema.index({ clerkId: 1, usageCount: -1 });
+// Compound index for efficient querying by popularity and recency
+SavedMealSchema.index({ clerkId: 1, usageCount: -1, createdAt: -1 });
 
 const SavedMeal =
   models.SavedMeal || model("SavedMeal", SavedMealSchema);

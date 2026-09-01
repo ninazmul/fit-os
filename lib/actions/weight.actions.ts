@@ -105,56 +105,69 @@ export async function getWeightStats() {
   const user = await currentUser();
   if (!user) throw new Error("Unauthorized");
 
-  const allLogs = (await WeightLog.find({ clerkId: user.id })
-    .sort({ date: -1 })
-    .lean()) as unknown as IWeightLog[];
-  if (allLogs.length === 0) return null;
-
   const today = getLocalDateString();
-  const todayLog = allLogs.find((l) => l.date === today);
-
-  // Last 7 days
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
   const sevenStr = getLocalDateString(sevenDaysAgo);
-  const weekLogs = allLogs.filter((l) => l.date >= sevenStr);
+
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const thirtyStr = getLocalDateString(thirtyDaysAgo);
+
+  const [totalEntries, latestLog, recentLogs, monthOldLog, profile] =
+    await Promise.all([
+      WeightLog.countDocuments({ clerkId: user.id }),
+      WeightLog.findOne({ clerkId: user.id }).sort({ date: -1 }).lean(),
+      WeightLog.find({ clerkId: user.id, date: { $gte: thirtyStr } })
+        .sort({ date: -1 })
+        .lean(),
+      WeightLog.findOne({ clerkId: user.id, date: { $lte: thirtyStr } })
+        .sort({ date: -1 })
+        .lean(),
+      UserProfile.findOne({ clerkId: user.id }, { height: 1 }).lean(),
+    ]);
+
+  if (!latestLog || totalEntries === 0) return null;
+
+  const latestWeight = (latestLog as unknown as IWeightLog).weight;
+  const todayLog = (recentLogs as unknown as IWeightLog[]).find((l) => l.date === today);
+
+  // Last 7 days
+  const weekLogs = (recentLogs as unknown as IWeightLog[]).filter(
+    (l) => l.date >= sevenStr,
+  );
   const weekAvg =
     weekLogs.length > 0
       ? Math.round(
-          (weekLogs.reduce((s, l) => s + l.weight, 0) / weekLogs.length) * 10
+          (weekLogs.reduce((s, l) => s + l.weight, 0) / weekLogs.length) * 10,
         ) / 10
       : null;
 
   // Last 30 days
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  const thirtyStr = getLocalDateString(thirtyDaysAgo);
-  const monthLogs = allLogs.filter((l) => l.date >= thirtyStr);
+  const monthLogs = recentLogs as unknown as IWeightLog[];
   const monthAvg =
     monthLogs.length > 0
       ? Math.round(
-          (monthLogs.reduce((s, l) => s + l.weight, 0) / monthLogs.length) * 10
+          (monthLogs.reduce((s, l) => s + l.weight, 0) / monthLogs.length) * 10,
         ) / 10
       : null;
 
   // Weekly change
-  const latestWeight = allLogs[0].weight;
-  const weekOldLog = allLogs.find((l) => l.date <= sevenStr);
+  const weekOldLog = (recentLogs as unknown as IWeightLog[]).find(
+    (l) => l.date <= sevenStr,
+  );
   const weeklyChange = weekOldLog
     ? Math.round((latestWeight - weekOldLog.weight) * 10) / 10
     : null;
 
   // Monthly change
-  const monthOldLog = allLogs.find((l) => l.date <= thirtyStr);
   const monthlyChange = monthOldLog
-    ? Math.round((latestWeight - monthOldLog.weight) * 10) / 10
+    ? Math.round((latestWeight - (monthOldLog as unknown as IWeightLog).weight) * 10) / 10
     : null;
 
   // BMI
-  const profile = (await UserProfile.findOne({
-    clerkId: user.id,
-  }).lean()) as IUserProfile | null;
-  const heightM = profile ? profile.height / 100 : 1.7;
+  const userHeight = (profile as unknown as IUserProfile | null)?.height;
+  const heightM = userHeight ? userHeight / 100 : 1.7;
   const bmi = Math.round((latestWeight / (heightM * heightM)) * 10) / 10;
 
   return {
@@ -164,7 +177,7 @@ export async function getWeightStats() {
     weeklyChange,
     monthlyChange,
     bmi,
-    totalEntries: allLogs.length,
+    totalEntries,
   };
 }
 
