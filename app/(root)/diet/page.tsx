@@ -830,14 +830,8 @@ export default function DietPage() {
       </div>
 
       {/* Add Food Modal */}
-      <Dialog
-        open={customFoodModalOpen}
-        onOpenChange={(open) => {
-          setCustomFoodModalOpen(open);
-          if (!open) resetCustomFoodForm();
-        }}
-      >
-        <DialogContent className="w-[calc(100vw-1rem)] sm:w-full sm:max-w-xl rounded-3xl p-3.5 sm:p-6 gap-3 sm:gap-4 max-h-[90dvh] sm:max-h-[85vh] overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] overscroll-contain">
+      <Dialog open={addModalOpen} onOpenChange={setAddModalOpen}>
+        <DialogContent className="w-[calc(100vw-1rem)] sm:w-full sm:max-w-xl rounded-3xl p-3.5 sm:p-6 gap-3 sm:gap-4 max-h-[90dvh] sm:max-h-[85vh] overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] overscroll-contain box-border min-w-0">
           <DialogHeader className="space-y-1 pr-6 sm:pr-8">
             <DialogTitle className="text-sm sm:text-lg font-bold flex items-center gap-2">
               <ChefHat className="w-4 h-4 sm:w-5 sm:h-5 text-primary shrink-0" />
@@ -876,7 +870,7 @@ export default function DietPage() {
 
           {/* AI Recipe Mode */}
           {customTab === "ai" && (
-            <div className="space-y-3 text-xs w-full max-w-full overflow-hidden">
+            <div className="space-y-3 text-xs w-full max-w-full overflow-hidden min-w-0">
               {/* Quick AI Recipe Prompt Suggestions */}
               <div className="w-full max-w-full overflow-hidden">
                 <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 flex items-center gap-1">
@@ -939,7 +933,7 @@ export default function DietPage() {
                   value={aiPrompt}
                   onChange={(e) => setAiPrompt(e.target.value)}
                   placeholder="e.g. 200g chicken breast pan fried in 1 tbsp olive oil with 100g broccoli..."
-                  className="w-full rounded-2xl p-3 bg-muted/40 border border-border/50 focus:border-primary focus:ring-1 focus:ring-primary text-xs outline-none transition-all resize-none box-border"
+                  className="w-full rounded-2xl p-3 bg-muted/40 border border-border/50 focus:border-primary focus:ring-1 focus:ring-primary text-xs outline-none transition-all resize-none box-border min-w-0"
                 />
               </div>
 
@@ -949,7 +943,7 @@ export default function DietPage() {
                   <select
                     value={aiCookingMethod}
                     onChange={(e) => setAiCookingMethod(e.target.value)}
-                    className="w-full rounded-xl p-2.5 bg-muted/40 border border-border/50 text-xs outline-none focus:border-primary truncate"
+                    className="w-full min-w-0 rounded-xl p-2.5 bg-muted/40 border border-border/50 text-xs outline-none focus:border-primary box-border"
                   >
                     <option value="pan_fry">Pan-fried / Sautéed (~5-7g oil)</option>
                     <option value="deep_fry">Deep-fried / Crispy (~12-15g oil)</option>
@@ -1051,7 +1045,7 @@ export default function DietPage() {
           )}
 
           {/* Form for saving / editing the custom food (populated by AI or manual) */}
-          <form onSubmit={handleSaveCustomFood} className="space-y-3 text-xs pt-2 border-t border-border/40 w-full overflow-hidden">
+          <form onSubmit={handleSaveCustomFood} className="space-y-3 text-xs pt-2 border-t border-border/40 w-full overflow-hidden min-w-0">
             <div className="flex flex-wrap items-center justify-between gap-1.5">
               <Label className="font-bold text-xs">
                 {customTab === "ai" ? "Review & Finalize Food Entry:" : "Custom Food Details:"}
@@ -1171,7 +1165,7 @@ export default function DietPage() {
           if (!open) resetCustomFoodForm();
         }}
       >
-        <DialogContent className="w-[calc(100vw-1.5rem)] sm:w-full sm:max-w-xl rounded-3xl p-4 sm:p-6 gap-3.5 sm:gap-4 max-h-[88dvh] sm:max-h-[85vh] overflow-y-auto overflow-x-hidden no-scrollbar overscroll-contain">
+        <DialogContent className="w-[calc(100vw-1rem)] sm:w-full sm:max-w-xl rounded-3xl p-4 sm:p-6 gap-3.5 sm:gap-4 max-h-[88dvh] sm:max-h-[85vh] overflow-y-auto overflow-x-hidden no-scrollbar overscroll-contain box-border min-w-0">
           <DialogHeader className="space-y-1 pr-7 sm:pr-8">
             <DialogTitle className="text-base sm:text-lg font-bold flex items-center gap-2">
               <ChefHat className="w-5 h-5 text-primary shrink-0" />
@@ -1210,7 +1204,7 @@ export default function DietPage() {
 
           {/* AI Recipe Mode */}
           {customTab === "ai" && (
-            <div className="space-y-3.5 text-xs">
+            <div className="space-y-3.5 text-xs w-full max-w-full overflow-hidden min-w-0">
               {/* Quick AI Recipe Prompt Suggestions */}
               <div className="w-full max-w-full overflow-hidden">
                 <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 flex items-center gap-1">
@@ -1273,7 +1267,7 @@ export default function DietPage() {
                   value={aiPrompt}
                   onChange={(e) => setAiPrompt(e.target.value)}
                   placeholder="e.g. 200g chicken breast pan fried in 1 tbsp olive oil with 100g broccoli and 1 cup rice. Cooked 2 portions total, I ate 1 portion..."
-                  className="w-full min-w-0 rounded-2xl p-3 bg-muted/40 border border-border/50 focus:border-primary focus:ring-1 focus:ring-primary text-xs outline-none transition-all resize-none"
+                  className="w-full min-w-0 rounded-2xl p-3 bg-muted/40 border border-border/50 focus:border-primary focus:ring-1 focus:ring-primary text-xs outline-none transition-all resize-none box-border"
                 />
               </div>
 
@@ -1283,7 +1277,7 @@ export default function DietPage() {
                   <select
                     value={aiCookingMethod}
                     onChange={(e) => setAiCookingMethod(e.target.value)}
-                    className="w-full rounded-xl p-2.5 bg-muted/40 border border-border/50 text-xs outline-none focus:border-primary truncate"
+                    className="w-full min-w-0 rounded-xl p-2.5 bg-muted/40 border border-border/50 text-xs outline-none focus:border-primary box-border"
                   >
                     <option value="pan_fry">Pan-fried / Sautéed (~5-7g oil)</option>
                     <option value="deep_fry">Deep-fried / Crispy (~12-15g oil)</option>
