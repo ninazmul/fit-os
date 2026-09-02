@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { logWorkout, getWorkoutHistory, getPersonalRecords, deleteWorkoutLog } from "@/lib/actions/workout.actions";
+import { notifyDataUpdated, useDataUpdateListener } from "@/lib/events";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -85,6 +86,12 @@ export default function WorkoutPage() {
     fetchData();
   }, []);
 
+  useDataUpdateListener((category) => {
+    if (category === "workout" || category === "all") {
+      fetchData();
+    }
+  });
+
   const handleAddSet = (exerciseIndex: number) => {
     const updated = [...exercises];
     const targetEx = updated[exerciseIndex];
@@ -122,6 +129,7 @@ export default function WorkoutPage() {
       });
 
       toast.success("Workout logged successfully! 💪");
+      notifyDataUpdated("workout");
       setModalOpen(false);
       fetchData();
     } catch {
@@ -133,6 +141,7 @@ export default function WorkoutPage() {
     try {
       await deleteWorkoutLog(id);
       toast.success("Workout deleted");
+      notifyDataUpdated("workout");
       fetchData();
     } catch {
       toast.error("Failed to delete workout");

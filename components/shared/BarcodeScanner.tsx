@@ -26,6 +26,7 @@ import { appendMealItem } from "@/lib/actions/meal.actions";
 import { getLocalDateString } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { notifyDataUpdated } from "@/lib/events";
 
 interface BarcodeScannerProps {
   open: boolean;
@@ -242,6 +243,7 @@ export default function BarcodeScanner({
       await appendMealItem(todayStr, defaultMealType, item);
 
       toast.success(`Logged ${item.name} (${item.calories} kcal)! 📦`);
+      notifyDataUpdated("meal");
 
       onOpenChange(false);
 

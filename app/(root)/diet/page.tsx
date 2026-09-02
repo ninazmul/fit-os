@@ -7,6 +7,7 @@ import {
   deleteMealLog,
   removeMealItem,
 } from "@/lib/actions/meal.actions";
+import { notifyDataUpdated, useDataUpdateListener } from "@/lib/events";
 import {
   getFoods,
   createCustomFood,
@@ -164,6 +165,12 @@ export default function DietPage() {
     fetchData();
   }, [fetchData]);
 
+  useDataUpdateListener((category) => {
+    if (category === "meal" || category === "all") {
+      fetchData();
+    }
+  });
+
   // Load foods catalog when search query or category changes
   useEffect(() => {
     if (!addModalOpen) return;
@@ -251,6 +258,7 @@ export default function DietPage() {
       setSelectedFood(null);
       setQuantity(1);
       setQuantityMode("multiplier");
+      notifyDataUpdated("meal");
       fetchData();
     } catch {
       toast.error("Failed to add meal");
@@ -387,6 +395,7 @@ export default function DietPage() {
     try {
       await logSavedMeal(templateId, dateStr, mealType);
       toast.success(`Logged saved meal template to ${mealType}! ⚡`);
+      notifyDataUpdated("meal");
       fetchData();
     } catch {
       toast.error("Failed to log saved meal template");
@@ -435,6 +444,7 @@ export default function DietPage() {
     try {
       await deleteMealLog(mealId);
       toast.success("Meal cleared");
+      notifyDataUpdated("meal");
       fetchData();
     } catch {
       toast.error("Failed to delete meal");
@@ -445,6 +455,7 @@ export default function DietPage() {
     try {
       await removeMealItem(mealId, itemIndex);
       toast.success("Item removed");
+      notifyDataUpdated("meal");
       fetchData();
     } catch {
       toast.error("Failed to remove item");

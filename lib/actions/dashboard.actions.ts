@@ -9,12 +9,14 @@ import WorkoutLog from "@/lib/database/models/workout-log.model";
 import SleepLog from "@/lib/database/models/sleep-log.model";
 import { currentUser } from "@clerk/nextjs/server";
 import type {
+  IMealItem,
   IMealLog,
   ISleepLog,
   IUserProfile,
   IWaterLog,
   IWeightLog,
   IWorkoutLog,
+  MealType,
 } from "@/types/fitness";
 
 type DashboardWaterLog = IWaterLog & { amountMl?: number | string };
@@ -22,6 +24,7 @@ type DashboardSleepLog = ISleepLog & { quality?: number | string };
 
 import { analyzeWeightTrend } from "@/lib/weight-prediction";
 import { getLocalDateString } from "@/lib/utils";
+import { getRecentFoods } from "@/lib/actions/recent-meals.actions";
 
 export async function getDashboardData(dateStr?: string) {
   await connectToDatabase();
@@ -35,19 +38,22 @@ export async function getDashboardData(dateStr?: string) {
 
   const today = dateStr || getLocalDateString();
 
-  const [meals, weightLog, waterLog, workouts, sleepLog] = (await Promise.all([
-    MealLog.find({ clerkId: user.id, date: today }).lean(),
-    WeightLog.findOne({ clerkId: user.id, date: today }).lean(),
-    WaterLog.findOne({ clerkId: user.id, date: today }).lean(),
-    WorkoutLog.find({ clerkId: user.id, date: today }).lean(),
-    SleepLog.findOne({ clerkId: user.id, date: today }).lean(),
-  ])) as unknown as [
-    IMealLog[],
-    IWeightLog | null,
-    DashboardWaterLog | null,
-    IWorkoutLog[],
-    DashboardSleepLog | null,
-  ];
+  const [meals, weightLog, waterLog, workouts, sleepLog, recentFoods] =
+    (await Promise.all([
+      MealLog.find({ clerkId: user.id, date: today }).lean(),
+      WeightLog.findOne({ clerkId: user.id, date: today }).lean(),
+      WaterLog.findOne({ clerkId: user.id, date: today }).lean(),
+      WorkoutLog.find({ clerkId: user.id, date: today }).lean(),
+      SleepLog.findOne({ clerkId: user.id, date: today }).lean(),
+      getRecentFoods(10),
+    ])) as unknown as [
+      IMealLog[],
+      IWeightLog | null,
+      DashboardWaterLog | null,
+      IWorkoutLog[],
+      DashboardSleepLog | null,
+      IMealItem[],
+    ];
 
   // Today's nutrition totals
   let todayCalories = 0;
@@ -56,7 +62,34 @@ export async function getDashboardData(dateStr?: string) {
   let todayFat = 0;
   let todayFiber = 0;
 
+  // Meal breakdown by slot
+  const mealSlots: Record<
+    MealType,
+    {
+      _id?: string;
+      items: IMealItem[];
+      calories: number;
+      protein: number;
+      carbs: number;
+      fat: number;
+    }
+  > = {
+    breakfast: { items: [], calories: 0, protein: 0, carbs: 0, fat: 0 },
+    lunch: { items: [], calories: 0, protein: 0, carbs: 0, fat: 0 },
+    dinner: { items: [], calories: 0, protein: 0, carbs: 0, fat: 0 },
+    snack: { items: [], calories: 0, protein: 0, carbs: 0, fat: 0 },
+  };
+
   for (const m of meals) {
+    const slot = m.mealType as MealType;
+    if (mealSlots[slot]) {
+      mealSlots[slot]._id = String(m._id);
+      mealSlots[slot].items = (m.items || []) as IMealItem[];
+      mealSlots[slot].calories = Number(m.totalCalories || 0);
+      mealSlots[slot].protein = Number(m.totalProtein || 0);
+      mealSlots[slot].carbs = Number(m.totalCarbs || 0);
+      mealSlots[slot].fat = Number(m.totalFat || 0);
+    }
     todayCalories += Number(m.totalCalories || 0);
     todayProtein += Number(m.totalProtein || 0);
     todayCarbs += Number(m.totalCarbs || 0);
@@ -64,9 +97,27 @@ export async function getDashboardData(dateStr?: string) {
     todayFiber += Number(m.totalFiber || 0);
   }
 
+  // Workouts summary
+  let todayWorkoutCalories = 0;
+  let todayWorkoutDuration = 0;
+  const todayWorkoutsList = workouts.map((w) => {
+    todayWorkoutCalories += Number(w.caloriesBurned || 0);
+    todayWorkoutDuration += Number(w.durationMinutes || 0);
+    return {
+      _id: String(w._id),
+      title: w.title,
+      workoutType: w.workoutType,
+      durationMinutes: w.durationMinutes,
+      caloriesBurned: w.caloriesBurned,
+      exerciseCount: w.exercises?.length || 0,
+      notes: w.notes || "",
+    };
+  });
+
   // Water total: prefer totalMl field, fallback to summing entries
   const waterEntries =
-    (waterLog?.entries as { amountMl: number }[] | undefined) || [];
+    (waterLog?.entries as { amountMl: number; time: string }[] | undefined) ||
+    [];
   const todayWaterMl =
     Number(waterLog?.totalMl) ||
     (waterEntries.length > 0
@@ -76,7 +127,13 @@ export async function getDashboardData(dateStr?: string) {
   // Sleep total: prefer sessions aggregation
   const sleepSessions =
     (sleepLog?.sessions as
-      | { totalHours: number; quality: number }[]
+      | {
+          totalHours: number;
+          quality: number;
+          sleepTime: string;
+          wakeTime: string;
+          notes?: string;
+        }[]
       | undefined) || [];
   const sleepHoursFromSessions = sleepSessions.length
     ? sleepSessions.reduce((s, ses) => s + Number(ses.totalHours || 0), 0)
@@ -134,8 +191,14 @@ export async function getDashboardData(dateStr?: string) {
       clerkId: user.id,
       date: { $gte: weekDates[0], $lte: weekDates[6] },
     }).lean(),
-    WorkoutLog.find({ clerkId: user.id, date: { $gte: oneYearAgoStr } }, { date: 1 }).lean(),
-    MealLog.find({ clerkId: user.id, date: { $gte: oneYearAgoStr } }, { date: 1 }).lean(),
+    WorkoutLog.find(
+      { clerkId: user.id, date: { $gte: oneYearAgoStr } },
+      { date: 1 },
+    ).lean(),
+    MealLog.find(
+      { clerkId: user.id, date: { $gte: oneYearAgoStr } },
+      { date: 1 },
+    ).lean(),
     WeightLog.find({
       clerkId: user.id,
       date: { $gte: thirtyStr },
@@ -145,7 +208,10 @@ export async function getDashboardData(dateStr?: string) {
   ]);
 
   // DSA Hash Map for O(1) daily meal aggregations
-  const mealNutritionByDate = new Map<string, { calories: number; protein: number }>();
+  const mealNutritionByDate = new Map<
+    string,
+    { calories: number; protein: number }
+  >();
   for (const m of weekMeals) {
     const curr = mealNutritionByDate.get(m.date) || { calories: 0, protein: 0 };
     mealNutritionByDate.set(m.date, {
@@ -180,8 +246,8 @@ export async function getDashboardData(dateStr?: string) {
   let streak = 0;
   const checkDate = new Date();
   for (let i = 0; i < 365; i++) {
-    const dateStr = getLocalDateString(checkDate);
-    if (activeDatesSet.has(dateStr)) {
+    const dateCheckStr = getLocalDateString(checkDate);
+    if (activeDatesSet.has(dateCheckStr)) {
       streak++;
       checkDate.setDate(checkDate.getDate() - 1);
     } else {
@@ -199,7 +265,7 @@ export async function getDashboardData(dateStr?: string) {
   }));
   const weightPrediction = analyzeWeightTrend(
     weightPoints,
-    profile.targetWeight
+    profile.targetWeight,
   );
 
   // ===== Phase 1: Daily Score (0-100) =====
@@ -215,19 +281,34 @@ export async function getDashboardData(dateStr?: string) {
   const scoreBreakdown = [
     {
       label: "Calorie Target (±15%)",
-      points: caloriesHit ? 25 : Math.min(25, Math.round((todayCalories / profile.dailyCaloriesGoal) * 25)),
+      points: caloriesHit
+        ? 25
+        : Math.min(
+            25,
+            Math.round((todayCalories / profile.dailyCaloriesGoal) * 25),
+          ),
       maxPoints: 25,
       done: caloriesHit,
     },
     {
       label: "Protein Target (≥80%)",
-      points: proteinHit ? 20 : Math.min(20, Math.round((todayProtein / profile.dailyProteinGoal) * 20)),
+      points: proteinHit
+        ? 20
+        : Math.min(
+            20,
+            Math.round((todayProtein / profile.dailyProteinGoal) * 20),
+          ),
       maxPoints: 20,
       done: proteinHit,
     },
     {
       label: "Water Goal (≥80%)",
-      points: waterHit ? 20 : Math.min(20, Math.round((todayWaterMl / profile.waterGoalMl) * 20)),
+      points: waterHit
+        ? 20
+        : Math.min(
+            20,
+            Math.round((todayWaterMl / profile.waterGoalMl) * 20),
+          ),
       maxPoints: 20,
       done: waterHit,
     },
@@ -290,7 +371,8 @@ export async function getDashboardData(dateStr?: string) {
 
   // Contextual smart recommendation logic based on missing logs and time
   if (!weightLog && currentHour < 12) {
-    primaryMission = "Log today's morning weight to keep predictions accurate!";
+    primaryMission =
+      "Log today's morning weight to keep predictions accurate!";
     missionAction = "weight";
   } else if (meals.length === 0) {
     primaryMission = "You haven't logged any meals today. Tap + Quick Add!";
@@ -317,13 +399,17 @@ export async function getDashboardData(dateStr?: string) {
     completedCount,
     totalCount: 6,
     remainingCalories: Math.max(0, profile.dailyCaloriesGoal - todayCalories),
-    remainingProtein: Math.max(0, Math.round((profile.dailyProteinGoal - todayProtein) * 10) / 10),
+    remainingProtein: Math.max(
+      0,
+      Math.round((profile.dailyProteinGoal - todayProtein) * 10) / 10,
+    ),
     remainingWaterMl: Math.max(0, profile.waterGoalMl - todayWaterMl),
   };
 
   return JSON.parse(
     JSON.stringify({
       needsOnboarding: false,
+      date: today,
       profile: {
         name: profile.name,
         goal: profile.goal,
@@ -347,10 +433,24 @@ export async function getDashboardData(dateStr?: string) {
         waterMl: todayWaterMl,
         workoutDone: workouts.length > 0,
         workoutCount: workouts.length,
+        workoutCalories: todayWorkoutCalories,
+        workoutDuration: todayWorkoutDuration,
         sleepHours: todaySleepHours ?? null,
         sleepQuality: todaySleepQuality ?? null,
         mealCount: meals.length,
       },
+      meals: mealSlots,
+      workouts: todayWorkoutsList,
+      water: {
+        totalMl: todayWaterMl,
+        entries: waterEntries,
+      },
+      sleep: {
+        totalHours: todaySleepHours,
+        avgQuality: todaySleepQuality,
+        sessions: sleepSessions,
+      },
+      recentFoods,
       charts: {
         weeklyCalories: weeklyCaloriesChart,
         weeklyWeight: weeklyWeightChart,
@@ -363,4 +463,3 @@ export async function getDashboardData(dateStr?: string) {
     }),
   );
 }
-
