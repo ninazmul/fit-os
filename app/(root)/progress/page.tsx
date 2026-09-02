@@ -5,7 +5,6 @@ import {
   getWeightHistory,
   getWeightStats,
   logWeight,
-  deleteWeightLog,
 } from "@/lib/actions/weight.actions";
 import { getBodyMeasurements } from "@/lib/actions/body-measurement.actions";
 import {
@@ -56,6 +55,7 @@ import {
   YAxis,
   Tooltip,
   CartesianGrid,
+  ReferenceLine,
   BarChart,
   Bar,
 } from "recharts";
@@ -229,15 +229,7 @@ export default function ProgressPage() {
     }
   };
 
-  const handleDeleteWeight = async (id: string) => {
-    try {
-      await deleteWeightLog(id);
-      toast.success("Log deleted");
-      fetchData();
-    } catch {
-      toast.error("Failed to delete log");
-    }
-  };
+
 
   useEffect(() => {
     if (sleepTime && wakeTime) {
@@ -524,9 +516,10 @@ export default function ProgressPage() {
         </TabsList>
 
         {/* Tab 1: Weight */}
-        <TabsContent value="weight" className="space-y-4">
+        <TabsContent value="weight" className="space-y-5">
+          {/* Header */}
           <div className="flex flex-wrap items-center justify-between gap-1.5">
-            <h2 className="text-lg font-bold">Weight Progress Chart</h2>
+            <h2 className="text-lg font-bold">Weight Journey</h2>
             <Button
               onClick={() => setWeightModalOpen(true)}
               className="rounded-xl gap-2 text-xs bg-primary hover:bg-primary/90 font-bold ml-auto"
@@ -536,7 +529,90 @@ export default function ProgressPage() {
             </Button>
           </div>
 
-          <div className="glass-card p-6 rounded-3xl border border-border/50 space-y-4">
+          {/* Journey Rail: Start → Now → Target */}
+          {(() => {
+            const startW = weightHistory.length > 0 ? Number(weightHistory[0]?.weight) : null;
+            const currentW = weightHistory.length > 0 ? Number(weightHistory[weightHistory.length - 1]?.weight) : Number(profile?.currentWeight) || null;
+            const targetW = profile?.targetWeight ? Number(profile.targetWeight) : null;
+            if (!startW || !currentW || !targetW) return null;
+
+            const totalChange = startW - targetW; // positive = weight loss goal
+            const achieved = startW - currentW;
+            const isLoss = totalChange > 0;
+            const pct = totalChange !== 0 ? Math.min(100, Math.max(0, Math.round((Math.abs(achieved) / Math.abs(totalChange)) * 100))) : 0;
+            const remaining = Math.abs(currentW - targetW);
+            const atGoal = currentW === targetW;
+
+            return (
+              <div className="glass-card p-5 rounded-3xl border border-primary/20 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-sm flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-primary" />
+                    Progress to Goal
+                  </h3>
+                  <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${
+                    atGoal ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                    : pct >= 75 ? "bg-primary/15 text-primary"
+                    : pct >= 40 ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                    : "bg-muted text-muted-foreground"
+                  }`}>
+                    {atGoal ? "🎉 Goal Reached!" : `${pct}% complete`}
+                  </span>
+                </div>
+
+                {/* Rail */}
+                <div className="relative">
+                  <div className="flex items-center justify-between text-[11px] font-semibold mb-2">
+                    <span className="text-muted-foreground">Start<br /><span className="text-base font-black text-foreground">{startW} kg</span></span>
+                    <span className="text-center text-primary">Now<br /><span className="text-base font-black">{currentW} kg</span></span>
+                    <span className="text-right text-muted-foreground">Target<br /><span className="text-base font-black text-foreground">{targetW} kg</span></span>
+                  </div>
+                  <div className="relative h-3 bg-muted/40 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-700 bg-gradient-to-r from-primary via-emerald-400 to-emerald-500"
+                      style={{ width: `${pct}%` }}
+                    />
+                    {/* Current marker */}
+                    <div
+                      className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white border-2 border-primary shadow-lg shadow-primary/30 transition-all duration-700"
+                      style={{ left: `calc(${pct}% - 8px)` }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-[10px] text-muted-foreground mt-2">
+                    <span>{isLoss ? `Lost ${Math.abs(achieved).toFixed(1)} kg` : `Gained ${Math.abs(achieved).toFixed(1)} kg`}</span>
+                    <span>{remaining.toFixed(1)} kg {isLoss ? "to lose" : "to gain"}</span>
+                  </div>
+                </div>
+
+                {/* Mini milestone chips */}
+                <div className="flex flex-wrap gap-2">
+                  {[25, 50, 75, 100].map((milestone) => (
+                    <span
+                      key={milestone}
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full border transition-colors ${
+                        pct >= milestone
+                          ? "bg-primary/15 border-primary/40 text-primary"
+                          : "bg-muted/30 border-border/30 text-muted-foreground"
+                      }`}
+                    >
+                      {pct >= milestone ? "✓" : ""} {milestone}% milestone
+                    </span>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Chart */}
+          <div className="glass-card p-6 rounded-3xl border border-border/50 space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-muted-foreground">Weight over time (kg)</p>
+              {profile?.targetWeight && (
+                <span className="text-[10px] flex items-center gap-1 text-muted-foreground">
+                  <span className="inline-block w-4 border-t-2 border-dashed border-amber-400" /> Target {profile.targetWeight} kg
+                </span>
+              )}
+            </div>
             <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart
@@ -544,33 +620,30 @@ export default function ProgressPage() {
                   margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
                 >
                   <defs>
-                    <linearGradient
-                      id="weightAreaGrad"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
+                    <linearGradient id="weightAreaGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#22a065" stopOpacity={0.4} />
                       <stop offset="95%" stopColor="#22a065" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    vertical={false}
-                    opacity={0.15}
-                  />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.15} />
                   <XAxis
                     dataKey="date"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fontSize: 11 }}
+                    tick={{ fontSize: 10 }}
+                    interval="preserveStartEnd"
                   />
                   <YAxis
-                    domain={["dataMin - 1", "dataMax + 1"]}
+                    domain={(() => {
+                      const weights = weightHistory.map((w) => Number(w.weight));
+                      const target = profile?.targetWeight ? Number(profile.targetWeight) : null;
+                      const min = Math.min(...weights, target ?? Infinity);
+                      const max = Math.max(...weights, target ?? -Infinity);
+                      return [Math.floor(min) - 2, Math.ceil(max) + 2];
+                    })()}
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fontSize: 11 }}
+                    tick={{ fontSize: 10 }}
                   />
                   <Tooltip
                     contentStyle={{
@@ -579,48 +652,105 @@ export default function ProgressPage() {
                       borderRadius: "12px",
                       fontSize: "12px",
                     }}
+                    formatter={(value) => [`${value} kg`, "Weight"]}
                   />
+                  {profile?.targetWeight && (
+                    <ReferenceLine
+                      y={Number(profile.targetWeight)}
+                      stroke="#f59e0b"
+                      strokeDasharray="5 5"
+                      strokeWidth={2}
+                      label={{ value: `Target ${profile.targetWeight} kg`, position: "insideTopRight", fontSize: 10, fill: "#f59e0b" }}
+                    />
+                  )}
                   <Area
                     type="monotone"
                     dataKey="weight"
                     stroke="#22a065"
-                    strokeWidth={3}
+                    strokeWidth={2.5}
                     fillOpacity={1}
                     fill="url(#weightAreaGrad)"
                     name="Weight (kg)"
+                    dot={{ fill: "#22a065", r: 3, strokeWidth: 0 }}
+                    activeDot={{ r: 5, fill: "#22a065" }}
                   />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
           </div>
 
-          {/* Logs table */}
-          <div className="glass-card p-5 rounded-3xl border border-border/50 space-y-3">
-            <h3 className="text-base font-bold">Weight Logs History</h3>
-            <div className="space-y-2">
-              {weightHistory.map((w) => (
-                <div
-                  key={w._id}
-                  className="flex items-center justify-between p-3 rounded-2xl bg-muted/40 text-xs"
-                >
-                  <div>
-                    <p className="font-bold text-sm">{w.weight} kg</p>
-                    <p className="text-muted-foreground text-[11px]">
-                      {w.date} {w.notes && `&middot; ${w.notes}`}
-                    </p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDeleteWeight(w._id)}
-                    className="h-7 w-7 text-muted-foreground hover:text-red-500 rounded-lg"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
-                </div>
-              ))}
+          {/* Rich history table */}
+          {weightHistory.length > 0 && (
+            <div className="glass-card p-5 rounded-3xl border border-border/50 space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold">Log History</h3>
+                <span className="text-[10px] text-muted-foreground">{weightHistory.length} entries</span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-border/40">
+                      <th className="text-left text-muted-foreground font-semibold pb-2.5 pr-3">Date</th>
+                      <th className="text-left text-muted-foreground font-semibold pb-2.5 pr-3">Weight</th>
+                      <th className="text-left text-muted-foreground font-semibold pb-2.5 pr-3">Change</th>
+                      <th className="text-left text-muted-foreground font-semibold pb-2.5 pr-3">vs Target</th>
+                      <th className="text-left text-muted-foreground font-semibold pb-2.5">Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...weightHistory].reverse().map((w, idx, arr) => {
+                      const prev = arr[idx + 1];
+                      const delta = prev ? Number(w.weight) - Number(prev.weight) : null;
+                      const targetW = profile?.targetWeight ? Number(profile.targetWeight) : null;
+                      const vsTarget = targetW !== null ? Number(w.weight) - targetW : null;
+                      const isGoalLoss = targetW !== null && (weightHistory[0] ? Number(weightHistory[0].weight) > targetW : false);
+                      return (
+                        <tr
+                          key={w._id}
+                          className="border-b border-border/20 last:border-0 hover:bg-muted/20 transition-colors group"
+                        >
+                          <td className="py-2.5 pr-3 font-medium text-muted-foreground whitespace-nowrap">{w.date}</td>
+                          <td className="py-2.5 pr-3">
+                            <span className="font-black text-sm text-foreground">{w.weight} kg</span>
+                          </td>
+                          <td className="py-2.5 pr-3">
+                            {delta !== null ? (
+                              <span className={`inline-flex items-center gap-0.5 font-bold px-2 py-0.5 rounded-full text-[10px] ${
+                                delta < 0
+                                  ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                                  : delta > 0
+                                  ? "bg-red-500/15 text-red-500"
+                                  : "bg-muted/40 text-muted-foreground"
+                              }`}>
+                                {delta < 0 ? "▼" : delta > 0 ? "▲" : "—"}
+                                {delta !== 0 ? ` ${Math.abs(delta).toFixed(1)} kg` : " same"}
+                              </span>
+                            ) : (
+                              <span className="text-[10px] text-muted-foreground italic">start</span>
+                            )}
+                          </td>
+                          <td className="py-2.5 pr-3">
+                            {vsTarget !== null ? (
+                              <span className={`text-[10px] font-semibold ${
+                                (isGoalLoss ? vsTarget <= 0 : vsTarget >= 0)
+                                  ? "text-emerald-500"
+                                  : "text-muted-foreground"
+                              }`}>
+                                {vsTarget === 0 ? "✓ On target" : `${vsTarget > 0 ? "+" : ""}${vsTarget.toFixed(1)} kg`}
+                              </span>
+                            ) : "—"}
+                          </td>
+                          <td className="py-2.5 text-muted-foreground italic max-w-[120px] truncate">
+                            {w.notes || "—"}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+          )}
         </TabsContent>
 
         {/* Tab 2: Body Measurements */}
