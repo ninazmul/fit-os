@@ -27,7 +27,7 @@ export default function TopNavbar() {
         onOpenChange={setNavigationOpen}
       />
 
-      <header className="sticky top-0 z-40 w-full glass-card border-b border-border/50">
+      <header className="sticky top-0 z-40 w-full bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70 border-b border-border/50 shadow-xs">
         <div className="grid h-14 grid-cols-[1fr_auto_1fr] items-center px-4 md:flex md:justify-between md:px-6">
           {/* Mobile navigation */}
           <div className="flex items-center justify-start md:hidden">

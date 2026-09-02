@@ -555,14 +555,14 @@ export default function DashboardPage() {
       />
 
       {/* ────────────────── TOP CONTROL & DATE NAV BAR ────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-background/60 backdrop-blur-md p-3.5 sm:p-4 rounded-3xl border border-border/50 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-2xl border border-border/40">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-background/60 backdrop-blur-md p-3.5 sm:p-4 rounded-3xl border border-border/50 shadow-sm overflow-x-auto no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex items-center gap-3 shrink-0 overflow-x-auto no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-2xl border border-border/40 shrink-0">
             <Button
               variant="ghost"
               size="icon"
               onClick={handlePrevDay}
-              className="h-8 w-8 rounded-xl"
+              className="h-8 w-8 rounded-xl shrink-0"
               title="Previous Day"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -570,7 +570,7 @@ export default function DashboardPage() {
             <button
               type="button"
               onClick={handleToday}
-              className={`px-3 py-1 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 ${
+              className={`px-3 py-1 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shrink-0 ${
                 isToday
                   ? "bg-primary text-white shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
@@ -588,25 +588,25 @@ export default function DashboardPage() {
               variant="ghost"
               size="icon"
               onClick={handleNextDay}
-              className="h-8 w-8 rounded-xl"
+              className="h-8 w-8 rounded-xl shrink-0"
               title="Next Day"
             >
               <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
 
-          <div className="hidden sm:flex items-center gap-2 text-xs">
-            <span className="px-2.5 py-1 rounded-full font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center gap-1">
+          <div className="flex items-center gap-2 text-xs shrink-0">
+            <span className="px-2.5 py-1 rounded-full font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center gap-1 shrink-0">
               <Zap className="w-3.5 h-3.5 fill-current" /> {streak}d Streak
             </span>
-            <span className="px-2.5 py-1 rounded-full font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400">
+            <span className="px-2.5 py-1 rounded-full font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 shrink-0">
               ⚡ Score: {dailyScore?.score || 0}/100
             </span>
           </div>
         </div>
 
         {/* 1-Tap Quick Action Icons Bar */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden pb-0.5 shrink-0">
           <Button
             size="sm"
             onClick={() => {

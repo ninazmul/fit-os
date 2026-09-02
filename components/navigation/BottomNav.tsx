@@ -25,7 +25,7 @@ export default function BottomNav() {
     <>
       <QuickAddSheet open={quickAddOpen} onOpenChange={setQuickAddOpen} />
 
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 glass-card border-t border-border/50 safe-area-bottom">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70 border-t border-border/50 shadow-lg safe-area-bottom">
         <div className="flex items-center justify-around px-1 py-1 relative">
           {leadingItems.map((item) => {
             const Icon = item.icon;
