@@ -4,6 +4,7 @@ const ExerciseSetSchema = new Schema({
   setNumber: { type: Number, required: true },
   reps: { type: Number, required: true, default: 0 },
   weight: { type: Number, required: true, default: 0 }, // kg
+  durationSeconds: { type: Number, default: 0 },
   isPersonalRecord: { type: Boolean, default: false },
 });
 

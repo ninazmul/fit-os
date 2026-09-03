@@ -89,6 +89,7 @@ export const exerciseSetSchema = z.object({
   setNumber: z.coerce.number().min(1),
   reps: z.coerce.number().min(0),
   weight: z.coerce.number().min(0),
+  durationSeconds: z.coerce.number().min(0).optional(),
   isPersonalRecord: z.boolean().optional(),
 });
 
@@ -122,8 +123,10 @@ export const workoutLogSchema = z.object({
 
 export const workoutPlanExerciseSchema = z.object({
   exerciseName: z.string().min(1, "Exercise name required").max(120),
+  trackingMode: z.enum(["reps", "time"]).default("reps"),
   sets: z.coerce.number().min(1).max(20),
-  reps: z.coerce.number().min(1).max(200),
+  reps: z.coerce.number().min(0).max(200).default(0),
+  seconds: z.coerce.number().min(0).max(3600).default(0),
 });
 
 export const workoutPlanDaySchema = z.object({
@@ -137,6 +140,20 @@ export const workoutPlanDaySchema = z.object({
 
 export const workoutPlanSchema = z.object({
   days: z.array(workoutPlanDaySchema).min(1).max(7),
+});
+
+export const completedWorkoutPlanExerciseSchema = z.object({
+  exerciseName: z.string().min(1).max(120),
+  trackingMode: z.enum(["reps", "time"]),
+  setsCompleted: z.coerce.number().min(0).max(20),
+  reps: z.coerce.number().min(0).max(200),
+  seconds: z.coerce.number().min(0).max(3600),
+});
+
+export const completeWorkoutPlanDaySchema = z.object({
+  date: z.string().min(1),
+  planDayId: z.string().min(1),
+  completedExercises: z.array(completedWorkoutPlanExerciseSchema).min(1),
 });
 
 export const waterLogSchema = z.object({

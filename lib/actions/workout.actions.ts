@@ -7,6 +7,7 @@ import UserProfile from "@/lib/database/models/user-profile.model";
 import { currentUser } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import {
+  completeWorkoutPlanDaySchema,
   workoutLogSchema,
   workoutPlanSchema,
   type WorkoutLogFormValues,
@@ -17,8 +18,10 @@ import type { IWorkoutPlanDay, IUserProfile } from "@/types/fitness";
 
 type PlanExerciseInput = {
   exerciseName: string;
+  trackingMode?: "reps" | "time";
   sets: number;
   reps: number;
+  seconds?: number;
 };
 
 function getDayOfWeekFromDate(dateStr: string) {
@@ -27,7 +30,15 @@ function getDayOfWeekFromDate(dateStr: string) {
 
 function estimateWorkoutDuration(exercises: PlanExerciseInput[]) {
   const totalSets = exercises.reduce((sum, ex) => sum + Number(ex.sets || 0), 0);
-  return Math.max(10, Math.round(totalSets * 3 + exercises.length * 4));
+  const timeSeconds = exercises.reduce(
+    (sum, ex) =>
+      sum +
+      (ex.trackingMode === "time"
+        ? Number(ex.sets || 0) * Number(ex.seconds || 0)
+        : 0),
+    0,
+  );
+  return Math.max(5, Math.round(totalSets * 2.5 + exercises.length * 3 + timeSeconds / 60));
 }
 
 function fallbackWorkoutCalories(
@@ -74,7 +85,7 @@ User:
 
 Workout:
 - title: ${title}
-- exercises: ${exercises.map((e) => `${e.exerciseName}: ${e.sets} sets x ${e.reps} reps`).join("; ")}
+- exercises: ${exercises.map((e) => e.trackingMode === "time" ? `${e.exerciseName}: ${e.sets} sets x ${e.seconds || 0} seconds` : `${e.exerciseName}: ${e.sets} sets x ${e.reps} reps`).join("; ")}
 - estimatedDurationMinutes: ${duration}
 
 Return strict JSON only:
@@ -130,15 +141,28 @@ export async function logWorkout(formData: WorkoutLogFormValues) {
   const profile = (await UserProfile.findOne({ clerkId: user.id }).lean()) as
     | IUserProfile
     | null;
-  const estimateInput = validated.exercises.map((exercise) => ({
-    exerciseName: exercise.exerciseName,
-    sets: exercise.sets.length,
-    reps:
-      Math.round(
-        exercise.sets.reduce((sum, set) => sum + Number(set.reps || 0), 0) /
-          Math.max(1, exercise.sets.length),
-      ) || 1,
-  }));
+  const estimateInput: PlanExerciseInput[] = validated.exercises.map((exercise) => {
+    const isTimeBased = exercise.sets.some(
+      (set) => Number(set.durationSeconds || 0) > 0,
+    );
+    return {
+      exerciseName: exercise.exerciseName,
+      trackingMode: isTimeBased ? "time" : "reps",
+      sets: exercise.sets.length,
+      reps:
+        Math.round(
+          exercise.sets.reduce((sum, set) => sum + Number(set.reps || 0), 0) /
+            Math.max(1, exercise.sets.length),
+        ) || 1,
+      seconds:
+        Math.round(
+          exercise.sets.reduce(
+            (sum, set) => sum + Number(set.durationSeconds || 0),
+            0,
+          ) / Math.max(1, exercise.sets.length),
+        ) || 0,
+    };
+  });
   const aiEstimate = await estimateWorkoutCaloriesWithAI(
     validated.title,
     estimateInput,
@@ -200,8 +224,10 @@ export async function saveWorkoutPlan(formData: WorkoutPlanFormValues) {
         estimatedCaloriesBurned: estimate.caloriesBurned,
         exercises: day.exercises.map((ex) => ({
           exerciseName: ex.exerciseName.trim(),
+          trackingMode: ex.trackingMode,
           sets: ex.sets,
           reps: ex.reps,
+          seconds: ex.seconds,
           caloriesBurned: caloriesPerSetTotal
             ? Math.round((estimate.caloriesBurned * ex.sets) / caloriesPerSetTotal)
             : 0,
@@ -245,7 +271,17 @@ export async function getWorkoutPlanForDate(date: string) {
   return JSON.parse(JSON.stringify(day));
 }
 
-export async function completeWorkoutPlanDay(date: string, planDayId: string) {
+export async function completeWorkoutPlanDay(
+  date: string,
+  planDayId: string,
+  completedExercises?: Array<{
+    exerciseName: string;
+    trackingMode: "reps" | "time";
+    setsCompleted: number;
+    reps: number;
+    seconds: number;
+  }>,
+) {
   await connectToDatabase();
   const user = await currentUser();
   if (!user) throw new Error("Unauthorized");
@@ -258,44 +294,78 @@ export async function completeWorkoutPlanDay(date: string, planDayId: string) {
   );
   if (!day) throw new Error("Workout plan day not found");
 
+  const validated = completeWorkoutPlanDaySchema.parse({
+    date,
+    planDayId,
+    completedExercises:
+      completedExercises ||
+      day.exercises.map((exercise) => ({
+        exerciseName: exercise.exerciseName,
+        trackingMode: exercise.trackingMode || "reps",
+        setsCompleted: exercise.sets,
+        reps: exercise.reps,
+        seconds: exercise.seconds || 0,
+      })),
+  });
+
   const existing = await WorkoutLog.findOne({
     clerkId: user.id,
-    date,
-    sourcePlanDayId: planDayId,
+    date: validated.date,
+    sourcePlanDayId: validated.planDayId,
   }).lean();
   if (existing) return JSON.parse(JSON.stringify(existing));
+
+  const completed = validated.completedExercises.filter(
+    (exercise) => Number(exercise.setsCompleted || 0) > 0,
+  );
+  if (completed.length === 0) {
+    throw new Error("Select at least one completed set");
+  }
 
   const profile = (await UserProfile.findOne({ clerkId: user.id }).lean()) as
     | IUserProfile
     | null;
   const estimate = await estimateWorkoutCaloriesWithAI(
     day.title,
-    day.exercises,
+    completed.map((exercise) => ({
+      exerciseName: exercise.exerciseName,
+      trackingMode: exercise.trackingMode,
+      sets: exercise.setsCompleted,
+      reps: exercise.reps,
+      seconds: exercise.seconds,
+    })),
     profile,
   );
-  const totalSets = day.exercises.reduce((sum, ex) => sum + Number(ex.sets || 0), 0);
+  const totalSets = completed.reduce(
+    (sum, ex) => sum + Number(ex.setsCompleted || 0),
+    0,
+  );
 
   const workout = await WorkoutLog.create({
     clerkId: user.id,
-    date,
+    date: validated.date,
     title: day.title,
     workoutType: "custom",
-    sourcePlanDayId: planDayId,
+    sourcePlanDayId: validated.planDayId,
     durationMinutes: estimate.durationMinutes,
     caloriesBurned: estimate.caloriesBurned,
-    notes: "Completed from saved workout plan.",
-    exercises: day.exercises.map((ex) => ({
+    notes:
+      completed.length === day.exercises.length
+        ? "Completed from saved workout plan."
+        : "Partially completed from saved workout plan.",
+    exercises: completed.map((ex) => ({
       exerciseName: ex.exerciseName,
-      sets: Array.from({ length: Number(ex.sets) || 1 }, (_, index) => ({
+      sets: Array.from({ length: Number(ex.setsCompleted) || 1 }, (_, index) => ({
         setNumber: index + 1,
-        reps: Number(ex.reps) || 1,
+        reps: ex.trackingMode === "time" ? 0 : Number(ex.reps) || 1,
         weight: 0,
+        durationSeconds: ex.trackingMode === "time" ? Number(ex.seconds) || 0 : 0,
       })),
       durationMinutes: totalSets
-        ? Math.round((estimate.durationMinutes * Number(ex.sets || 0)) / totalSets)
+        ? Math.round((estimate.durationMinutes * Number(ex.setsCompleted || 0)) / totalSets)
         : 0,
       caloriesBurned: totalSets
-        ? Math.round((estimate.caloriesBurned * Number(ex.sets || 0)) / totalSets)
+        ? Math.round((estimate.caloriesBurned * Number(ex.setsCompleted || 0)) / totalSets)
         : 0,
     })),
   });

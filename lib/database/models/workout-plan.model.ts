@@ -3,8 +3,14 @@ import { Schema, model, models } from "mongoose";
 const WorkoutPlanExerciseSchema = new Schema(
   {
     exerciseName: { type: String, required: true },
+    trackingMode: {
+      type: String,
+      enum: ["reps", "time"],
+      default: "reps",
+    },
     sets: { type: Number, required: true, default: 3 },
     reps: { type: Number, required: true, default: 10 },
+    seconds: { type: Number, default: 0 },
     caloriesBurned: { type: Number, default: 0 },
   },
   { _id: true },

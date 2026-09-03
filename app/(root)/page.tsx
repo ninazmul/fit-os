@@ -24,7 +24,10 @@ import StatCard from "@/components/shared/StatCard";
 import ProgressRing from "@/components/shared/ProgressRing";
 import { DashboardSkeleton } from "@/components/shared/SkeletonLoaders";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Flame,
   Scale,
@@ -55,6 +58,16 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
+
+type DashboardCompletionExercise = {
+  exerciseName: string;
+  trackingMode: "reps" | "time";
+  sets: number;
+  reps: number;
+  seconds: number;
+  selected: boolean;
+  setsCompleted: number;
+};
 
 const QuickActionModal = dynamic(
   () => import("@/components/shared/QuickActionModal"),
@@ -148,6 +161,10 @@ export default function DashboardPage() {
   >("water");
   const [quickWorkoutOpen, setQuickWorkoutOpen] = useState(false);
   const [planCompleting, setPlanCompleting] = useState(false);
+  const [planCompletionOpen, setPlanCompletionOpen] = useState(false);
+  const [planCompletionExercises, setPlanCompletionExercises] = useState<
+    DashboardCompletionExercise[]
+  >([]);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchMealSlot, setSearchMealSlot] = useState<MealType>("lunch");
@@ -401,14 +418,52 @@ export default function DashboardPage() {
     }
   };
 
+  const openPlanCompletionDialog = () => {
+    if (!todayWorkoutPlan?._id) return;
+
+    setPlanCompletionExercises(
+      todayWorkoutPlan.exercises.map(
+        (exercise: {
+          exerciseName: string;
+          trackingMode?: "reps" | "time";
+          sets: number;
+          reps: number;
+          seconds?: number;
+        }) => ({
+          exerciseName: exercise.exerciseName,
+          trackingMode: exercise.trackingMode || "reps",
+          sets: exercise.sets,
+          reps: exercise.reps,
+          seconds: exercise.seconds || 0,
+          selected: true,
+          setsCompleted: exercise.sets,
+        }),
+      ),
+    );
+    setPlanCompletionOpen(true);
+  };
+
   const handleCompleteWorkoutPlan = async () => {
     if (!todayWorkoutPlan?._id) return;
 
     try {
       setPlanCompleting(true);
-      await completeWorkoutPlanDay(selectedDateStr, todayWorkoutPlan._id);
+      await completeWorkoutPlanDay(
+        selectedDateStr,
+        todayWorkoutPlan._id,
+        planCompletionExercises
+          .filter((exercise) => exercise.selected && exercise.setsCompleted > 0)
+          .map((exercise) => ({
+            exerciseName: exercise.exerciseName,
+            trackingMode: exercise.trackingMode,
+            setsCompleted: exercise.setsCompleted,
+            reps: exercise.trackingMode === "time" ? 0 : exercise.reps,
+            seconds: exercise.trackingMode === "time" ? exercise.seconds : 0,
+          })),
+      );
       toast.success(`${todayWorkoutPlan.title} completed`);
       notifyDataUpdated("workout");
+      setPlanCompletionOpen(false);
       await fetchDashboard(false);
     } catch {
       toast.error("Failed to complete workout plan");
@@ -555,6 +610,122 @@ export default function DashboardPage() {
         dateStr={selectedDateStr}
         onCompleted={() => fetchDashboard(false)}
       />
+      <Dialog open={planCompletionOpen} onOpenChange={setPlanCompletionOpen}>
+        <DialogContent className="sm:max-w-lg rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold">Complete Workout Plan</DialogTitle>
+            <DialogDescription className="text-xs">
+              Select the exercises and set counts you finished today.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <div className="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-3">
+              <p className="text-sm font-black">{todayWorkoutPlan?.title}</p>
+              <p className="text-xs text-muted-foreground">
+                {todayWorkoutPlan?.estimatedDurationMinutes || 0} min planned &middot;{" "}
+                {todayWorkoutPlan?.estimatedCaloriesBurned || 0} kcal planned
+              </p>
+            </div>
+
+            {planCompletionExercises.map((exercise, index) => (
+              <div
+                key={`${exercise.exerciseName}-${index}`}
+                className="rounded-2xl border border-border/60 bg-card p-3 space-y-3"
+              >
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    checked={exercise.selected}
+                    onCheckedChange={(checked) =>
+                      setPlanCompletionExercises(
+                        planCompletionExercises.map((item, itemIndex) =>
+                          itemIndex === index
+                            ? { ...item, selected: Boolean(checked) }
+                            : item,
+                        ),
+                      )
+                    }
+                    className="mt-1"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold truncate">{exercise.exerciseName}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Planned: {exercise.sets} sets &times;{" "}
+                      {exercise.trackingMode === "time"
+                        ? `${exercise.seconds}s`
+                        : `${exercise.reps} reps`}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label className="text-[11px]">Sets done</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={exercise.sets}
+                      value={exercise.setsCompleted}
+                      disabled={!exercise.selected}
+                      onChange={(e) =>
+                        setPlanCompletionExercises(
+                          planCompletionExercises.map((item, itemIndex) =>
+                            itemIndex === index
+                              ? {
+                                  ...item,
+                                  setsCompleted: Math.min(
+                                    item.sets,
+                                    Number(e.target.value) || 0,
+                                  ),
+                                }
+                              : item,
+                          ),
+                        )
+                      }
+                      className="rounded-xl bg-background"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[11px]">
+                      {exercise.trackingMode === "time" ? "Seconds/set" : "Reps/set"}
+                    </Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={
+                        exercise.trackingMode === "time"
+                          ? exercise.seconds
+                          : exercise.reps
+                      }
+                      disabled={!exercise.selected}
+                      onChange={(e) =>
+                        setPlanCompletionExercises(
+                          planCompletionExercises.map((item, itemIndex) => {
+                            if (itemIndex !== index) return item;
+                            return item.trackingMode === "time"
+                              ? { ...item, seconds: Number(e.target.value) || 0 }
+                              : { ...item, reps: Number(e.target.value) || 0 };
+                          }),
+                        )
+                      }
+                      className="rounded-xl bg-background"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            <Button
+              type="button"
+              onClick={handleCompleteWorkoutPlan}
+              disabled={planCompleting}
+              className="w-full rounded-xl bg-primary hover:bg-primary/90 font-bold"
+            >
+              {planCompleting ? "Saving..." : "Save Completed Workout"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
       <SearchModal
         open={searchOpen}
         onOpenChange={setSearchOpen}
@@ -654,7 +825,7 @@ export default function DashboardPage() {
             variant="outline"
             onClick={() =>
               todayWorkoutPlan && !today.workoutDone
-                ? handleCompleteWorkoutPlan()
+                ? openPlanCompletionDialog()
                 : setQuickWorkoutOpen(true)
             }
             disabled={planCompleting}
@@ -1541,7 +1712,7 @@ export default function DashboardPage() {
             {todayWorkoutPlan && !today.workoutDone ? (
               <Button
                 size="sm"
-                onClick={handleCompleteWorkoutPlan}
+                onClick={openPlanCompletionDialog}
                 disabled={planCompleting}
                 className="rounded-xl text-xs font-bold gap-1 bg-amber-500 hover:bg-amber-600 text-white"
               >
@@ -1590,7 +1761,7 @@ export default function DashboardPage() {
               </div>
               <Button
                 size="sm"
-                onClick={handleCompleteWorkoutPlan}
+                onClick={openPlanCompletionDialog}
                 disabled={planCompleting}
                 className="rounded-xl text-xs font-bold gap-1 bg-foreground text-background hover:bg-foreground/90"
               >
@@ -1605,8 +1776,10 @@ export default function DashboardPage() {
                   ex: {
                     _id?: string;
                     exerciseName: string;
+                    trackingMode?: "reps" | "time";
                     sets: number;
                     reps: number;
+                    seconds?: number;
                   },
                   idx: number,
                 ) => (
@@ -1616,7 +1789,10 @@ export default function DashboardPage() {
                   >
                     <p className="text-sm font-bold truncate">{ex.exerciseName}</p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {ex.sets} sets &times; {ex.reps} reps
+                      {ex.sets} sets &times;{" "}
+                      {ex.trackingMode === "time"
+                        ? `${ex.seconds || 0}s`
+                        : `${ex.reps} reps`}
                     </p>
                   </div>
                 ),

@@ -127,6 +127,7 @@ export interface IExerciseSet {
   setNumber: number;
   reps: number;
   weight: number; // in kg
+  durationSeconds?: number;
   isPersonalRecord?: boolean;
 }
 
@@ -155,8 +156,10 @@ export interface IWorkoutLog {
 export interface IWorkoutPlanExercise {
   _id?: string;
   exerciseName: string;
+  trackingMode: "reps" | "time";
   sets: number;
   reps: number;
+  seconds?: number;
   caloriesBurned?: number;
 }
 
