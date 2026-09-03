@@ -14,7 +14,7 @@ import {
   appendMealItem,
   removeMealItem,
 } from "@/lib/actions/meal.actions";
-import { deleteWorkoutLog } from "@/lib/actions/workout.actions";
+import { completeWorkoutPlanDay, deleteWorkoutLog } from "@/lib/actions/workout.actions";
 import { formatTime12h, getLocalDateString } from "@/lib/utils";
 import { APP_NAME } from "@/lib/constants";
 import { notifyDataUpdated, useDataUpdateListener } from "@/lib/events";
@@ -51,6 +51,7 @@ import {
   ScanBarcode,
   Sun,
   Apple,
+  CalendarCheck,
 } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
@@ -146,6 +147,7 @@ export default function DashboardPage() {
     "meal" | "weight" | "water" | "workout" | "sleep"
   >("water");
   const [quickWorkoutOpen, setQuickWorkoutOpen] = useState(false);
+  const [planCompleting, setPlanCompleting] = useState(false);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchMealSlot, setSearchMealSlot] = useState<MealType>("lunch");
@@ -399,6 +401,22 @@ export default function DashboardPage() {
     }
   };
 
+  const handleCompleteWorkoutPlan = async () => {
+    if (!todayWorkoutPlan?._id) return;
+
+    try {
+      setPlanCompleting(true);
+      await completeWorkoutPlanDay(selectedDateStr, todayWorkoutPlan._id);
+      toast.success(`${todayWorkoutPlan.title} completed`);
+      notifyDataUpdated("workout");
+      await fetchDashboard(false);
+    } catch {
+      toast.error("Failed to complete workout plan");
+    } finally {
+      setPlanCompleting(false);
+    }
+  };
+
   if (loading || !data) {
     return <DashboardSkeleton />;
   }
@@ -436,6 +454,7 @@ export default function DashboardPage() {
     todaysMission,
     dailyScore,
     weightPrediction,
+    todayWorkoutPlan,
   } = data;
 
   const caloriePct = Math.min(
@@ -633,10 +652,24 @@ export default function DashboardPage() {
           <Button
             size="sm"
             variant="outline"
-            onClick={() => setQuickWorkoutOpen(true)}
+            onClick={() =>
+              todayWorkoutPlan && !today.workoutDone
+                ? handleCompleteWorkoutPlan()
+                : setQuickWorkoutOpen(true)
+            }
+            disabled={planCompleting}
             className="rounded-2xl text-xs font-bold gap-1 border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 h-8 px-3"
           >
-            <Dumbbell className="w-3.5 h-3.5 text-amber-500" /> Workout
+            {todayWorkoutPlan && !today.workoutDone ? (
+              <CalendarCheck className="w-3.5 h-3.5 text-amber-500" />
+            ) : (
+              <Dumbbell className="w-3.5 h-3.5 text-amber-500" />
+            )}
+            {todayWorkoutPlan && !today.workoutDone
+              ? planCompleting
+                ? "Saving..."
+                : `${new Date(`${selectedDateStr}T12:00:00`).toLocaleDateString("en-US", { weekday: "short" })} Plan`
+              : "Workout"}
           </Button>
 
           <Button
@@ -1505,13 +1538,25 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              onClick={() => setQuickWorkoutOpen(true)}
-              className="rounded-xl text-xs font-bold gap-1 bg-amber-500 hover:bg-amber-600 text-white"
-            >
-              <Plus className="w-3.5 h-3.5" /> Log Workout
-            </Button>
+            {todayWorkoutPlan && !today.workoutDone ? (
+              <Button
+                size="sm"
+                onClick={handleCompleteWorkoutPlan}
+                disabled={planCompleting}
+                className="rounded-xl text-xs font-bold gap-1 bg-amber-500 hover:bg-amber-600 text-white"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                {planCompleting ? "Saving..." : "Complete Plan"}
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                onClick={() => setQuickWorkoutOpen(true)}
+                className="rounded-xl text-xs font-bold gap-1 bg-amber-500 hover:bg-amber-600 text-white"
+              >
+                <Plus className="w-3.5 h-3.5" /> Log Workout
+              </Button>
+            )}
             <Link href="/workout">
               <Button
                 variant="ghost"
@@ -1523,6 +1568,62 @@ export default function DashboardPage() {
             </Link>
           </div>
         </div>
+
+        {todayWorkoutPlan && !today.workoutDone && (
+          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-300">
+                  {new Date(`${selectedDateStr}T12:00:00`).toLocaleDateString(
+                    "en-US",
+                    { weekday: "long" },
+                  )}{" "}
+                  Workout Plan
+                </p>
+                <h4 className="text-base font-black text-foreground mt-0.5">
+                  {todayWorkoutPlan.title}
+                </h4>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {todayWorkoutPlan.estimatedDurationMinutes} min &middot;{" "}
+                  {todayWorkoutPlan.estimatedCaloriesBurned} kcal estimated by AI
+                </p>
+              </div>
+              <Button
+                size="sm"
+                onClick={handleCompleteWorkoutPlan}
+                disabled={planCompleting}
+                className="rounded-xl text-xs font-bold gap-1 bg-foreground text-background hover:bg-foreground/90"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                {planCompleting ? "Saving..." : "Mark Complete"}
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              {todayWorkoutPlan.exercises.map(
+                (
+                  ex: {
+                    _id?: string;
+                    exerciseName: string;
+                    sets: number;
+                    reps: number;
+                  },
+                  idx: number,
+                ) => (
+                  <div
+                    key={ex._id || `${ex.exerciseName}-${idx}`}
+                    className="rounded-xl bg-background/80 border border-border/50 p-3"
+                  >
+                    <p className="text-sm font-bold truncate">{ex.exerciseName}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {ex.sets} sets &times; {ex.reps} reps
+                    </p>
+                  </div>
+                ),
+              )}
+            </div>
+          </div>
+        )}
 
         {todayWorkouts && todayWorkouts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-1">

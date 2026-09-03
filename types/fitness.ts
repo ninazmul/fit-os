@@ -148,7 +148,31 @@ export interface IWorkoutLog {
   exercises: IWorkoutExercise[];
   durationMinutes: number;
   caloriesBurned: number;
+  sourcePlanDayId?: string;
   notes?: string;
+}
+
+export interface IWorkoutPlanExercise {
+  _id?: string;
+  exerciseName: string;
+  sets: number;
+  reps: number;
+  caloriesBurned?: number;
+}
+
+export interface IWorkoutPlanDay {
+  _id?: string;
+  dayOfWeek: number;
+  title: string;
+  exercises: IWorkoutPlanExercise[];
+  estimatedDurationMinutes: number;
+  estimatedCaloriesBurned: number;
+}
+
+export interface IWorkoutPlan {
+  _id?: string;
+  clerkId: string;
+  days: IWorkoutPlanDay[];
 }
 
 export interface IWaterEntry {

@@ -120,6 +120,25 @@ export const workoutLogSchema = z.object({
   notes: z.string().optional(),
 });
 
+export const workoutPlanExerciseSchema = z.object({
+  exerciseName: z.string().min(1, "Exercise name required").max(120),
+  sets: z.coerce.number().min(1).max(20),
+  reps: z.coerce.number().min(1).max(200),
+});
+
+export const workoutPlanDaySchema = z.object({
+  _id: z.string().optional(),
+  dayOfWeek: z.coerce.number().min(0).max(6),
+  title: z.string().min(1, "Day title required").max(120),
+  exercises: z
+    .array(workoutPlanExerciseSchema)
+    .min(1, "Add at least one exercise"),
+});
+
+export const workoutPlanSchema = z.object({
+  days: z.array(workoutPlanDaySchema).min(1).max(7),
+});
+
 export const waterLogSchema = z.object({
   date: z.string().min(1),
   entries: z.array(
@@ -159,3 +178,4 @@ export type MealLogFormValues = z.infer<typeof mealLogSchema>;
 export type WeightLogFormValues = z.infer<typeof weightLogSchema>;
 export type BodyMeasurementFormValues = z.infer<typeof bodyMeasurementSchema>;
 export type WorkoutLogFormValues = z.infer<typeof workoutLogSchema>;
+export type WorkoutPlanFormValues = z.infer<typeof workoutPlanSchema>;

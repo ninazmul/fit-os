@@ -29,6 +29,7 @@ const WorkoutLogSchema = new Schema(
     exercises: [WorkoutExerciseSchema],
     durationMinutes: { type: Number, default: 0 },
     caloriesBurned: { type: Number, default: 0 },
+    sourcePlanDayId: { type: String, default: "" },
     notes: { type: String, default: "" },
   },
   { timestamps: true }
@@ -37,6 +38,7 @@ const WorkoutLogSchema = new Schema(
 // Compound indexes for history queries and PR aggregations
 WorkoutLogSchema.index({ clerkId: 1, date: -1 });
 WorkoutLogSchema.index({ clerkId: 1, date: 1 });
+WorkoutLogSchema.index({ clerkId: 1, date: 1, sourcePlanDayId: 1 });
 WorkoutLogSchema.index({ clerkId: 1, "exercises.exerciseName": 1 });
 
 const WorkoutLog = models.WorkoutLog || model("WorkoutLog", WorkoutLogSchema);

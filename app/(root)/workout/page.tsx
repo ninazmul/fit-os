@@ -1,7 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { logWorkout, getWorkoutHistory, getPersonalRecords, deleteWorkoutLog } from "@/lib/actions/workout.actions";
+import {
+  completeWorkoutPlanDay,
+  deleteWorkoutLog,
+  getPersonalRecords,
+  getWorkoutHistory,
+  getWorkoutPlan,
+  logWorkout,
+  saveWorkoutPlan,
+} from "@/lib/actions/workout.actions";
 import { notifyDataUpdated, useDataUpdateListener } from "@/lib/events";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -18,9 +26,12 @@ import {
   Clock,
   Trash2,
   Calendar,
+  Sparkles,
+  CheckCircle2,
+  X,
 } from "lucide-react";
 import { getLocalDateString } from "@/lib/utils";
-import type { WorkoutType, IWorkoutExercise } from "@/types/fitness";
+import type { WorkoutType, IWorkoutExercise, IWorkoutPlanDay } from "@/types/fitness";
 import dynamic from "next/dynamic";
 import toast from "react-hot-toast";
 
@@ -39,19 +50,54 @@ const workoutTypes: { type: WorkoutType; label: string }[] = [
   { type: "custom", label: "Custom Routine" },
 ];
 
+const weekDays = [
+  { value: 0, label: "Sunday", short: "Sun" },
+  { value: 1, label: "Monday", short: "Mon" },
+  { value: 2, label: "Tuesday", short: "Tue" },
+  { value: 3, label: "Wednesday", short: "Wed" },
+  { value: 4, label: "Thursday", short: "Thu" },
+  { value: 5, label: "Friday", short: "Fri" },
+  { value: 6, label: "Saturday", short: "Sat" },
+];
+
+type PlanExerciseEditor = {
+  exerciseName: string;
+  sets: number;
+  reps: number;
+};
+
+type PlanDayEditor = {
+  _id?: string;
+  dayOfWeek: number;
+  title: string;
+  exercises: PlanExerciseEditor[];
+};
+
+const createPlanDay = (dayOfWeek = new Date().getDay()): PlanDayEditor => ({
+  dayOfWeek,
+  title: `${weekDays.find((day) => day.value === dayOfWeek)?.label || "Daily"} Workout`,
+  exercises: [
+    { exerciseName: "Bench Press", sets: 3, reps: 10 },
+    { exerciseName: "Shoulder Press", sets: 3, reps: 10 },
+    { exerciseName: "Triceps Pushdown", sets: 3, reps: 12 },
+  ],
+});
+
 export default function WorkoutPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [workouts, setWorkouts] = useState<any[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [prs, setPrs] = useState<Record<string, any>>({});
+  const [planDays, setPlanDays] = useState<PlanDayEditor[]>([createPlanDay(6)]);
+  const [savedPlanDays, setSavedPlanDays] = useState<IWorkoutPlanDay[]>([]);
   const [loading, setLoading] = useState(true);
+  const [planSaving, setPlanSaving] = useState(false);
+  const [completingDayId, setCompletingDayId] = useState<string | null>(null);
 
   // New Workout Dialog State
   const [modalOpen, setModalOpen] = useState(false);
   const [title, setTitle] = useState("Push Workout");
   const [workoutType, setWorkoutType] = useState<WorkoutType>("push");
-  const [durationMinutes, setDurationMinutes] = useState<number>(45);
-  const [caloriesBurned, setCaloriesBurned] = useState<number>(300);
   const [notes] = useState("");
 
   // Exercises list in active workout
@@ -59,9 +105,9 @@ export default function WorkoutPage() {
     {
       exerciseName: "Bench Press",
       sets: [
-        { setNumber: 1, reps: 10, weight: 60 },
-        { setNumber: 2, reps: 8, weight: 70 },
-        { setNumber: 3, reps: 6, weight: 80 },
+        { setNumber: 1, reps: 10, weight: 0 },
+        { setNumber: 2, reps: 10, weight: 0 },
+        { setNumber: 3, reps: 10, weight: 0 },
       ],
     },
   ]);
@@ -69,12 +115,29 @@ export default function WorkoutPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [history, prData] = await Promise.all([
+      const [history, prData, plan] = await Promise.all([
         getWorkoutHistory(30),
         getPersonalRecords(),
+        getWorkoutPlan(),
       ]);
       setWorkouts(history);
       setPrs(prData);
+      const days = (plan?.days || []) as IWorkoutPlanDay[];
+      setSavedPlanDays(days);
+      if (days.length > 0) {
+        setPlanDays(
+          days.map((day) => ({
+            _id: day._id,
+            dayOfWeek: day.dayOfWeek,
+            title: day.title,
+            exercises: day.exercises.map((ex) => ({
+              exerciseName: ex.exerciseName,
+              sets: ex.sets,
+              reps: ex.reps,
+            })),
+          })),
+        );
+      }
     } catch (err) {
       console.error("Error fetching workouts:", err);
     } finally {
@@ -99,7 +162,7 @@ export default function WorkoutPage() {
     targetEx.sets.push({
       setNumber: targetEx.sets.length + 1,
       reps: lastSet.reps,
-      weight: lastSet.weight,
+      weight: 0,
     });
     setExercises(updated);
   };
@@ -109,9 +172,117 @@ export default function WorkoutPage() {
       ...exercises,
       {
         exerciseName: "Incline Dumbbell Press",
-        sets: [{ setNumber: 1, reps: 10, weight: 20 }],
+        sets: [{ setNumber: 1, reps: 10, weight: 0 }],
       },
     ]);
+  };
+
+  const handleAddPlanDay = () => {
+    const usedDays = new Set(planDays.map((day) => day.dayOfWeek));
+    const nextDay = weekDays.find((day) => !usedDays.has(day.value))?.value ?? 0;
+    setPlanDays([...planDays, createPlanDay(nextDay)]);
+  };
+
+  const handleRemovePlanDay = (dayIndex: number) => {
+    setPlanDays(planDays.filter((_, index) => index !== dayIndex));
+  };
+
+  const handlePlanDayChange = (
+    dayIndex: number,
+    patch: Partial<PlanDayEditor>,
+  ) => {
+    setPlanDays(
+      planDays.map((day, index) =>
+        index === dayIndex ? { ...day, ...patch } : day,
+      ),
+    );
+  };
+
+  const handlePlanExerciseChange = (
+    dayIndex: number,
+    exerciseIndex: number,
+    patch: Partial<PlanExerciseEditor>,
+  ) => {
+    setPlanDays(
+      planDays.map((day, index) => {
+        if (index !== dayIndex) return day;
+        return {
+          ...day,
+          exercises: day.exercises.map((exercise, exIndex) =>
+            exIndex === exerciseIndex ? { ...exercise, ...patch } : exercise,
+          ),
+        };
+      }),
+    );
+  };
+
+  const handleAddPlanExercise = (dayIndex: number) => {
+    setPlanDays(
+      planDays.map((day, index) =>
+        index === dayIndex
+          ? {
+              ...day,
+              exercises: [
+                ...day.exercises,
+                { exerciseName: "New Exercise", sets: 3, reps: 10 },
+              ],
+            }
+          : day,
+      ),
+    );
+  };
+
+  const handleRemovePlanExercise = (dayIndex: number, exerciseIndex: number) => {
+    setPlanDays(
+      planDays.map((day, index) => {
+        if (index !== dayIndex || day.exercises.length <= 1) return day;
+        return {
+          ...day,
+          exercises: day.exercises.filter((_, exIndex) => exIndex !== exerciseIndex),
+        };
+      }),
+    );
+  };
+
+  const handleSaveWorkoutPlan = async () => {
+    try {
+      setPlanSaving(true);
+      await saveWorkoutPlan({
+        days: planDays.map((day) => ({
+          _id: day._id,
+          dayOfWeek: day.dayOfWeek,
+          title: day.title,
+          exercises: day.exercises.map((exercise) => ({
+            exerciseName: exercise.exerciseName,
+            sets: Number(exercise.sets) || 1,
+            reps: Number(exercise.reps) || 1,
+          })),
+        })),
+      });
+      toast.success("Workout plan saved with AI calorie estimates");
+      notifyDataUpdated("workout");
+      await fetchData();
+    } catch {
+      toast.error("Failed to save workout plan");
+    } finally {
+      setPlanSaving(false);
+    }
+  };
+
+  const handleCompleteSavedDay = async (day: IWorkoutPlanDay) => {
+    if (!day._id) return;
+
+    try {
+      setCompletingDayId(day._id);
+      await completeWorkoutPlanDay(getLocalDateString(), day._id);
+      toast.success(`${day.title} completed`);
+      notifyDataUpdated("workout");
+      await fetchData();
+    } catch {
+      toast.error("Failed to complete workout plan");
+    } finally {
+      setCompletingDayId(null);
+    }
   };
 
   const handleSaveWorkout = async (e: React.FormEvent) => {
@@ -123,8 +294,6 @@ export default function WorkoutPage() {
         title,
         workoutType,
         exercises,
-        durationMinutes,
-        caloriesBurned,
         notes,
       });
 
@@ -159,7 +328,7 @@ export default function WorkoutPage() {
 
         <Button onClick={() => setModalOpen(true)} className="rounded-xl gap-2 bg-primary hover:bg-primary/90 font-bold">
           <Plus className="w-4 h-4" />
-          Log New Workout
+          Quick Add Workout
         </Button>
       </div>
 
@@ -189,6 +358,195 @@ export default function WorkoutPage() {
           icon={Flame}
           variant="purple"
         />
+      </div>
+
+      <div className="glass-card p-5 sm:p-6 rounded-3xl border border-primary/20 space-y-5 bg-gradient-to-br from-primary/5 via-background to-amber-500/5">
+        <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-wider">
+              <Sparkles className="w-3.5 h-3.5" />
+              Weekly Workout Builder
+            </div>
+            <div>
+              <h2 className="text-xl font-black tracking-tight">Create your daily workout templates</h2>
+              <p className="text-xs text-muted-foreground max-w-2xl">
+                Pick the weekdays you train, add exercise names, sets, and reps. AI estimates calories so the dashboard can show the right workout button on the right day.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleAddPlanDay}
+              disabled={planDays.length >= 7}
+              className="rounded-xl text-xs font-bold gap-1"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Add Day
+            </Button>
+            <Button
+              type="button"
+              onClick={handleSaveWorkoutPlan}
+              disabled={planSaving || planDays.length === 0}
+              className="rounded-xl text-xs font-bold gap-1 bg-primary hover:bg-primary/90"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              {planSaving ? "Estimating..." : "Save Plan"}
+            </Button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+          {weekDays.map((day) => {
+            const planDay = savedPlanDays.find((item) => item.dayOfWeek === day.value);
+            const isToday = day.value === new Date().getDay();
+            return (
+              <div
+                key={day.value}
+                className={`rounded-2xl border p-3 min-h-24 ${
+                  planDay
+                    ? "bg-emerald-500/10 border-emerald-500/25"
+                    : "bg-muted/20 border-border/50"
+                } ${isToday ? "ring-2 ring-primary/30" : ""}`}
+              >
+                <p className="text-xs font-black">{day.short}</p>
+                <p className="text-[11px] text-muted-foreground mt-1 truncate">
+                  {planDay?.title || "Rest day"}
+                </p>
+                {planDay && (
+                  <button
+                    type="button"
+                    onClick={() => handleCompleteSavedDay(planDay)}
+                    disabled={completingDayId === planDay._id}
+                    className="mt-3 inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline disabled:opacity-60"
+                  >
+                    <CheckCircle2 className="w-3 h-3" />
+                    {completingDayId === planDay._id ? "Saving" : "Complete"}
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="space-y-4">
+          {planDays.map((day, dayIndex) => (
+            <div key={`${day.dayOfWeek}-${dayIndex}`} className="rounded-2xl border border-border/60 bg-card p-4 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-[160px_1fr_auto] gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Training Day</Label>
+                  <Select
+                    value={String(day.dayOfWeek)}
+                    onValueChange={(value) =>
+                      handlePlanDayChange(dayIndex, { dayOfWeek: Number(value) })
+                    }
+                  >
+                    <SelectTrigger className="rounded-xl">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {weekDays.map((item) => (
+                        <SelectItem key={item.value} value={String(item.value)}>
+                          {item.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-xs">Workout Name</Label>
+                  <Input
+                    value={day.title}
+                    onChange={(e) => handlePlanDayChange(dayIndex, { title: e.target.value })}
+                    placeholder="e.g. Push Day / Upper Strength"
+                    className="rounded-xl font-bold"
+                  />
+                </div>
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleRemovePlanDay(dayIndex)}
+                  disabled={planDays.length <= 1}
+                  className="rounded-xl self-end text-muted-foreground hover:text-red-500"
+                  title="Remove day"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+
+              <div className="space-y-2">
+                {day.exercises.map((exercise, exerciseIndex) => (
+                  <div
+                    key={`${exercise.exerciseName}-${exerciseIndex}`}
+                    className="grid grid-cols-1 sm:grid-cols-[1fr_92px_92px_36px] gap-2"
+                  >
+                    <Input
+                      value={exercise.exerciseName}
+                      onChange={(e) =>
+                        handlePlanExerciseChange(dayIndex, exerciseIndex, {
+                          exerciseName: e.target.value,
+                        })
+                      }
+                      placeholder="Workout name"
+                      className="rounded-xl bg-background"
+                    />
+                    <Input
+                      type="number"
+                      min={1}
+                      value={exercise.sets}
+                      onChange={(e) =>
+                        handlePlanExerciseChange(dayIndex, exerciseIndex, {
+                          sets: Number(e.target.value),
+                        })
+                      }
+                      placeholder="Sets"
+                      className="rounded-xl bg-background"
+                    />
+                    <Input
+                      type="number"
+                      min={1}
+                      value={exercise.reps}
+                      onChange={(e) =>
+                        handlePlanExerciseChange(dayIndex, exerciseIndex, {
+                          reps: Number(e.target.value),
+                        })
+                      }
+                      placeholder="Reps"
+                      className="rounded-xl bg-background"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleRemovePlanExercise(dayIndex, exerciseIndex)}
+                      disabled={day.exercises.length <= 1}
+                      className="rounded-xl text-muted-foreground hover:text-red-500"
+                      title="Remove exercise"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => handleAddPlanExercise(dayIndex)}
+                className="rounded-xl text-xs font-bold gap-1"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Add Exercise
+              </Button>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Mid-page Ad */}
@@ -274,7 +632,9 @@ export default function WorkoutPage() {
                         key={sIdx}
                         className="px-2.5 py-1 rounded-lg bg-background border border-border/50 text-[11px] font-bold"
                       >
-                        Set {set.setNumber}: {set.weight}kg &times; {set.reps}
+                        Set {set.setNumber}:{" "}
+                        {set.weight ? `${set.weight}kg x ` : ""}
+                        {set.reps} reps
                       </span>
                     ))}
                   </div>
@@ -289,9 +649,9 @@ export default function WorkoutPage() {
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="sm:max-w-xl rounded-2xl p-6 max-h-[90vh] overflow-y-auto space-y-4">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold">Log Workout Session 🏋️‍♂️</DialogTitle>
+            <DialogTitle className="text-lg font-bold">Quick Add Workout</DialogTitle>
             <DialogDescription className="text-xs">
-              Record exercises, sets, reps, and weight lifted.
+              Add workout names, sets, and reps. Calories are estimated automatically.
             </DialogDescription>
           </DialogHeader>
 
@@ -322,28 +682,6 @@ export default function WorkoutPage() {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label>Duration (mins)</Label>
-                <Input
-                  type="number"
-                  value={durationMinutes}
-                  onChange={(e) => setDurationMinutes(Number(e.target.value))}
-                  className="rounded-xl"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <Label>Calories Burned (kcal)</Label>
-                <Input
-                  type="number"
-                  value={caloriesBurned}
-                  onChange={(e) => setCaloriesBurned(Number(e.target.value))}
-                  className="rounded-xl"
-                />
               </div>
             </div>
 
@@ -380,18 +718,6 @@ export default function WorkoutPage() {
                     {ex.sets.map((set, setIdx) => (
                       <div key={setIdx} className="flex items-center gap-2">
                         <span className="w-12 text-[11px] font-semibold text-muted-foreground">Set {set.setNumber}</span>
-                        <Input
-                          type="number"
-                          placeholder="Weight (kg)"
-                          value={set.weight}
-                          onChange={(e) => {
-                            const updated = [...exercises];
-                            updated[exIdx].sets[setIdx].weight = Number(e.target.value);
-                            setExercises(updated);
-                          }}
-                          className="rounded-xl h-8 text-xs bg-background"
-                        />
-                        <span className="text-[10px] text-muted-foreground">kg</span>
                         <Input
                           type="number"
                           placeholder="Reps"

@@ -6,6 +6,7 @@ import MealLog from "@/lib/database/models/meal-log.model";
 import WeightLog from "@/lib/database/models/weight-log.model";
 import WaterLog from "@/lib/database/models/water-log.model";
 import WorkoutLog from "@/lib/database/models/workout-log.model";
+import WorkoutPlan from "@/lib/database/models/workout-plan.model";
 import SleepLog from "@/lib/database/models/sleep-log.model";
 import { currentUser } from "@clerk/nextjs/server";
 import type {
@@ -37,8 +38,9 @@ export async function getDashboardData(dateStr?: string) {
   if (!profile) return { needsOnboarding: true };
 
   const today = dateStr || getLocalDateString();
+  const selectedDayOfWeek = new Date(`${today}T12:00:00`).getDay();
 
-  const [meals, weightLog, waterLog, workouts, sleepLog, recentFoods] =
+  const [meals, weightLog, waterLog, workouts, sleepLog, recentFoods, workoutPlan] =
     (await Promise.all([
       MealLog.find({ clerkId: user.id, date: today }).lean(),
       WeightLog.findOne({ clerkId: user.id, date: today }).lean(),
@@ -46,6 +48,10 @@ export async function getDashboardData(dateStr?: string) {
       WorkoutLog.find({ clerkId: user.id, date: today }).lean(),
       SleepLog.findOne({ clerkId: user.id, date: today }).lean(),
       getRecentFoods(10),
+      WorkoutPlan.findOne(
+        { clerkId: user.id, "days.dayOfWeek": selectedDayOfWeek },
+        { "days.$": 1 },
+      ).lean(),
     ])) as unknown as [
       IMealLog[],
       IWeightLog | null,
@@ -53,6 +59,7 @@ export async function getDashboardData(dateStr?: string) {
       IWorkoutLog[],
       DashboardSleepLog | null,
       IMealItem[],
+      { days?: unknown[] } | null,
     ];
 
   // Today's nutrition totals
@@ -441,6 +448,7 @@ export async function getDashboardData(dateStr?: string) {
       },
       meals: mealSlots,
       workouts: todayWorkoutsList,
+      todayWorkoutPlan: workoutPlan?.days?.[0] || null,
       water: {
         totalMl: todayWaterMl,
         entries: waterEntries,
