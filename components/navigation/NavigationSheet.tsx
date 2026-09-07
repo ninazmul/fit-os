@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { X } from "lucide-react";
+import { X, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -25,6 +27,11 @@ import {
   APP_LOGO_ALT,
 } from "@/lib/constants";
 
+const DietUserGuideModal = dynamic(
+  () => import("@/components/shared/DietUserGuideModal"),
+  { ssr: false },
+);
+
 interface NavigationSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -36,6 +43,7 @@ export default function NavigationSheet({
 }: NavigationSheetProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const [guideOpen, setGuideOpen] = useState(false);
 
   const handleNavigate = (href: string) => {
     onOpenChange(false);
@@ -43,7 +51,8 @@ export default function NavigationSheet({
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <>
+      <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="left"
         className="lg:hidden w-[82vw] max-w-[340px] border-r border-border bg-card/95 p-0 backdrop-blur-xl [&>button]:hidden"
@@ -141,7 +150,25 @@ export default function NavigationSheet({
         </nav>
         {/* Developer Footer */}
         <footer className="">
-          <div className="p-4 border-t border-border">
+          <div className="p-4 border-t border-border space-y-3">
+            <button
+              type="button"
+              onClick={() => {
+                onOpenChange(false);
+                setGuideOpen(true);
+              }}
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-all border border-border/60 hover:border-primary/40 group shadow-2xs"
+            >
+              <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-colors shrink-0">
+                <BookOpen className="w-4 h-4" />
+              </div>
+              <div className="flex flex-col items-start min-w-0 flex-1">
+                <span className="font-semibold text-foreground text-xs leading-tight">User Guide</span>
+                <span className="text-[10px] text-muted-foreground leading-tight">Features & AI Tips</span>
+              </div>
+              <span className="text-[10px] bg-primary/10 text-primary font-semibold px-2 py-0.5 rounded-full">Help</span>
+            </button>
+
             <p className="text-[11px] text-muted-foreground text-center">
               {APP_NAME} {APP_VERSION} &middot; By{" "}
               <a
@@ -157,5 +184,8 @@ export default function NavigationSheet({
         </footer>
       </SheetContent>
     </Sheet>
+
+    <DietUserGuideModal open={guideOpen} onOpenChange={setGuideOpen} />
+  </>
   );
 }
