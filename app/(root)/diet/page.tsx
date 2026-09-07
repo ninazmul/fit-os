@@ -46,6 +46,7 @@ import {
   Info,
   CheckCircle2,
   Calculator,
+  Loader2,
 } from "lucide-react";
 import type {
   MealType,
@@ -133,11 +134,8 @@ export default function DietPage() {
   const [customFat, setCustomFat] = useState<number>(5);
   const [customFiber, setCustomFiber] = useState<number>(2);
 
-  // AI custom food estimation state
+  // AI custom food estimation state (single field)
   const [aiPrompt, setAiPrompt] = useState("");
-  const [aiCookingMethod, setAiCookingMethod] = useState("pan_fry");
-  const [aiTotalBatch, setAiTotalBatch] = useState("Total cooked: 1 batch (approx 4 portions)");
-  const [aiPortionEaten, setAiPortionEaten] = useState("I ate: 1 portion (25%)");
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState<AIEstimateResult | null>(null);
 
@@ -322,17 +320,14 @@ export default function DietPage() {
 
   const handleRunAIEstimate = async () => {
     if (!aiPrompt.trim()) {
-      toast.error("Please describe what ingredients you cooked and portion eaten.");
+      toast.error("Please describe your food or ingredients first.");
       return;
     }
 
     try {
       setAiLoading(true);
       const result = await estimateFoodNutritionWithAI({
-        description: aiPrompt,
-        cookingMethod: aiCookingMethod,
-        cookedPortionTotal: aiTotalBatch,
-        portionEaten: aiPortionEaten,
+        description: aiPrompt.trim(),
       });
 
       setAiResult(result);
@@ -345,7 +340,7 @@ export default function DietPage() {
       setCustomFat(result.fat);
       setCustomFiber(result.fiber);
 
-      toast.success("AI calculated nutritional values! Review and save ✨");
+      toast.success("AI calculated macros & filled the required fields! ✨");
     } catch (err) {
       console.error("AI estimation error:", err);
       toast.error("Failed to calculate with AI. Please check inputs.");
@@ -1116,11 +1111,11 @@ export default function DietPage() {
         <span className="truncate">{editingFoodId ? "Edit Custom Food ✏️" : "Custom Food & AI Recipe 🍳"}</span>
       </DialogTitle>
       <DialogDescription className="text-xs text-muted-foreground">
-        Describe ingredients, cooking method and portion eaten for instant AI calculation.
+        Describe your food in one field — AI will calculate macros and fill all required fields automatically.
       </DialogDescription>
     </DialogHeader>
 
-    {/* Mode Switcher: AI Recipe Estimator vs Manual Form */}
+    {/* Mode Switcher: AI Auto-Fill vs Manual Entry */}
     <div className="grid grid-cols-2 gap-1.5 p-1 bg-muted/70 rounded-2xl text-xs font-semibold">
       <button
         type="button"
@@ -1131,7 +1126,7 @@ export default function DietPage() {
           }`}
       >
         <Sparkles className="w-3.5 h-3.5 shrink-0" />
-        <span className="truncate text-[11px] sm:text-xs">AI Recipe Estimator</span>
+        <span className="truncate text-[11px] sm:text-xs">AI Auto-Fill</span>
       </button>
       <button
         type="button"
@@ -1146,50 +1141,42 @@ export default function DietPage() {
       </button>
     </div>
 
-    {/* AI Recipe Mode */}
+    {/* AI Recipe Mode - Single Field Input */}
     {customTab === "ai" && (
-      <div className="space-y-3.5 text-xs w-full max-w-full overflow-hidden min-w-0">
-        {/* Quick AI Recipe Prompt Suggestions */}
+      <div className="space-y-3 text-xs w-full max-w-full overflow-hidden min-w-0">
+        {/* Quick Inspiration Presets */}
         <div className="w-full max-w-full overflow-hidden">
           <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 flex items-center gap-1">
             <Sparkles className="w-3 h-3 text-primary shrink-0" />
             Quick Inspiration:
           </p>
-          <div className="flex gap-1.5 overflow-x-auto pb-1.5 no-scrollbar text-[10px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden w-full">
+          <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar text-[10px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden w-full">
             {[
               {
-                label: "🍗 Chicken Curry (1 of 4 servings)",
-                text: "500g chicken breast, 2 potatoes (150g), 1 onion, 2 tbsp mustard oil, turmeric, chili powder. Cooked 4 servings in total, I ate 1 serving.",
-                method: "curry",
-                portion: "1 portion of 4 (25%)",
+                label: "🍗 Chicken Curry (1 of 4 portions)",
+                text: "500g chicken breast curry with 2 potatoes (150g), 1 onion, and 2 tbsp mustard oil. Cooked 4 servings in total, I ate 1 serving.",
               },
               {
                 label: "🍳 2-Egg Omelette in Butter",
-                text: "2 whole eggs, 1 tbsp butter, chopped onions and green chilies. Ate the whole omelette.",
-                method: "pan_fry",
-                portion: "All (100%)",
+                text: "2 whole eggs omelette fried in 1 tbsp butter with chopped onions, green chilies, and 2 slices of whole wheat bread.",
               },
               {
                 label: "🍚 Rice & Lentil Dal Bowl",
                 text: "150g cooked basmati rice with 100g red lentil masoor dal cooked with 1 tsp ghee and cumin.",
-                method: "boil",
-                portion: "1 bowl (250g)",
               },
               {
                 label: "🥩 Beef Bhuna (150g portion)",
-                text: "600g lean beef cooked with 2 onions, 2 tbsp oil, ginger garlic paste and spices. Total cooked was ~500g, I ate 150g.",
-                method: "curry",
-                portion: "150g out of 500g",
+                text: "600g lean beef cooked with 2 onions, 2 tbsp oil, and spices. Total cooked was ~500g, I ate 150g.",
+              },
+              {
+                label: "🥤 Whey & Banana Shake",
+                text: "1 scoop whey protein isolate with 1 medium banana, 250ml milk, and 1 tbsp peanut butter.",
               },
             ].map((preset, idx) => (
               <button
                 key={idx}
                 type="button"
-                onClick={() => {
-                  setAiPrompt(preset.text);
-                  setAiCookingMethod(preset.method);
-                  setAiPortionEaten(preset.portion);
-                }}
+                onClick={() => setAiPrompt(preset.text)}
                 className="px-2.5 py-1.5 rounded-xl bg-muted/60 hover:bg-primary/10 hover:text-primary border border-border/40 whitespace-nowrap transition-colors shrink-0 font-medium"
               >
                 {preset.label}
@@ -1198,70 +1185,54 @@ export default function DietPage() {
           </div>
         </div>
 
-        {/* Recipe & Cooking Description Textarea */}
+        {/* Single Description Textarea */}
         <div className="space-y-1.5">
-          <Label className="font-semibold flex flex-wrap items-center justify-between gap-1">
-            <span>Describe Ingredients & Cooking:</span>
+          <Label className="font-semibold flex flex-wrap items-center justify-between gap-1 text-xs">
+            <span className="flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-primary shrink-0" />
+              Describe Food / Recipe:
+            </span>
             <span className="text-[10px] text-muted-foreground font-normal">
-              (raw weights, oil, spices, portions)
+              Ingredients, cooking method, & portion eaten in one field
             </span>
           </Label>
           <textarea
             rows={3}
             value={aiPrompt}
             onChange={(e) => setAiPrompt(e.target.value)}
-            placeholder="e.g. 200g chicken breast pan fried in 1 tbsp olive oil with 100g broccoli and 1 cup rice. Cooked 2 portions total, I ate 1 portion..."
-            className="w-full min-w-0 rounded-2xl p-3 bg-muted/40 border border-border/50 focus:border-primary focus:ring-1 focus:ring-primary text-xs outline-none transition-all resize-none box-border"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault();
+                handleRunAIEstimate();
+              }
+            }}
+            placeholder="e.g. 500g chicken breast curry with 2 potatoes and 2 tbsp oil. Cooked 4 servings in total, I ate 1 serving..."
+            className="w-full min-w-0 rounded-2xl p-3 bg-muted/40 border border-border/50 focus:border-primary focus:ring-1 focus:ring-primary text-xs outline-none transition-all resize-none box-border leading-relaxed"
           />
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-          <div className="space-y-1 min-w-0">
-            <Label className="font-semibold text-xs">Cooking Method / Oil:</Label>
-            <select
-              value={aiCookingMethod}
-              onChange={(e) => setAiCookingMethod(e.target.value)}
-              className="w-full min-w-0 rounded-xl p-2.5 bg-muted/40 border border-border/50 text-xs outline-none focus:border-primary box-border"
-            >
-              <option value="pan_fry">Pan-fried / Sautéed (~5-7g oil)</option>
-              <option value="deep_fry">Deep-fried / Crispy (~12-15g oil)</option>
-              <option value="curry">Curry / Stew with Gravy</option>
-              <option value="bake_roast">Baked / Grilled (light oil)</option>
-              <option value="boil_steam">Boiled / Steamed (0g oil)</option>
-              <option value="raw">Raw / Fresh</option>
-            </select>
-          </div>
-
-          <div className="space-y-1 min-w-0">
-            <Label className="font-semibold text-xs">Total Cooked Batch:</Label>
-            <Input
-              placeholder="e.g. 500g or 4 servings"
-              value={aiTotalBatch}
-              onChange={(e) => setAiTotalBatch(e.target.value)}
-              className="rounded-xl text-xs h-10 w-full"
-            />
-          </div>
-
-          <div className="space-y-1 min-w-0">
-            <Label className="font-semibold text-xs">Portion Eaten:</Label>
-            <Input
-              placeholder="e.g. 20g of 100g, 1 bowl"
-              value={aiPortionEaten}
-              onChange={(e) => setAiPortionEaten(e.target.value)}
-              className="rounded-xl text-xs h-10 w-full"
-            />
+          <div className="flex items-center justify-between text-[10px] text-muted-foreground px-1">
+            <span>Tip: Press <kbd className="px-1.5 py-0.5 rounded bg-muted text-[10px] font-mono border border-border/50">⌘ Enter</kbd> to analyze</span>
+            {aiPrompt.length > 0 && <span>{aiPrompt.length} chars</span>}
           </div>
         </div>
 
-        {/* AI Calculate Button */}
+        {/* AI Calculate & Fill Button */}
         <Button
           type="button"
           disabled={aiLoading || !aiPrompt.trim()}
           onClick={handleRunAIEstimate}
           className="w-full rounded-2xl py-3.5 sm:py-4 bg-gradient-to-r from-primary to-emerald-600 hover:from-primary/90 hover:to-emerald-700 text-white font-bold text-xs sm:text-sm gap-2 shadow-md hover:shadow-lg transition-all"
         >
-          <Sparkles className="w-4 h-4 shrink-0" />
-          {aiLoading ? "AI is Analyzing Ingredients & Cooking..." : "✨ Calculate Nutrition with AI"}
+          {aiLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
+              <span>AI is analyzing & filling fields...</span>
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-4 h-4 shrink-0" />
+              <span>✨ Analyze with AI & Fill Fields</span>
+            </>
+          )}
         </Button>
 
         {/* AI Result Card */}
@@ -1270,7 +1241,7 @@ export default function DietPage() {
             <div className="flex flex-wrap items-center justify-between gap-1.5">
               <span className="text-xs font-bold text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                AI Calculated for Portion Eaten
+                Required Fields Filled Below ✨
               </span>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-800 dark:text-emerald-200 shrink-0">
                 {Math.round((aiResult.portionEatenRatio || 1) * 100)}% portion

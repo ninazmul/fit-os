@@ -89,6 +89,13 @@ const NUTRITION_BASE: Record<
   oats: { calPer100g: 389, p: 16.9, c: 66.3, f: 6.9, fib: 10.6, defaultCat: "rice_grains" },
   flour: { calPer100g: 364, p: 10, c: 76, f: 1, fib: 2.7, defaultCat: "bread_bakery" },
   sugar: { calPer100g: 387, p: 0, c: 100, f: 0, fib: 0, defaultCat: "sweets_desserts" },
+  whey: { calPer100g: 400, p: 80, c: 6.7, f: 5, fib: 0, defaultCat: "dairy_eggs" }, // ~1 scoop 30g = 120 cal, 24g P
+  proteinpowder: { calPer100g: 400, p: 80, c: 6.7, f: 5, fib: 0, defaultCat: "dairy_eggs" },
+  banana: { calPer100g: 89, p: 1.1, c: 22.8, f: 0.3, fib: 2.6, defaultCat: "fruits_veg" },
+  peanutbutter: { calPer100g: 588, p: 25, c: 20, f: 50, fib: 6, defaultCat: "custom" },
+  apple: { calPer100g: 52, p: 0.3, c: 14, f: 0.2, fib: 2.4, defaultCat: "fruits_veg" },
+  pasta: { calPer100g: 158, p: 5.8, c: 31, f: 0.9, fib: 1.8, defaultCat: "rice_grains" },
+  tofu: { calPer100g: 76, p: 8, c: 1.9, f: 4.8, fib: 0.3, defaultCat: "dairy_eggs" },
 };
 
 /** Parse quantity and gram weight from ingredient snippet */
@@ -102,6 +109,7 @@ function parseIngredientSnippet(text: string): { name: string; grams: number; ba
   const tbspMatch = lower.match(/(\d+(?:\.\d+)?)\s*(?:tbsp|tablespoon|tbsps|tablespoons)/);
   const tspMatch = lower.match(/(\d+(?:\.\d+)?)\s*(?:tsp|teaspoon|tsps|teaspoons)/);
   const cupMatch = lower.match(/(\d+(?:\.\d+)?)\s*(?:cups?|katori|bowl)/);
+  const scoopMatch = lower.match(/(\d+(?:\.\d+)?)\s*scoops?/);
   const pieceMatch = lower.match(/(\d+(?:\.\d+)?)\s*(?:pcs?|pieces?|slice|slices?|egg|eggs)/);
 
   if (kgMatch) {
@@ -114,17 +122,21 @@ function parseIngredientSnippet(text: string): { name: string; grams: number; ba
     grams = parseFloat(tspMatch[1]) * 5;
   } else if (cupMatch) {
     grams = parseFloat(cupMatch[1]) * 150;
+  } else if (scoopMatch) {
+    grams = parseFloat(scoopMatch[1]) * 30;
   } else if (pieceMatch) {
     const count = parseFloat(pieceMatch[1]);
     if (lower.includes("egg")) grams = count * 50;
     else if (lower.includes("roti") || lower.includes("chapati")) grams = count * 35;
     else if (lower.includes("bread")) grams = count * 30;
+    else if (lower.includes("banana")) grams = count * 118;
     else grams = count * 75;
   }
 
-  // Find matching key in NUTRITION_BASE
+  // Find matching key in NUTRITION_BASE (longest match first)
   let matchedKey: string | null = null;
-  for (const key of Object.keys(NUTRITION_BASE)) {
+  const sortedKeys = Object.keys(NUTRITION_BASE).sort((a, b) => b.length - a.length);
+  for (const key of sortedKeys) {
     if (lower.includes(key)) {
       matchedKey = key;
       break;
@@ -132,6 +144,38 @@ function parseIngredientSnippet(text: string): { name: string; grams: number; ba
   }
 
   return { name: text, grams: Math.max(1, grams), baseKey: matchedKey };
+}
+
+/** Extract clean dish name from freeform description */
+function extractDishName(text: string): string {
+  if (!text) return "Homemade Custom Food";
+  // Remove common leading phrases or instructions
+  const stripped = text
+    .replace(/^e\.g\.?\s*/i, "")
+    .replace(/(?:cooked|made|total)\s*\d+.*$/i, "")
+    .replace(/(?:i ate|ate|portion).*$/i, "")
+    .trim();
+
+  // Pick the first clause
+  const firstClause = stripped.split(/[,.;]/)[0]?.trim() || "";
+  if (firstClause.length >= 3 && firstClause.length <= 45) {
+    // Title case and clean numbers from start
+    const clean = firstClause.replace(/^\d+\s*(?:g|gm|kg|tbsp|tsp|cups?|pcs?|pieces?)\s+/i, "");
+    return clean
+      .split(/\s+/)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(" ");
+  }
+
+  if (stripped.toLowerCase().includes("chicken")) return "Homemade Chicken Dish";
+  if (stripped.toLowerCase().includes("beef")) return "Homemade Beef Dish";
+  if (stripped.toLowerCase().includes("fish")) return "Homemade Fish Dish";
+  if (stripped.toLowerCase().includes("egg")) return "Homemade Egg Dish";
+  if (stripped.toLowerCase().includes("rice")) return "Rice Bowl with Sides";
+  if (stripped.toLowerCase().includes("dal")) return "Homemade Dal / Lentils";
+  if (stripped.toLowerCase().includes("shake")) return "Protein Shake";
+
+  return stripped.slice(0, 35) || "Homemade Custom Food";
 }
 
 /** Fallback deterministic nutrition calculator based on culinary rules */
@@ -146,15 +190,23 @@ function fallbackCalculateNutrition(input: AIEstimateInput): AIEstimateResult {
     .join(" ")
     .toLowerCase();
 
-  // Extract portion ratio (e.g. "ate 1 of 4", "ate 20g out of 100g", "ate 150g of 600g", "half", "quarter", "1/2", "1/4")
+  // Extract portion ratio (e.g. "cooked 4 servings, ate 1", "ate 1 of 4", "ate 20g out of 100g", "ate 150g of 600g", "half", "quarter", "1/2", "1/4")
   let portionRatio = 1.0;
   let portionText = "Full batch (100%)";
 
+  const cookedAteMatch = fullText.match(/(?:cooked|made|total)\s*(\d+)\s*(?:servings?|portions?).*?(?:ate|eat|had)\s*(\d+)/);
   const fractionMatch = fullText.match(/(\d+)\s*(?:\/|out of|of)\s*(\d+)/);
   const percentMatch = fullText.match(/(\d+)\s*%/);
   const gramPortionMatch = fullText.match(/ate\s*(\d+)\s*g.*(?:of|total)\s*(\d+)\s*g/);
 
-  if (gramPortionMatch) {
+  if (cookedAteMatch) {
+    const totalS = parseFloat(cookedAteMatch[1]);
+    const ateS = parseFloat(cookedAteMatch[2]);
+    if (totalS > 0 && ateS <= totalS) {
+      portionRatio = ateS / totalS;
+      portionText = `${ateS} of ${totalS} servings (${Math.round(portionRatio * 100)}%)`;
+    }
+  } else if (gramPortionMatch) {
     const eatenG = parseFloat(gramPortionMatch[1]);
     const totalG = parseFloat(gramPortionMatch[2]);
     if (totalG > 0 && eatenG <= totalG) {
@@ -208,9 +260,9 @@ function fallbackCalculateNutrition(input: AIEstimateInput): AIEstimateResult {
     cookingAdjustmentNote = "Baked / Grilled: Added +3g light coating oil.";
   }
 
-  // Parse lines or comma separated ingredients
+  // Parse lines or comma / 'with' / 'and' separated ingredients
   const lines = (input.ingredients || input.description || "")
-    .split(/[,;\n+]+/)
+    .split(/[,;\n+]|\band\b|\bwith\b/)
     .map((s) => s.trim())
     .filter(Boolean);
 
@@ -258,7 +310,6 @@ function fallbackCalculateNutrition(input: AIEstimateInput): AIEstimateResult {
 
   // If no ingredients matched from keyword dictionary, perform smart baseline heuristic
   if (detected.length === 0) {
-    // Default reasonable home-cooked dish estimate
     totalBatchCal = 380;
     totalBatchP = 22;
     totalBatchC = 35;
@@ -266,7 +317,6 @@ function fallbackCalculateNutrition(input: AIEstimateInput): AIEstimateResult {
     totalBatchFib = 4;
     totalBatchGrams = 300;
   } else {
-    // Add extra fat calories
     totalBatchCal += Math.round(cookingExtraFat * 9);
   }
 
@@ -278,25 +328,18 @@ function fallbackCalculateNutrition(input: AIEstimateInput): AIEstimateResult {
   const finalFib = Math.max(0, Math.round(totalBatchFib * portionRatio * 10) / 10);
   const eatenGrams = Math.round(totalBatchGrams * portionRatio);
 
-  // Generate clean name
-  let dishName = input.description ? input.description.slice(0, 40) : "Homemade Custom Dish";
-  if (dishName.includes("chicken")) dishName = "Homemade Chicken Dish";
-  else if (dishName.includes("beef")) dishName = "Homemade Beef Dish";
-  else if (dishName.includes("fish")) dishName = "Homemade Fish Dish";
-  else if (dishName.includes("egg")) dishName = "Homemade Egg Dish";
-  else if (dishName.includes("rice")) dishName = "Homemade Rice Dish";
-  else if (dishName.includes("dal")) dishName = "Homemade Dal / Lentils";
+  const dishName = extractDishName(input.description || "");
 
   return {
     name: dishName,
     category: primaryCategory,
-    servingSize: eatenGrams > 0 ? `${eatenGrams}g (${portionText})` : `1 serving (${portionText})`,
+    servingSize: eatenGrams > 0 ? `${eatenGrams}g` : `1 portion${portionRatio < 1 ? ` (${portionText})` : ""}`,
     calories: finalCal,
     protein: finalP,
     carbs: finalC,
     fat: finalF,
     fiber: finalFib,
-    explanation: `Calculated from ${detected.length} ingredients + cooking method (${cookingAdjustmentNote}). Scaled to portion eaten: ${portionText}.`,
+    explanation: `Calculated from ${detected.length > 0 ? detected.length : "estimated"} ingredients & cooking method (${cookingAdjustmentNote}). Portion eaten: ${portionText}.`,
     detectedIngredients: detected,
     cookingAdjustments: cookingAdjustmentNote,
     portionEatenRatio: portionRatio,
@@ -315,39 +358,45 @@ export async function estimateFoodNutritionWithAI(input: AIEstimateInput): Promi
 
   try {
     const systemPrompt = `You are an expert culinary nutritionist & macro calculation AI for a fitness application.
-Your goal is to parse a home-cooked dish recipe or food description and calculate precise nutritional values for the exact portion eaten.
+Your goal is to parse a home-cooked dish recipe or food description from a single free-form user description, and calculate precise nutritional values to fill required fields for the exact portion eaten.
 
-Input provided:
-- Dish description: "${input.description || ""}"
-- Ingredients used & quantities: "${input.ingredients || ""}"
-- Cooking method & oils: "${input.cookingMethod || ""}"
-- Total batch cooked: "${input.cookedPortionTotal || ""}"
-- Cooked portion eaten: "${input.portionEaten || ""}"
+User Food Description:
+"${input.description || ""}"
+${input.ingredients ? `- Additional ingredients note: "${input.ingredients}"` : ""}
+${input.cookingMethod ? `- Cooking method: "${input.cookingMethod}"` : ""}
+${input.cookedPortionTotal ? `- Batch cooked: "${input.cookedPortionTotal}"` : ""}
+${input.portionEaten ? `- Portion eaten: "${input.portionEaten}"` : ""}
 
 Instructions:
-1. Identify all raw ingredients, measurements (grams/tbsp/cups/pieces), and sum total calories, protein (g), carbs (g), fat (g), fiber (g).
-2. Factor in the cooking method:
-   - Deep frying: add 10-15g oil absorption unless already counted.
-   - Pan/stir fry: add 4-7g cooking oil.
-   - Boiling/steaming/baking without oil: 0g added fat.
-3. Compute the fraction/ratio of the dish actually eaten (e.g. if cooked 4 portions and ate 1, ratio is 0.25; if cooked 500g total and ate 100g, ratio is 0.20).
-4. Scale calories, protein, carbs, fat, fiber by this portion eaten fraction.
-5. Choose appropriate category from: 'rice_grains', 'curry_meat', 'fish_seafood', 'bread_bakery', 'dairy_eggs', 'fruits_veg', 'sweets_desserts', 'snacks_beverages', 'custom'.
-6. Provide a clean concise dish name and serving size description (e.g. "150g (1 bowl)").
+1. Parse everything directly from the user's description. The user provides ingredients, weights, cooking method, batch size, and portion eaten all within this single input field.
+2. Extract or infer:
+   - "name": Clean, concise, appetizing food/dish name (e.g., "Homemade Chicken Curry", "2 Fried Eggs with Toast", "Beef Bhuna & Rice", "Oats & Whey Bowl").
+   - "category": Best matching category from: 'rice_grains', 'curry_meat', 'fish_seafood', 'bread_bakery', 'dairy_eggs', 'fruits_veg', 'sweets_desserts', 'snacks_beverages', 'custom'.
+   - "servingSize": Concise serving size string for the portion eaten (e.g., "1 portion (approx 250g)", "1 bowl (150g)", "2 eggs + 2 toasts").
+   - Raw ingredients and measurements (grams, tbsp, cups, pieces), and their respective calories & macros.
+   - Cooking method & added oil/fat:
+     * Deep frying: add 10-15g oil absorption per serving unless already counted.
+     * Pan/stir fry: add 4-7g cooking oil/butter unless already counted.
+     * Boiled / steamed: 0g extra oil.
+     * Curries / gravies: account for stated oil/ghee (typically 1-2 tbsp across the batch).
+   - Portion eaten scaling:
+     * If user states a cooked batch and portion eaten (e.g., "cooked 4 portions, ate 1", "made 500g, ate 150g", "ate half"), scale calories, protein, carbs, fat, and fiber by that exact ratio.
+     * If user simply lists what they ate (e.g., "2 boiled eggs with 1 banana and a glass of milk"), portion eaten ratio is 1.0 (100%).
+3. Calculate final total calories (kcal), protein (g), carbs (g), fat (g), fiber (g) for the EXACT portion eaten.
 
 Output strictly valid JSON with this exact schema (no markdown wrap, just raw JSON):
 {
-  "name": "Clean short name of dish",
+  "name": "Clean concise dish name",
   "category": "curry_meat",
-  "servingSize": "150g (1 portion)",
-  "calories": 245,
+  "servingSize": "1 portion (approx 200g)",
+  "calories": 320,
   "protein": 28.5,
-  "carbs": 12.0,
-  "fat": 9.5,
-  "fiber": 2.1,
-  "explanation": "Calculated from 200g chicken breast, 1 tbsp oil, 1 potato. Scaled to 50% eaten portion.",
+  "carbs": 14.0,
+  "fat": 9.0,
+  "fiber": 2.5,
+  "explanation": "Calculated from 200g chicken breast, 1 potato, 1 tbsp oil. Scaled to 1 of 4 portions (25%).",
   "cookingAdjustments": "Accounted for 1 tbsp pan-fry oil absorption across portion.",
-  "portionEatenRatio": 0.5,
+  "portionEatenRatio": 0.25,
   "detectedIngredients": [
     { "name": "Chicken breast", "amount": "200g", "calories": 330, "protein": 62, "carbs": 0, "fat": 7.2, "fiber": 0 }
   ]
