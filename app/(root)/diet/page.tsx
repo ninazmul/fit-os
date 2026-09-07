@@ -498,6 +498,15 @@ export default function DietPage() {
         onOpenChange={setBarcodeOpen}
         dateStr={dateStr}
         onLogged={fetchData}
+        onCustomFoodSaved={async () => {
+          fetchData();
+          try {
+            const foods = await getFoods(searchQuery, selectedCategory);
+            setFoodCatalog(foods);
+          } catch (err) {
+            console.error("Error refreshing catalog after barcode scan:", err);
+          }
+        }}
       />
 
       {/* User Guide Modal */}

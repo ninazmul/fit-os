@@ -20,9 +20,13 @@ import {
   X,
   Loader2,
   ScanLine,
+  ChefHat,
+  CheckCircle2,
+  Sparkles,
 } from "lucide-react";
-import type { IMealItem, MealType } from "@/types/fitness";
-import { appendMealItem } from "@/lib/actions/meal.actions";
+import type { MealType } from "@/types/fitness";
+import { createCustomFood } from "@/lib/actions/food.actions";
+import type { FoodFormValues } from "@/validations/fitness";
 import { getLocalDateString } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
@@ -34,6 +38,7 @@ interface BarcodeScannerProps {
   dateStr?: string;
   defaultMealType?: MealType;
   onLogged?: () => void | Promise<void>;
+  onCustomFoodSaved?: (food: any) => void | Promise<void>;
 }
 
 interface ScannedProduct {
@@ -93,7 +98,118 @@ const QUICK_TEST_BARCODES = [
   { label: "KitKat", code: "5000159461122" },
 ] as const;
 
-const QUANTITY_PRESETS = [0.5, 1, 2] as const;
+const FOOD_CATEGORIES: { value: FoodFormValues["category"]; label: string }[] = [
+  { value: "snacks_beverages", label: "Snacks & Beverages 🥤" },
+  { value: "dairy_eggs", label: "Dairy & Eggs 🥛" },
+  { value: "bread_bakery", label: "Bread & Bakery 🍞" },
+  { value: "rice_grains", label: "Rice & Grains 🍚" },
+  { value: "fruits_veg", label: "Fruits & Vegetables 🍎" },
+  { value: "curry_meat", label: "Curry & Meat 🍗" },
+  { value: "fish_seafood", label: "Fish & Seafood 🐟" },
+  { value: "sweets_desserts", label: "Sweets & Desserts 🍯" },
+  { value: "custom", label: "Other / Custom 🍽️" },
+];
+
+function inferCategory(name: string): FoodFormValues["category"] {
+  const lower = name.toLowerCase();
+  if (
+    lower.includes("milk") ||
+    lower.includes("cheese") ||
+    lower.includes("yogurt") ||
+    lower.includes("curd") ||
+    lower.includes("egg") ||
+    lower.includes("butter") ||
+    lower.includes("ghee") ||
+    lower.includes("dairy")
+  ) {
+    return "dairy_eggs";
+  }
+  if (
+    lower.includes("bread") ||
+    lower.includes("bun") ||
+    lower.includes("biscuit") ||
+    lower.includes("cookie") ||
+    lower.includes("cake") ||
+    lower.includes("bakery") ||
+    lower.includes("toast") ||
+    lower.includes("roti")
+  ) {
+    return "bread_bakery";
+  }
+  if (
+    lower.includes("rice") ||
+    lower.includes("oat") ||
+    lower.includes("cereal") ||
+    lower.includes("grain") ||
+    lower.includes("flour") ||
+    lower.includes("pasta") ||
+    lower.includes("noodle") ||
+    lower.includes("muesli") ||
+    lower.includes("quinoa")
+  ) {
+    return "rice_grains";
+  }
+  if (
+    lower.includes("juice") ||
+    lower.includes("drink") ||
+    lower.includes("tea") ||
+    lower.includes("coffee") ||
+    lower.includes("chips") ||
+    lower.includes("snack") ||
+    lower.includes("soda") ||
+    lower.includes("water") ||
+    lower.includes("chocolate") ||
+    lower.includes("bar") ||
+    lower.includes("crisp")
+  ) {
+    return "snacks_beverages";
+  }
+  if (
+    lower.includes("fruit") ||
+    lower.includes("apple") ||
+    lower.includes("banana") ||
+    lower.includes("veg") ||
+    lower.includes("salad") ||
+    lower.includes("tomato") ||
+    lower.includes("berry")
+  ) {
+    return "fruits_veg";
+  }
+  if (
+    lower.includes("fish") ||
+    lower.includes("prawn") ||
+    lower.includes("shrimp") ||
+    lower.includes("salmon") ||
+    lower.includes("tuna") ||
+    lower.includes("seafood")
+  ) {
+    return "fish_seafood";
+  }
+  if (
+    lower.includes("meat") ||
+    lower.includes("chicken") ||
+    lower.includes("beef") ||
+    lower.includes("mutton") ||
+    lower.includes("curry") ||
+    lower.includes("pork") ||
+    lower.includes("steak")
+  ) {
+    return "curry_meat";
+  }
+  if (
+    lower.includes("sweet") ||
+    lower.includes("halwa") ||
+    lower.includes("mithai") ||
+    lower.includes("dessert") ||
+    lower.includes("ice cream") ||
+    lower.includes("candy") ||
+    lower.includes("sugar") ||
+    lower.includes("honey")
+  ) {
+    return "sweets_desserts";
+  }
+  return "snacks_beverages";
+}
 
 function stopMediaStream(stream: MediaStream | null) {
   stream?.getTracks().forEach((track) => track.stop());
@@ -128,12 +244,24 @@ export default function BarcodeScanner({
   dateStr,
   defaultMealType = "snack",
   onLogged,
+  onCustomFoodSaved,
 }: BarcodeScannerProps) {
   const [barcodeInput, setBarcodeInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [product, setProduct] = useState<ScannedProduct | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [quantity, setQuantity] = useState<number>(1);
+
+  // Editable custom food states
+  const [editName, setEditName] = useState("");
+  const [editCategory, setEditCategory] =
+    useState<FoodFormValues["category"]>("snacks_beverages");
+  const [editServingSize, setEditServingSize] = useState("100g");
+  const [editCalories, setEditCalories] = useState<number>(0);
+  const [editProtein, setEditProtein] = useState<number>(0);
+  const [editCarbs, setEditCarbs] = useState<number>(0);
+  const [editFat, setEditFat] = useState<number>(0);
+  const [editFiber, setEditFiber] = useState<number>(0);
+  const [savingCustom, setSavingCustom] = useState(false);
 
   const [cameraOpen, setCameraOpen] = useState(false);
   const [facingMode, setFacingMode] = useState<FacingMode>("environment");
@@ -157,7 +285,20 @@ export default function BarcodeScanner({
 
   const router = useRouter();
 
-  const todayStr = dateStr || getLocalDateString();
+  const resetScannerState = useCallback(() => {
+    setProduct(null);
+    setBarcodeInput("");
+    setEditName("");
+    setEditCategory("snacks_beverages");
+    setEditServingSize("100g");
+    setEditCalories(0);
+    setEditProtein(0);
+    setEditCarbs(0);
+    setEditFat(0);
+    setEditFiber(0);
+    setErrorMsg(null);
+    detectedBarcodeRef.current = null;
+  }, []);
 
   /*
    * ---------------------------------------------------------
@@ -198,8 +339,20 @@ export default function BarcodeScanner({
         return;
       }
 
+      const fullName = data.product.brand
+        ? `${data.product.brand} - ${data.product.name}`
+        : data.product.name;
+
       setBarcodeInput(cleanCode);
       setProduct(data.product);
+      setEditName(fullName);
+      setEditCategory(inferCategory(fullName));
+      setEditServingSize(data.product.servingSize || "100g");
+      setEditCalories(data.product.calories || 0);
+      setEditProtein(data.product.protein || 0);
+      setEditCarbs(data.product.carbs || 0);
+      setEditFat(data.product.fat || 0);
+      setEditFiber(data.product.fiber || 0);
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") {
         // Superseded by a newer lookup — nothing to do.
@@ -217,47 +370,54 @@ export default function BarcodeScanner({
 
   /*
    * ---------------------------------------------------------
-   * Log product
+   * Save scanned product to Custom Foods
    * ---------------------------------------------------------
    */
 
-  const handleLogScannedProduct = async () => {
-    if (!product) return;
+  const handleSaveToCustomFood = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+
+    if (!editName.trim()) {
+      toast.error("Please enter a food name");
+      return;
+    }
+    if (!editServingSize.trim()) {
+      toast.error("Please enter a serving size");
+      return;
+    }
 
     try {
-      setLoading(true);
+      setSavingCustom(true);
 
-      const item: IMealItem = {
-        name: product.brand
-          ? `${product.brand} - ${product.name}`
-          : product.name,
-        serving: product.servingSize,
-        quantity,
-        calories: product.calories * quantity,
-        protein: product.protein * quantity,
-        carbs: product.carbs * quantity,
-        fat: product.fat * quantity,
-        fiber: product.fiber * quantity,
+      const payload: FoodFormValues = {
+        name: editName.trim(),
+        category: editCategory,
+        servingSize: editServingSize.trim(),
+        calories: Math.max(0, Number(editCalories) || 0),
+        protein: Math.max(0, Number(editProtein) || 0),
+        carbs: Math.max(0, Number(editCarbs) || 0),
+        fat: Math.max(0, Number(editFat) || 0),
+        fiber: Math.max(0, Number(editFiber) || 0),
+        image: product?.image || undefined,
       };
 
-      await appendMealItem(todayStr, defaultMealType, item);
+      const savedFood = await createCustomFood(payload);
 
-      toast.success(`Logged ${item.name} (${item.calories} kcal)! 📦`);
+      toast.success(`Saved "${payload.name}" to Custom Foods! 🥗`);
       notifyDataUpdated("meal");
 
       onOpenChange(false);
+      resetScannerState();
 
-      setProduct(null);
-      setBarcodeInput("");
-      setQuantity(1);
-
+      await onCustomFoodSaved?.(savedFood);
       await onLogged?.();
 
       router.refresh();
-    } catch {
-      toast.error("Failed to log scanned food");
+    } catch (err) {
+      console.error("Failed to save custom food from barcode:", err);
+      toast.error("Failed to save custom food. Please check inputs.");
     } finally {
-      setLoading(false);
+      setSavingCustom(false);
     }
   };
 
@@ -649,15 +809,9 @@ export default function BarcodeScanner({
     if (!open) {
       stopCamera();
       lookupAbortRef.current?.abort();
-
-      setProduct(null);
-      setBarcodeInput("");
-      setQuantity(1);
-      setErrorMsg(null);
-
-      detectedBarcodeRef.current = null;
+      resetScannerState();
     }
-  }, [open, stopCamera]);
+  }, [open, stopCamera, resetScannerState]);
 
   /*
    * ---------------------------------------------------------
@@ -667,290 +821,398 @@ export default function BarcodeScanner({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md rounded-3xl p-5 gap-4 max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100vw-1rem)] sm:w-full sm:max-w-lg rounded-3xl p-4 sm:p-5 gap-3.5 sm:gap-4 max-h-[88dvh] sm:max-h-[85vh] overflow-y-auto overflow-x-hidden no-scrollbar overscroll-contain box-border min-w-0">
         <DialogHeader>
-          <DialogTitle className="text-lg font-bold flex items-center gap-2">
-            <ScanBarcode className="w-5 h-5 text-primary" />
-            Barcode Nutrition Scanner
+          <DialogTitle className="text-base sm:text-lg font-bold flex items-center gap-2">
+            <ScanBarcode className="w-5 h-5 text-primary shrink-0" />
+            <span>Barcode Food Scanner</span>
           </DialogTitle>
         </DialogHeader>
 
         {/* =====================================================
-            CONTINUOUS CAMERA SCANNER
+            WHEN NO PRODUCT SCANNED YET: SCANNER & MANUAL INPUT
         ===================================================== */}
+        {!product && (
+          <div className="space-y-4">
+            {/* Camera View */}
+            {cameraOpen && (
+              <div className="space-y-3">
+                <div className="relative overflow-hidden rounded-3xl bg-black aspect-[4/3]">
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    muted
+                    playsInline
+                    className="w-full h-full object-cover"
+                  />
 
-        {cameraOpen && (
-          <div className="space-y-3">
-            <div className="relative overflow-hidden rounded-3xl bg-black aspect-[4/3]">
-              <video
-                ref={videoRef}
-                autoPlay
-                muted
-                playsInline
-                className="w-full h-full object-cover"
-              />
+                  <div className="absolute inset-0 pointer-events-none">
+                    <div className="absolute inset-x-0 top-0 h-[25%] bg-black/45" />
+                    <div className="absolute inset-x-0 bottom-0 h-[25%] bg-black/45" />
+                    <div className="absolute left-0 top-[25%] bottom-[25%] w-[12%] bg-black/45" />
+                    <div className="absolute right-0 top-[25%] bottom-[25%] w-[12%] bg-black/45" />
 
-              <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute inset-x-0 top-0 h-[25%] bg-black/45" />
-                <div className="absolute inset-x-0 bottom-0 h-[25%] bg-black/45" />
-                <div className="absolute left-0 top-[25%] bottom-[25%] w-[12%] bg-black/45" />
-                <div className="absolute right-0 top-[25%] bottom-[25%] w-[12%] bg-black/45" />
+                    <div className="absolute left-[12%] right-[12%] top-[25%] bottom-[25%]">
+                      <span className="absolute left-0 top-0 w-8 h-8 border-l-[3px] border-t-[3px] border-white rounded-tl-xl" />
+                      <span className="absolute right-0 top-0 w-8 h-8 border-r-[3px] border-t-[3px] border-white rounded-tr-xl" />
+                      <span className="absolute left-0 bottom-0 w-8 h-8 border-l-[3px] border-b-[3px] border-white rounded-bl-xl" />
+                      <span className="absolute right-0 bottom-0 w-8 h-8 border-r-[3px] border-b-[3px] border-white rounded-br-xl" />
 
-                <div className="absolute left-[12%] right-[12%] top-[25%] bottom-[25%]">
-                  <span className="absolute left-0 top-0 w-8 h-8 border-l-[3px] border-t-[3px] border-white rounded-tl-xl" />
-                  <span className="absolute right-0 top-0 w-8 h-8 border-r-[3px] border-t-[3px] border-white rounded-tr-xl" />
-                  <span className="absolute left-0 bottom-0 w-8 h-8 border-l-[3px] border-b-[3px] border-white rounded-bl-xl" />
-                  <span className="absolute right-0 bottom-0 w-8 h-8 border-r-[3px] border-b-[3px] border-white rounded-br-xl" />
+                      {cameraReady && (
+                        <div className="absolute left-2 right-2 top-1/2 h-[2px] bg-primary shadow-[0_0_12px_hsl(var(--primary))] animate-pulse" />
+                      )}
+                    </div>
+                  </div>
 
-                  {cameraReady && (
-                    <div className="absolute left-2 right-2 top-1/2 h-[2px] bg-primary shadow-[0_0_12px_hsl(var(--primary))] animate-pulse" />
-                  )}
+                  <div className="absolute top-4 left-1/2 -translate-x-1/2">
+                    <div className="flex items-center gap-2 rounded-full bg-black/65 backdrop-blur-sm px-3 py-1.5 text-white text-xs font-medium whitespace-nowrap">
+                      {cameraReady ? (
+                        <>
+                          <span className="relative flex h-2 w-2">
+                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                          </span>
+                          Scan barcode
+                        </>
+                      ) : (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          Starting camera...
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <Button
+                    type="button"
+                    onClick={flipCamera}
+                    disabled={!cameraReady}
+                    className="absolute top-3 right-3 rounded-full w-11 h-11 bg-black/65 hover:bg-black/80 text-white border-0 backdrop-blur-sm"
+                    aria-label="Flip camera"
+                  >
+                    <RotateCcw className="w-5 h-5" />
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={stopCamera}
+                    className="absolute bottom-3 right-3 rounded-full w-11 h-11 bg-white/90 hover:bg-white text-black border-0"
+                    aria-label="Close camera"
+                  >
+                    <X className="w-5 h-5" />
+                  </Button>
+
+                  <div className="absolute bottom-4 left-4">
+                    <div className="flex items-center gap-2 rounded-full bg-black/65 backdrop-blur-sm px-3 py-1.5 text-white text-[11px]">
+                      <ScanLine className="w-3.5 h-3.5" />
+                      {facingMode === "environment"
+                        ? "Rear camera"
+                        : "Front camera"}
+                    </div>
+                  </div>
                 </div>
-              </div>
 
-              <div className="absolute top-4 left-1/2 -translate-x-1/2">
-                <div className="flex items-center gap-2 rounded-full bg-black/65 backdrop-blur-sm px-3 py-1.5 text-white text-xs font-medium whitespace-nowrap">
-                  {cameraReady ? (
-                    <>
-                      <span className="relative flex h-2 w-2">
-                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                        <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-                      </span>
-                      Scan barcode
-                    </>
-                  ) : (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      Starting camera...
-                    </>
-                  )}
+                <p className="text-center text-[11px] text-muted-foreground">
+                  Align the barcode inside the frame. It will scan automatically.
+                </p>
+              </div>
+            )}
+
+            {/* Manual input */}
+            {!cameraOpen && (
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold">
+                  Enter Barcode Manually
+                </Label>
+
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="e.g. 8901030300001"
+                    value={barcodeInput}
+                    onChange={(e) => setBarcodeInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleLookupBarcode(barcodeInput);
+                      }
+                    }}
+                    className="rounded-xl text-sm font-mono"
+                  />
+
+                  <Button
+                    disabled={loading || !barcodeInput.trim()}
+                    onClick={() => handleLookupBarcode(barcodeInput)}
+                    className="rounded-xl bg-primary hover:bg-primary/90 text-white font-bold"
+                  >
+                    {loading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Search className="w-4 h-4" />
+                    )}
+                  </Button>
                 </div>
-              </div>
 
+                <p className="text-[11px] text-muted-foreground">
+                  Search products using their barcode number.
+                </p>
+              </div>
+            )}
+
+            {/* Camera Button */}
+            {!cameraOpen && (
               <Button
                 type="button"
-                onClick={flipCamera}
-                disabled={!cameraReady}
-                className="absolute top-3 right-3 rounded-full w-11 h-11 bg-black/65 hover:bg-black/80 text-white border-0 backdrop-blur-sm"
-                aria-label="Flip camera"
+                onClick={openCameraScanner}
+                disabled={loading}
+                className="w-full rounded-xl h-12 bg-primary hover:bg-primary/90 text-white font-bold"
               >
-                <RotateCcw className="w-5 h-5" />
+                <Camera className="w-5 h-5 mr-2" />
+                Scan with Camera
               </Button>
+            )}
 
-              <Button
-                type="button"
-                variant="outline"
-                onClick={stopCamera}
-                className="absolute bottom-3 right-3 rounded-full w-11 h-11 bg-white/90 hover:bg-white text-black border-0"
-                aria-label="Close camera"
-              >
-                <X className="w-5 h-5" />
-              </Button>
-
-              <div className="absolute bottom-4 left-4">
-                <div className="flex items-center gap-2 rounded-full bg-black/65 backdrop-blur-sm px-3 py-1.5 text-white text-[11px]">
-                  <ScanLine className="w-3.5 h-3.5" />
-                  {facingMode === "environment" ? "Rear camera" : "Front camera"}
-                </div>
-              </div>
-            </div>
-
-            <p className="text-center text-[11px] text-muted-foreground">
-              Align the barcode inside the frame. It will scan automatically.
-            </p>
-          </div>
-        )}
-
-        {/* =====================================================
-            MANUAL INPUT
-        ===================================================== */}
-
-        {!cameraOpen && (
-          <div className="space-y-2">
-            <Label className="text-xs font-semibold">
-              Enter Barcode Manually
-            </Label>
-
-            <div className="flex gap-2">
-              <Input
-                placeholder="e.g. 8901030300001"
-                value={barcodeInput}
-                onChange={(e) => setBarcodeInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    handleLookupBarcode(barcodeInput);
-                  }
-                }}
-                className="rounded-xl text-sm font-mono"
-              />
-
-              <Button
-                disabled={loading || !barcodeInput.trim()}
-                onClick={() => handleLookupBarcode(barcodeInput)}
-                className="rounded-xl bg-primary hover:bg-primary/90 text-white font-bold"
-              >
-                {loading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Search className="w-4 h-4" />
-                )}
-              </Button>
-            </div>
-
-            <p className="text-[11px] text-muted-foreground">
-              Search products using their barcode number.
-            </p>
-          </div>
-        )}
-
-        {/* =====================================================
-            CAMERA BUTTON (retry / reopen)
-        ===================================================== */}
-
-        {!cameraOpen && (
-          <Button
-            type="button"
-            onClick={openCameraScanner}
-            disabled={loading}
-            className="w-full rounded-xl h-12 bg-primary hover:bg-primary/90 text-white font-bold"
-          >
-            <Camera className="w-5 h-5 mr-2" />
-            Scan with Camera
-          </Button>
-        )}
-
-        {/* =====================================================
-            QUICK TEST BARCODES
-        ===================================================== */}
-
-        {!cameraOpen && (
-          <div className="space-y-1 pt-1">
-            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-              Quick Test Barcodes:
-            </p>
-
-            <div className="flex flex-wrap gap-1.5">
-              {QUICK_TEST_BARCODES.map((preset) => (
-                <button
-                  key={preset.code}
-                  type="button"
-                  onClick={() => {
-                    setBarcodeInput(preset.code);
-                    handleLookupBarcode(preset.code);
-                  }}
-                  className="px-2.5 py-1 rounded-full bg-muted border border-border/50 text-[11px] font-medium hover:bg-accent transition-colors"
-                >
-                  {preset.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* =====================================================
-            ERROR
-        ===================================================== */}
-
-        {errorMsg && (
-          <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300 flex items-start gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-            <p>{errorMsg}</p>
-          </div>
-        )}
-
-        {/* =====================================================
-            PRODUCT RESULT
-        ===================================================== */}
-
-        {product && (
-          <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 space-y-3">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <span className="text-[10px] uppercase font-bold text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-full bg-emerald-500/20">
-                  Found Product
-                </span>
-
-                <h4 className="text-base font-bold tracking-tight mt-1">
-                  {product.name}
-                </h4>
-
-                {product.brand && (
-                  <p className="text-xs text-muted-foreground">{product.brand}</p>
-                )}
-              </div>
-
-              <div className="text-right">
-                <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
-                  {product.calories * quantity}
-                </span>
-                <span className="text-[10px] text-muted-foreground block">
-                  kcal total
-                </span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-4 gap-1.5 pt-2 border-t border-emerald-500/20 text-center text-xs">
-              <div className="p-1.5 rounded-xl bg-background/60">
-                <p className="text-[10px] text-muted-foreground">Serving</p>
-                <p className="font-bold">{product.servingSize}</p>
-              </div>
-
-              <div className="p-1.5 rounded-xl bg-background/60">
-                <p className="text-[10px] text-muted-foreground">Protein</p>
-                <p className="font-bold text-emerald-600">
-                  {product.protein * quantity}g
+            {/* Quick Test Barcodes */}
+            {!cameraOpen && (
+              <div className="space-y-1.5 pt-1">
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  Quick Test Barcodes:
                 </p>
-              </div>
 
-              <div className="p-1.5 rounded-xl bg-background/60">
-                <p className="text-[10px] text-muted-foreground">Carbs</p>
-                <p className="font-bold text-blue-600">
-                  {product.carbs * quantity}g
-                </p>
-              </div>
-
-              <div className="p-1.5 rounded-xl bg-background/60">
-                <p className="text-[10px] text-muted-foreground">Fat</p>
-                <p className="font-bold text-purple-600">
-                  {product.fat * quantity}g
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between gap-2 pt-2">
-              <div className="flex items-center gap-2">
-                <Label className="text-xs font-semibold">Servings:</Label>
-
-                <div className="flex items-center gap-1">
-                  {QUANTITY_PRESETS.map((q) => (
+                <div className="flex flex-wrap gap-1.5">
+                  {QUICK_TEST_BARCODES.map((preset) => (
                     <button
-                      key={q}
+                      key={preset.code}
                       type="button"
-                      onClick={() => setQuantity(q)}
-                      className={`px-2 py-1 rounded-lg text-xs font-bold transition-all ${quantity === q
-                          ? "bg-emerald-600 text-white"
-                          : "bg-background border border-border text-muted-foreground"
-                        }`}
+                      onClick={() => {
+                        setBarcodeInput(preset.code);
+                        handleLookupBarcode(preset.code);
+                      }}
+                      className="px-2.5 py-1 rounded-full bg-muted border border-border/50 text-[11px] font-medium hover:bg-accent transition-colors"
                     >
-                      {q}x
+                      {preset.label}
                     </button>
                   ))}
                 </div>
               </div>
+            )}
+
+            {/* Error Message */}
+            {errorMsg && (
+              <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300 flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <p>{errorMsg}</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* =====================================================
+            PRODUCT SCANNED: EDITABLE CUSTOM FOOD FORM
+        ===================================================== */}
+        {product && (
+          <div className="p-4 sm:p-5 rounded-3xl bg-card border border-primary/20 shadow-md space-y-4 animate-in fade-in">
+            {/* Header with Rescan */}
+            <div className="flex items-start justify-between gap-2 border-b border-border/50 pb-3">
+              <div>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[10px] uppercase font-bold text-primary px-2.5 py-0.5 rounded-full bg-primary/10">
+                    Scanned Product
+                  </span>
+                  <span className="text-[10px] font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                    #{product.barcode}
+                  </span>
+                </div>
+                <h4 className="text-sm sm:text-base font-bold tracking-tight mt-1.5 flex items-center gap-1.5">
+                  <ChefHat className="w-4 h-4 text-primary shrink-0" />
+                  <span>Edit &amp; Save to Custom Foods</span>
+                </h4>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Review or edit the values before saving. Once saved, you can
+                  search and add it to any meal anytime with flexible portions!
+                </p>
+              </div>
 
               <Button
-                disabled={loading}
-                onClick={handleLogScannedProduct}
-                className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1"
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={resetScannerState}
+                className="h-7 text-[11px] text-muted-foreground hover:text-foreground shrink-0 rounded-lg"
               >
-                {loading ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <UtensilsCrossed className="w-3.5 h-3.5" />
-                )}
-                Log to {defaultMealType}
+                <RotateCcw className="w-3.5 h-3.5 mr-1" />
+                Rescan
               </Button>
             </div>
+
+            {/* Form */}
+            <form onSubmit={handleSaveToCustomFood} className="space-y-3">
+              {/* Food Name */}
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold">Food Name</Label>
+                <Input
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder="e.g. Milk Powder or Protein Bar"
+                  required
+                  className="rounded-xl h-10 font-semibold"
+                />
+              </div>
+
+              {/* Category & Serving Size */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Category</Label>
+                  <select
+                    value={editCategory}
+                    onChange={(e) =>
+                      setEditCategory(
+                        e.target.value as FoodFormValues["category"]
+                      )
+                    }
+                    className="w-full h-10 rounded-xl px-3 bg-background border border-input text-xs font-medium focus:ring-1 focus:ring-primary focus:outline-none transition-colors"
+                  >
+                    {FOOD_CATEGORIES.map((cat) => (
+                      <option key={cat.value} value={cat.value}>
+                        {cat.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">
+                    Serving Size (Base)
+                  </Label>
+                  <Input
+                    value={editServingSize}
+                    onChange={(e) => setEditServingSize(e.target.value)}
+                    placeholder="e.g. 100g, 1 cup (240ml), 1 pack"
+                    required
+                    className="rounded-xl h-10"
+                  />
+                </div>
+              </div>
+
+              {/* Calories */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-semibold">
+                    Calories (kcal)
+                  </Label>
+                  <span className="text-[11px] text-primary font-bold">
+                    {editCalories} kcal
+                  </span>
+                </div>
+                <Input
+                  type="number"
+                  min={0}
+                  value={editCalories}
+                  onChange={(e) =>
+                    setEditCalories(Math.max(0, Number(e.target.value)))
+                  }
+                  required
+                  className="rounded-xl h-10 font-bold text-primary"
+                />
+              </div>
+
+              {/* Macro breakdown grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                <div className="space-y-1">
+                  <Label className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                    Protein (g)
+                  </Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    min={0}
+                    value={editProtein}
+                    onChange={(e) =>
+                      setEditProtein(Math.max(0, Number(e.target.value)))
+                    }
+                    className="rounded-xl h-9 text-xs font-bold"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-[11px] font-semibold text-blue-600 dark:text-blue-400">
+                    Carbs (g)
+                  </Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    min={0}
+                    value={editCarbs}
+                    onChange={(e) =>
+                      setEditCarbs(Math.max(0, Number(e.target.value)))
+                    }
+                    className="rounded-xl h-9 text-xs font-bold"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-[11px] font-semibold text-purple-600 dark:text-purple-400">
+                    Fat (g)
+                  </Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    min={0}
+                    value={editFat}
+                    onChange={(e) =>
+                      setEditFat(Math.max(0, Number(e.target.value)))
+                    }
+                    className="rounded-xl h-9 text-xs font-bold"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-[11px] font-semibold text-amber-600 dark:text-amber-400">
+                    Fiber (g)
+                  </Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    min={0}
+                    value={editFiber}
+                    onChange={(e) =>
+                      setEditFiber(Math.max(0, Number(e.target.value)))
+                    }
+                    className="rounded-xl h-9 text-xs font-bold"
+                  />
+                </div>
+              </div>
+
+              {/* Info Notice */}
+              <div className="p-3 rounded-2xl bg-muted/40 border border-border/50 text-[11px] text-muted-foreground flex items-start gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                <p>
+                  This food will be saved to your Custom Foods database. You can
+                  search it and log any portion size directly to your diet log
+                  anytime!
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-1">
+                <Button
+                  type="submit"
+                  disabled={savingCustom || !editName.trim()}
+                  className="w-full rounded-xl h-11 bg-primary hover:bg-primary/90 text-white font-bold text-xs gap-1.5 shadow-md"
+                >
+                  {savingCustom ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Saving to Custom Foods...
+                    </>
+                  ) : (
+                    <>
+                      <ChefHat className="w-4 h-4" />
+                      Save to Custom Foods 🥗
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
           </div>
         )}
       </DialogContent>

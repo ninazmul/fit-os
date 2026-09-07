@@ -474,11 +474,11 @@ export default function DietUserGuideModal({
 
                 <div className="p-3 rounded-2xl bg-card border border-border/50 space-y-1.5">
                   <h4 className="font-bold text-foreground text-xs flex items-center gap-2">
-                    <HelpCircle className="w-4 h-4 text-primary" />
-                    <span>Barcode Scanner</span>
+                    <HelpCircle className="w-4 h-4 text-primary shrink-0" />
+                    <span>Barcode Scanner &rarr; Custom Food Catalog</span>
                   </h4>
                   <p className="text-muted-foreground">
-                    Tap the barcode button to scan packaged snacks, oats, milk, or protein powders using your camera. NutriBD looks up verified nutrition facts automatically.
+                    Scan packaged items (milk, oats, protein bars, snacks) using your camera or barcode number. Rather than locking you into rigid numbers, NutriBD lets you review and edit the name, serving size, and macros, then saves it directly to your <strong>Custom Foods</strong> catalog. You can then search, portion-scale, and log it to your diet anytime!
                   </p>
                 </div>
               </div>
