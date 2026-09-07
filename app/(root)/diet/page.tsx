@@ -514,12 +514,12 @@ export default function DietPage() {
       {/* Date Navigation & Title */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            Diet & Nutrition Tracker 🥗
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex flex-wrap items-center gap-2">
+            <span>Diet &amp; Nutrition Tracker 🥗</span>
             <button
               type="button"
               onClick={() => setUserGuideOpen(true)}
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-[11px] font-semibold border border-primary/20 shrink-0"
+              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-xs font-semibold border border-primary/20 shrink-0 shadow-2xs"
               title="Open User Guide"
             >
               <BookOpen className="w-3 h-3" />

@@ -72,31 +72,31 @@ export default function DietUserGuideModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100vw-1rem)] sm:w-full sm:max-w-2xl rounded-3xl p-0 max-h-[88dvh] flex flex-col overflow-hidden border bg-background shadow-2xl box-border min-w-0">
+      <DialogContent className="w-[calc(100vw-1rem)] sm:w-full sm:max-w-2xl rounded-3xl p-0 h-[88dvh] sm:h-auto max-h-[90dvh] sm:max-h-[85vh] flex flex-col gap-0 overflow-hidden border bg-background shadow-2xl box-border min-w-0">
         {/* Header */}
-        <DialogHeader className="p-4 sm:p-5 pb-3 border-b border-border/40 shrink-0 pr-12">
-          <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-wider">
-            <BookOpen className="w-4 h-4" />
+        <DialogHeader className="p-4 sm:p-5 pb-3 border-b border-border/40 shrink-0 pr-10 sm:pr-12 text-left">
+          <div className="flex items-center gap-1.5 text-primary font-bold text-[11px] sm:text-xs uppercase tracking-wider">
+            <BookOpen className="w-3.5 h-3.5 shrink-0" />
             <span>NutriBD Complete User Guide</span>
           </div>
-          <DialogTitle className="text-base sm:text-xl font-bold flex items-center gap-2">
-            <span>How to Use Diet, AI &amp; Community Foods 🥗</span>
+          <DialogTitle className="text-base sm:text-xl font-bold leading-snug">
+            How to Use Diet, AI &amp; Community Foods 🥗
           </DialogTitle>
-          <DialogDescription className="text-xs text-muted-foreground">
+          <DialogDescription className="text-[11px] sm:text-xs text-muted-foreground line-clamp-2 sm:line-clamp-none mt-0.5">
             Everything you need to know about tracking nutrition, AI recipe calculations, community foods, and continuous AI learning.
           </DialogDescription>
         </DialogHeader>
 
         {/* Tab Navigation Pill Bar */}
-        <div className="px-4 sm:px-5 pt-3 shrink-0">
-          <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs font-semibold">
+        <div className="px-3 sm:px-5 py-2.5 bg-muted/20 border-b border-border/30 shrink-0">
+          <div className="flex gap-1.5 overflow-x-auto pb-0.5 no-scrollbar text-xs font-semibold [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {[
-              { id: "overview", label: "Overview", icon: UtensilsCrossed },
-              { id: "ai", label: "AI Recipe Estimator", icon: Sparkles },
-              { id: "community", label: "Community Foods", icon: Users },
-              { id: "training", label: "AI Continuous Learning", icon: BrainCircuit },
-              { id: "portions", label: "Portion Calculator", icon: Scale },
-              { id: "templates", label: "Templates & Barcode", icon: Bookmark },
+              { id: "overview", label: "Overview", shortLabel: "Overview", icon: UtensilsCrossed },
+              { id: "ai", label: "AI Recipe Estimator", shortLabel: "AI Estimator", icon: Sparkles },
+              { id: "community", label: "Community Foods", shortLabel: "Community", icon: Users },
+              { id: "training", label: "AI Continuous Learning", shortLabel: "AI Learning", icon: BrainCircuit },
+              { id: "portions", label: "Portion Calculator", shortLabel: "Portions", icon: Scale },
+              { id: "templates", label: "Templates & Barcode", shortLabel: "Templates", icon: Bookmark },
             ].map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -105,14 +105,15 @@ export default function DietUserGuideModal({
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id as GuideTab)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl whitespace-nowrap transition-all text-xs ${
+                  className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl whitespace-nowrap transition-all text-xs shrink-0 ${
                     isActive
                       ? "bg-primary text-white font-bold shadow-xs"
                       : "bg-muted/70 text-muted-foreground hover:text-foreground hover:bg-muted"
                   }`}
                 >
                   <Icon className="w-3.5 h-3.5 shrink-0" />
-                  <span>{tab.label}</span>
+                  <span className="sm:hidden">{tab.shortLabel}</span>
+                  <span className="hidden sm:inline">{tab.label}</span>
                 </button>
               );
             })}
@@ -120,7 +121,7 @@ export default function DietUserGuideModal({
         </div>
 
         {/* Scrollable Content Body */}
-        <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-5 space-y-4 overscroll-contain pb-6 text-xs text-muted-foreground">
+        <div className="flex-1 min-h-0 overflow-y-auto p-3.5 sm:p-5 space-y-4 overscroll-contain pb-6 text-xs text-muted-foreground no-scrollbar">
           {/* TAB 1: OVERVIEW */}
           {activeTab === "overview" && (
             <div className="space-y-3.5">
@@ -243,29 +244,29 @@ export default function DietUserGuideModal({
                   {SAMPLE_PROMPTS.map((sp, idx) => (
                     <div
                       key={idx}
-                      className="p-2.5 rounded-2xl bg-muted/40 border border-border/50 flex flex-col justify-between gap-2 hover:border-primary/40 transition-all"
+                      className="p-3 rounded-2xl bg-muted/40 border border-border/50 flex flex-col justify-between gap-2.5 hover:border-primary/40 transition-all"
                     >
                       <div>
                         <p className="font-bold text-foreground text-xs">{sp.title}</p>
-                        <p className="text-[11px] text-muted-foreground italic mt-0.5 line-clamp-2">
+                        <p className="text-[11px] text-muted-foreground italic mt-1 leading-relaxed">
                           &ldquo;{sp.prompt}&rdquo;
                         </p>
                       </div>
-                      <div className="flex items-center gap-1.5 pt-1">
+                      <div className="flex items-center gap-1.5 pt-1 flex-wrap">
                         <Button
                           type="button"
                           size="sm"
                           variant="outline"
                           onClick={() => handleCopy(sp.prompt, idx)}
-                          className="h-6 text-[10px] px-2 rounded-lg gap-1 border-border/60"
+                          className="h-7 text-[11px] px-2.5 rounded-lg gap-1 border-border/60 shrink-0"
                         >
                           {copiedIndex === idx ? (
                             <>
-                              <Check className="w-3 h-3 text-emerald-500" /> Copied
+                              <Check className="w-3 h-3 text-emerald-500 shrink-0" /> Copied
                             </>
                           ) : (
                             <>
-                              <Copy className="w-3 h-3" /> Copy
+                              <Copy className="w-3 h-3 shrink-0" /> Copy
                             </>
                           )}
                         </Button>
@@ -277,7 +278,7 @@ export default function DietUserGuideModal({
                               onSelectSamplePrompt(sp.prompt);
                               onOpenChange(false);
                             }}
-                            className="h-6 text-[10px] px-2 rounded-lg bg-primary text-white font-semibold"
+                            className="h-7 text-[11px] px-2.5 rounded-lg bg-primary text-white font-semibold flex-1 sm:flex-initial"
                           >
                             Use in AI Estimator &rarr;
                           </Button>
@@ -295,7 +296,7 @@ export default function DietUserGuideModal({
             <div className="space-y-3.5">
               <div className="p-3.5 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-foreground space-y-2">
                 <h3 className="font-bold text-sm flex items-center gap-1.5 text-blue-600 dark:text-blue-400">
-                  <Users className="w-4 h-4" /> Shared Community Food Database
+                  <Users className="w-4 h-4 shrink-0" /> Shared Community Food Database
                 </h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   Every custom food you or other users create is automatically shared across the platform. This transforms NutriBD into an ever-expanding, crowdsourced Bangladeshi &amp; global food database!
@@ -314,7 +315,7 @@ export default function DietUserGuideModal({
                   <div>
                     <strong className="text-foreground">Custom Foods Created by You:</strong>
                     <p className="text-muted-foreground mt-0.5">
-                      You have full ownership. You can log it, adjust portions, and you are the <strong>only person</strong> who can edit (<kbd>Pencil</kbd>) or delete (<kbd>Trash</kbd>) this food.
+                      You have full ownership. You can log it, adjust portions, and you are the <strong>only person</strong> who can edit (<span className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">Pencil</span>) or delete (<span className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">Trash</span>) this food.
                     </p>
                   </div>
                 </div>
@@ -361,7 +362,7 @@ export default function DietUserGuideModal({
             <div className="space-y-3.5">
               <div className="p-3.5 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-foreground space-y-2">
                 <h3 className="font-bold text-sm flex items-center gap-1.5 text-purple-600 dark:text-purple-400">
-                  <BrainCircuit className="w-4 h-4" /> Continuous AI Learning (&ldquo;Trained by Time&rdquo;)
+                  <BrainCircuit className="w-4 h-4 shrink-0" /> Continuous AI Learning (&ldquo;Trained by Time&rdquo;)
                 </h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   How does our AI become smarter over time? NutriBD employs dynamic in-context retrieval to continuously train the AI on the latest user-verified recipes in the database!
@@ -371,7 +372,7 @@ export default function DietUserGuideModal({
               <div className="space-y-3">
                 <div className="p-3 rounded-2xl bg-card border border-border/50 space-y-1.5">
                   <div className="flex items-center gap-2 font-bold text-foreground">
-                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-white text-[10px]">
+                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-white text-[10px] shrink-0">
                       1
                     </span>
                     <span>Real-Time Database Retrieval</span>
@@ -383,7 +384,7 @@ export default function DietUserGuideModal({
 
                 <div className="p-3 rounded-2xl bg-card border border-border/50 space-y-1.5">
                   <div className="flex items-center gap-2 font-bold text-foreground">
-                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-white text-[10px]">
+                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-white text-[10px] shrink-0">
                       2
                     </span>
                     <span>Dynamic Few-Shot Learning</span>
@@ -395,7 +396,7 @@ export default function DietUserGuideModal({
 
                 <div className="p-3 rounded-2xl bg-card border border-border/50 space-y-1.5">
                   <div className="flex items-center gap-2 font-bold text-foreground">
-                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-white text-[10px]">
+                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-white text-[10px] shrink-0">
                       3
                     </span>
                     <span>Smart Fallback Calibration</span>
@@ -486,14 +487,14 @@ export default function DietUserGuideModal({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-border/40 bg-muted/20 flex items-center justify-between gap-2 shrink-0">
+        <div className="p-3 sm:p-4 border-t border-border/40 bg-muted/20 flex items-center justify-between gap-2 shrink-0">
           <p className="text-[11px] text-muted-foreground hidden sm:block">
             Have questions? Check the AI Recipe Estimator or Portion Calculator anytime!
           </p>
           <Button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="rounded-xl bg-primary hover:bg-primary/90 text-white font-bold text-xs px-5 w-full sm:w-auto"
+            className="rounded-xl bg-primary hover:bg-primary/90 text-white font-bold text-xs px-5 w-full sm:w-auto h-9 sm:h-10 shadow-xs"
           >
             Got it, let&rsquo;s track! &rarr;
           </Button>

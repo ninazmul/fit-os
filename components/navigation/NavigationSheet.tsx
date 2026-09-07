@@ -55,9 +55,9 @@ export default function NavigationSheet({
       <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="left"
-        className="lg:hidden w-[82vw] max-w-[340px] border-r border-border bg-card/95 p-0 backdrop-blur-xl [&>button]:hidden"
+        className="lg:hidden w-[82vw] max-w-[340px] border-r border-border bg-card/95 p-0 backdrop-blur-xl [&>button]:hidden flex flex-col h-full justify-between"
       >
-        <SheetHeader className="flex-row items-center justify-between space-y-0 border-b border-border px-5 py-4 text-left">
+        <SheetHeader className="flex-row items-center justify-between space-y-0 border-b border-border px-5 py-4 text-left shrink-0">
           <div className="flex items-center gap-3">
             <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-border/60 bg-white shadow-sm">
               <Image
@@ -98,7 +98,7 @@ export default function NavigationSheet({
           </Button>
         </SheetHeader>
 
-        <nav className="h-[calc(100vh-120px)] flex-1 overflow-y-auto px-3 py-4">
+        <nav className="flex-1 min-h-0 overflow-y-auto px-3 py-4">
           <div className="space-y-6">
             {navGroups.map((group) => (
               <section key={group.label}>
@@ -149,7 +149,7 @@ export default function NavigationSheet({
           </div>
         </nav>
         {/* Developer Footer */}
-        <footer className="">
+        <footer className="shrink-0 mt-auto">
           <div className="p-4 border-t border-border space-y-3">
             <button
               type="button"
