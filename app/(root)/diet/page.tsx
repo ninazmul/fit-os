@@ -1153,6 +1153,10 @@ export default function DietPage() {
           <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar text-[10px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden w-full">
             {[
               {
+                label: "🍗 Chicken Curry (50g portion)",
+                text: "500g chicken curry with potatoes and 2 tbsp oil. Eaten portion 50g.",
+              },
+              {
                 label: "🍗 Chicken Curry (1 of 4 portions)",
                 text: "500g chicken breast curry with 2 potatoes (150g), 1 onion, and 2 tbsp mustard oil. Cooked 4 servings in total, I ate 1 serving.",
               },

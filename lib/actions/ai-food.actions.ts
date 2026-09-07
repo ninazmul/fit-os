@@ -1,6 +1,7 @@
 "use server";
 
 import type { FoodCategory } from "@/types/fitness";
+import { extractGramsFromServing } from "@/lib/food-portion";
 
 export interface AIEstimateInput {
   description: string;
@@ -96,6 +97,20 @@ const NUTRITION_BASE: Record<
   apple: { calPer100g: 52, p: 0.3, c: 14, f: 0.2, fib: 2.4, defaultCat: "fruits_veg" },
   pasta: { calPer100g: 158, p: 5.8, c: 31, f: 0.9, fib: 1.8, defaultCat: "rice_grains" },
   tofu: { calPer100g: 76, p: 8, c: 1.9, f: 4.8, fib: 0.3, defaultCat: "dairy_eggs" },
+  kalabhuna: { calPer100g: 250, p: 18.5, c: 3.5, f: 18.5, fib: 0.5, defaultCat: "curry_meat" },
+  bhuna: { calPer100g: 215, p: 17, c: 4, f: 15, fib: 0.5, defaultCat: "curry_meat" },
+  kacchi: { calPer100g: 185, p: 8, c: 18, f: 9, fib: 0.5, defaultCat: "rice_grains" },
+  biryani: { calPer100g: 175, p: 8, c: 19, f: 7.5, fib: 0.5, defaultCat: "rice_grains" },
+  tehari: { calPer100g: 175, p: 6.5, c: 21, f: 7.5, fib: 0.5, defaultCat: "rice_grains" },
+  polao: { calPer100g: 180, p: 3.6, c: 27, f: 6, fib: 0.5, defaultCat: "rice_grains" },
+  khichuri: { calPer100g: 130, p: 4, c: 20, f: 3.5, fib: 1.5, defaultCat: "rice_grains" },
+  bhorta: { calPer100g: 125, p: 2.5, c: 16, f: 6, fib: 2, defaultCat: "fruits_veg" },
+  vaji: { calPer100g: 140, p: 2.5, c: 14, f: 8, fib: 2.5, defaultCat: "fruits_veg" },
+  bhaji: { calPer100g: 140, p: 2.5, c: 14, f: 8, fib: 2.5, defaultCat: "fruits_veg" },
+  paratha: { calPer100g: 330, p: 6, c: 45, f: 14, fib: 3, defaultCat: "bread_bakery" },
+  singara: { calPer100g: 250, p: 5, c: 30, f: 13, fib: 2.5, defaultCat: "snacks_beverages" },
+  fuchka: { calPer100g: 210, p: 4, c: 32, f: 7.5, fib: 2.5, defaultCat: "snacks_beverages" },
+  chotpoti: { calPer100g: 124, p: 5.6, c: 19.2, f: 2.8, fib: 3.2, defaultCat: "snacks_beverages" },
 };
 
 /** Parse quantity and gram weight from ingredient snippet */
@@ -146,36 +161,100 @@ function parseIngredientSnippet(text: string): { name: string; grams: number; ba
   return { name: text, grams: Math.max(1, grams), baseKey: matchedKey };
 }
 
+/**
+ * Extract explicit eaten weight in grams (e.g. "eaten portion 50g", "eaten poriton 50g", "ate 50g", "portion 50g", "50g eaten")
+ */
+function extractExplicitEatenGrams(text: string): number | null {
+  if (!text) return null;
+  const lower = text.toLowerCase();
+
+  // Pattern 1: e.g. "eaten portion 50g", "eaten poriton 50g", "portion eaten: 50g", "eaten 50g", "ate 50g", "portion 50g", "had 50g", "eating 50g"
+  const m1 = lower.match(
+    /(?:eaten|eat|ate|eating|had|having|portion|poriton|serving|serving\s*size)\s*(?:portion|poriton|size|amount|weight)?\s*(?:is|was|of|:)?\s*(\d+(?:\.\d+)?)\s*(?:g|gm|grams?)\b/
+  );
+  if (m1) return parseFloat(m1[1]);
+
+  // Pattern 2: e.g. "50g portion", "50g poriton", "50g eaten", "50g serving", "50g of it"
+  const m2 = lower.match(/(\d+(?:\.\d+)?)\s*(?:g|gm|grams?)\s*(?:portion|poriton|eaten|serving|of\s*it)/);
+  if (m2) return parseFloat(m2[1]);
+
+  // Pattern 3: e.g. "ate 50g" or "eaten 50g"
+  const m3 = lower.match(/(?:ate|eaten|eat)\s*(\d+(?:\.\d+)?)\s*(?:g|gm|grams?)\b/);
+  if (m3) return parseFloat(m3[1]);
+
+  // Pattern 4: If text has only one single gram quantity and does NOT contain batch words, e.g. "50g chicken curry"
+  const allGrams = [...lower.matchAll(/(\d+(?:\.\d+)?)\s*(?:g|gm|grams?)\b/g)];
+  if (allGrams.length === 1 && !/(?:batch|cooked|total|made|prepared)/.test(lower)) {
+    return parseFloat(allGrams[0][1]);
+  }
+
+  return null;
+}
+
+/**
+ * Extract explicit batch or total weight in grams (e.g. "cooked 500g", "total batch 500g", "made 500g", "total 500g")
+ */
+function extractExplicitBatchGrams(text: string): number | null {
+  if (!text) return null;
+  const lower = text.toLowerCase();
+
+  const m1 = lower.match(
+    /(?:cooked|made|total|batch|prepared|whole)\s*(?:total|batch|cooked|weight)?\s*(?:is|was|of|:)?\s*(\d+(?:\.\d+)?)\s*(?:g|gm|grams?)\b/
+  );
+  if (m1) return parseFloat(m1[1]);
+
+  const m2 = lower.match(/(\d+(?:\.\d+)?)\s*(?:g|gm|grams?)\s*(?:total|batch|cooked|prepared|in\s*total)/);
+  if (m2) return parseFloat(m2[1]);
+
+  return null;
+}
+
+/** Check if text line is purely describing portion or batch rather than an ingredient */
+function isPortionClause(text: string): boolean {
+  const lower = text.toLowerCase().trim();
+  return (
+    /(?:eaten|eat|ate|eating|had|portion|poriton|serving|serving\s*size|batch|total\s*batch|total\s*cooked)/.test(lower) &&
+    /\d/.test(lower) &&
+    !/(?:chicken|beef|mutton|goat|fish|salmon|tuna|shrimp|prawn|egg|rice|dal|lentil|chickpea|potato|onion|tomato|spinach|broccoli|carrot|oil|butter|ghee|cheese|paneer|milk|yogurt|bread|roti|oats|whey|banana|peanut|tofu|pasta)/.test(lower)
+  );
+}
+
 /** Extract clean dish name from freeform description */
 function extractDishName(text: string): string {
   if (!text) return "Homemade Custom Food";
-  // Remove common leading phrases or instructions
-  const stripped = text
+  // Remove common leading phrases or instructions, and strip portion clauses
+  let clean = text
     .replace(/^e\.g\.?\s*/i, "")
-    .replace(/(?:cooked|made|total)\s*\d+.*$/i, "")
-    .replace(/(?:i ate|ate|portion).*$/i, "")
+    .replace(/(?:i\s+)?(?:ate|eaten|had|eating)\s+\d+(?:\.\d+)?\s*(?:g|gm|grams?|servings?|portions?|bowls?|cups?)\b/gi, "")
+    .replace(/(?:eaten|portion|poriton)\s*(?:portion|poriton|size|amount|weight)?\s*(?:is|was|of|:)?\s*\d+(?:\.\d+)?\s*(?:g|gm|grams?)\b/gi, "")
+    .replace(/(?:cooked|made|total|batch)\s*(?:total|batch|cooked)?\s*(?:is|was|of|:)?\s*\d+(?:\.\d+)?\s*(?:g|gm|grams?|servings?|portions?)\b/gi, "")
+    .replace(/\b(?:eaten|poriton|portion)\s+\d+(?:\.\d+)?\s*(?:g|gm|grams?)\b/gi, "")
     .trim();
 
-  // Pick the first clause
-  const firstClause = stripped.split(/[,.;]/)[0]?.trim() || "";
+  clean = clean.replace(/^(?:i\s+)?(?:ate|eaten|had|eating)\s+/i, "").trim();
+  clean = clean.replace(/\s*\b\d+(?:\.\d+)?\s*(?:g|gm|grams?|kg)$/i, "").trim();
+
+  // Pick the first clause before commas, semicolons or 'with'
+  const firstClause = clean.split(/[,.;]|\bwith\b/)[0]?.trim() || "";
   if (firstClause.length >= 3 && firstClause.length <= 45) {
-    // Title case and clean numbers from start
-    const clean = firstClause.replace(/^\d+\s*(?:g|gm|kg|tbsp|tsp|cups?|pcs?|pieces?)\s+/i, "");
-    return clean
-      .split(/\s+/)
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-      .join(" ");
+    const withoutNumbers = firstClause.replace(/^\d+\s*(?:g|gm|kg|tbsp|tsp|cups?|pcs?|pieces?)\s+/i, "");
+    if (withoutNumbers.length >= 3) {
+      return withoutNumbers
+        .split(/\s+/)
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+        .join(" ");
+    }
   }
 
-  if (stripped.toLowerCase().includes("chicken")) return "Homemade Chicken Dish";
-  if (stripped.toLowerCase().includes("beef")) return "Homemade Beef Dish";
-  if (stripped.toLowerCase().includes("fish")) return "Homemade Fish Dish";
-  if (stripped.toLowerCase().includes("egg")) return "Homemade Egg Dish";
-  if (stripped.toLowerCase().includes("rice")) return "Rice Bowl with Sides";
-  if (stripped.toLowerCase().includes("dal")) return "Homemade Dal / Lentils";
-  if (stripped.toLowerCase().includes("shake")) return "Protein Shake";
+  if (clean.toLowerCase().includes("chicken")) return "Homemade Chicken Dish";
+  if (clean.toLowerCase().includes("beef")) return "Homemade Beef Dish";
+  if (clean.toLowerCase().includes("fish")) return "Homemade Fish Dish";
+  if (clean.toLowerCase().includes("egg")) return "Homemade Egg Dish";
+  if (clean.toLowerCase().includes("rice")) return "Rice Bowl with Sides";
+  if (clean.toLowerCase().includes("dal")) return "Homemade Dal / Lentils";
+  if (clean.toLowerCase().includes("shake")) return "Protein Shake";
 
-  return stripped.slice(0, 35) || "Homemade Custom Food";
+  return clean.slice(0, 35) || "Homemade Custom Food";
 }
 
 /** Fallback deterministic nutrition calculator based on culinary rules */
@@ -190,74 +269,41 @@ function fallbackCalculateNutrition(input: AIEstimateInput): AIEstimateResult {
     .join(" ")
     .toLowerCase();
 
-  // Extract portion ratio (e.g. "cooked 4 servings, ate 1", "ate 1 of 4", "ate 20g out of 100g", "ate 150g of 600g", "half", "quarter", "1/2", "1/4")
-  let portionRatio = 1.0;
-  let portionText = "Full batch (100%)";
+  const explicitEatenG = extractExplicitEatenGrams(fullText);
+  const explicitBatchG = extractExplicitBatchGrams(fullText);
 
-  const cookedAteMatch = fullText.match(/(?:cooked|made|total)\s*(\d+)\s*(?:servings?|portions?).*?(?:ate|eat|had)\s*(\d+)/);
-  const fractionMatch = fullText.match(/(\d+)\s*(?:\/|out of|of)\s*(\d+)/);
-  const percentMatch = fullText.match(/(\d+)\s*%/);
-  const gramPortionMatch = fullText.match(/ate\s*(\d+)\s*g.*(?:of|total)\s*(\d+)\s*g/);
-
-  if (cookedAteMatch) {
-    const totalS = parseFloat(cookedAteMatch[1]);
-    const ateS = parseFloat(cookedAteMatch[2]);
-    if (totalS > 0 && ateS <= totalS) {
-      portionRatio = ateS / totalS;
-      portionText = `${ateS} of ${totalS} servings (${Math.round(portionRatio * 100)}%)`;
-    }
-  } else if (gramPortionMatch) {
-    const eatenG = parseFloat(gramPortionMatch[1]);
-    const totalG = parseFloat(gramPortionMatch[2]);
-    if (totalG > 0 && eatenG <= totalG) {
-      portionRatio = eatenG / totalG;
-      portionText = `${eatenG}g of ${totalG}g total (${Math.round(portionRatio * 100)}%)`;
-    }
-  } else if (fractionMatch) {
-    const num = parseFloat(fractionMatch[1]);
-    const den = parseFloat(fractionMatch[2]);
-    if (den > 0 && num <= den) {
-      portionRatio = num / den;
-      portionText = `${num}/${den} portion (${Math.round(portionRatio * 100)}%)`;
-    }
-  } else if (percentMatch) {
-    const p = parseFloat(percentMatch[1]);
-    if (p > 0 && p <= 100) {
-      portionRatio = p / 100;
-      portionText = `${p}% portion`;
-    }
-  } else if (fullText.includes("half") || fullText.includes("1/2")) {
-    portionRatio = 0.5;
-    portionText = "Half portion (50%)";
-  } else if (fullText.includes("quarter") || fullText.includes("1/4")) {
-    portionRatio = 0.25;
-    portionText = "Quarter portion (25%)";
-  } else if (fullText.includes("one third") || fullText.includes("1/3")) {
-    portionRatio = 0.33;
-    portionText = "1/3rd portion (~33%)";
-  }
-
-  // Parse cooking method adjustments
+  // Parse cooking method adjustments - specialized for Bangladeshi & South Asian cooking (rich in oil & spices)
   let cookingExtraFat = 0; // extra grams of fat per batch
   let cookingAdjustmentNote = "Standard cooking.";
-  if (fullText.includes("deep fry") || fullText.includes("deep-fried") || fullText.includes("crispy fried")) {
-    cookingExtraFat = 14; // absorbs ~1 tbsp oil
-    cookingAdjustmentNote = "Deep frying: Added +14g oil/fat absorption.";
-  } else if (
-    fullText.includes("pan fry") ||
-    fullText.includes("pan-fried") ||
-    fullText.includes("stir fry") ||
-    fullText.includes("sauté") ||
-    fullText.includes("saute")
-  ) {
-    cookingExtraFat = 6;
-    cookingAdjustmentNote = "Pan/Stir fry: Added +6g cooking fat.";
+  const hasExplicitOilInText = fullText.includes("oil") || fullText.includes("ghee") || fullText.includes("butter");
+
+  if (fullText.includes("deep fry") || fullText.includes("deep-fried") || fullText.includes("crispy fried") || fullText.includes("singara") || fullText.includes("piyaju") || fullText.includes("beguni")) {
+    cookingExtraFat = hasExplicitOilInText ? 4 : 16;
+    cookingAdjustmentNote = "Deep fried (Bangladeshi style): +16g oil absorption accounted for.";
+  } else if (fullText.includes("kala bhuna") || fullText.includes("bhuna") || fullText.includes("koshano")) {
+    cookingExtraFat = hasExplicitOilInText ? 4 : 16;
+    cookingAdjustmentNote = "Traditional Bangladeshi Bhuna (braised in rich spiced oil/ghee): +16g cooking fat accounted for.";
+  } else if (fullText.includes("kacchi") || fullText.includes("tehari") || fullText.includes("biryani") || fullText.includes("morog polao")) {
+    cookingExtraFat = hasExplicitOilInText ? 4 : 18;
+    cookingAdjustmentNote = "Rich Bangladeshi Biryani/Tehari (cooked in mustard oil/ghee): +18g fat accounted for.";
+  } else if (fullText.includes("curry") || fullText.includes("jhol") || fullText.includes("torkari") || fullText.includes("rezala") || fullText.includes("korma")) {
+    cookingExtraFat = hasExplicitOilInText ? 3 : 14;
+    cookingAdjustmentNote = "Bangladeshi spiced curry/jhol gravy: +14g cooking oil accounted for.";
+  } else if (fullText.includes("vaji") || fullText.includes("bhaji") || fullText.includes("pan fry") || fullText.includes("pan-fried") || fullText.includes("stir fry") || fullText.includes("sauté") || fullText.includes("saute")) {
+    cookingExtraFat = hasExplicitOilInText ? 2 : 10;
+    cookingAdjustmentNote = "Sautéed / Vaji (in spiced oil): +10g cooking fat accounted for.";
+  } else if (fullText.includes("bhorta") || fullText.includes("vorta")) {
+    cookingExtraFat = hasExplicitOilInText ? 2 : 6;
+    cookingAdjustmentNote = "Bangladeshi Bhorta (finished with raw mustard oil): +6g mustard oil accounted for.";
   } else if (fullText.includes("boil") || fullText.includes("steam") || fullText.includes("steamed")) {
     cookingExtraFat = 0;
     cookingAdjustmentNote = "Boiled / Steamed: No extra cooking fat added.";
   } else if (fullText.includes("bake") || fullText.includes("baked") || fullText.includes("roast") || fullText.includes("grilled")) {
-    cookingExtraFat = 3;
-    cookingAdjustmentNote = "Baked / Grilled: Added +3g light coating oil.";
+    cookingExtraFat = 4;
+    cookingAdjustmentNote = "Baked / Grilled: +4g light coating oil.";
+  } else if (fullText.includes("spicy") || fullText.includes("oily") || fullText.includes("bangladeshi") || fullText.includes("desi")) {
+    cookingExtraFat = hasExplicitOilInText ? 3 : 12;
+    cookingAdjustmentNote = "Traditional Bangladeshi oily/spicy preparation: +12g cooking fat accounted for.";
   }
 
   // Parse lines or comma / 'with' / 'and' separated ingredients
@@ -276,6 +322,8 @@ function fallbackCalculateNutrition(input: AIEstimateInput): AIEstimateResult {
   let primaryCategory: FoodCategory = "custom";
 
   for (const line of lines) {
+    if (isPortionClause(line)) continue;
+
     const parsed = parseIngredientSnippet(line);
     if (parsed.baseKey && NUTRITION_BASE[parsed.baseKey]) {
       const base = NUTRITION_BASE[parsed.baseKey];
@@ -308,38 +356,122 @@ function fallbackCalculateNutrition(input: AIEstimateInput): AIEstimateResult {
     }
   }
 
-  // If no ingredients matched from keyword dictionary, perform smart baseline heuristic
-  if (detected.length === 0) {
-    totalBatchCal = 380;
-    totalBatchP = 22;
-    totalBatchC = 35;
-    totalBatchF = 12 + cookingExtraFat;
-    totalBatchFib = 4;
-    totalBatchGrams = 300;
+  // Determine portion ratio, eaten grams, and serving size accurately
+  let portionRatio = 1.0;
+  let portionText = "Full batch (100%)";
+  let eatenGrams = 0;
+  let servingSize = "1 portion";
+
+  if (explicitEatenG !== null && explicitEatenG > 0) {
+    eatenGrams = explicitEatenG;
+    servingSize = `${explicitEatenG}g`;
+
+    const effectiveBatchGrams =
+      explicitBatchG && explicitBatchG > 0
+        ? explicitBatchG
+        : totalBatchGrams > explicitEatenG
+          ? totalBatchGrams
+          : explicitEatenG;
+
+    if (effectiveBatchGrams > explicitEatenG) {
+      portionRatio = explicitEatenG / effectiveBatchGrams;
+      portionText = `${explicitEatenG}g portion (${Math.round(portionRatio * 100)}% of ${effectiveBatchGrams}g batch)`;
+    } else {
+      portionRatio = 1.0;
+      portionText = `${explicitEatenG}g portion`;
+    }
   } else {
-    totalBatchCal += Math.round(cookingExtraFat * 9);
+    // Check for fraction or portion counts (e.g. "cooked 4 servings, ate 1", "1 of 4", "half", "quarter", "25%")
+    const cookedAteMatch = fullText.match(
+      /(?:cooked|made|total)\s*(\d+)\s*(?:servings?|portions?).*?(?:ate|eat|had)\s*(\d+)/
+    );
+    const fractionMatch = fullText.match(/(\d+)\s*(?:\/|out of|of)\s*(\d+)/);
+    const percentMatch = fullText.match(/(\d+)\s*%/);
+    const gramPortionMatch = fullText.match(/ate\s*(\d+)\s*g.*(?:of|total)\s*(\d+)\s*g/);
+
+    if (cookedAteMatch) {
+      const totalS = parseFloat(cookedAteMatch[1]);
+      const ateS = parseFloat(cookedAteMatch[2]);
+      if (totalS > 0 && ateS <= totalS) {
+        portionRatio = ateS / totalS;
+        portionText = `${ateS} of ${totalS} servings (${Math.round(portionRatio * 100)}%)`;
+      }
+    } else if (gramPortionMatch) {
+      const eatenG = parseFloat(gramPortionMatch[1]);
+      const totalG = parseFloat(gramPortionMatch[2]);
+      if (totalG > 0 && eatenG <= totalG) {
+        portionRatio = eatenG / totalG;
+        eatenGrams = eatenG;
+        servingSize = `${eatenG}g`;
+        portionText = `${eatenG}g of ${totalG}g total (${Math.round(portionRatio * 100)}%)`;
+      }
+    } else if (fractionMatch) {
+      const num = parseFloat(fractionMatch[1]);
+      const den = parseFloat(fractionMatch[2]);
+      if (den > 0 && num <= den) {
+        portionRatio = num / den;
+        portionText = `${num}/${den} portion (${Math.round(portionRatio * 100)}%)`;
+      }
+    } else if (percentMatch) {
+      const p = parseFloat(percentMatch[1]);
+      if (p > 0 && p <= 100) {
+        portionRatio = p / 100;
+        portionText = `${p}% portion`;
+      }
+    } else if (fullText.includes("half") || fullText.includes("1/2")) {
+      portionRatio = 0.5;
+      portionText = "Half portion (50%)";
+    } else if (fullText.includes("quarter") || fullText.includes("1/4")) {
+      portionRatio = 0.25;
+      portionText = "Quarter portion (25%)";
+    } else if (fullText.includes("one third") || fullText.includes("1/3")) {
+      portionRatio = 0.33;
+      portionText = "1/3rd portion (~33%)";
+    }
+
+    if (!eatenGrams) {
+      eatenGrams = Math.round(totalBatchGrams * portionRatio);
+      servingSize = eatenGrams > 0 ? `${eatenGrams}g` : `1 portion${portionRatio < 1 ? ` (${portionText})` : ""}`;
+    }
   }
 
-  // Calculate final values for the portion eaten
-  const finalCal = Math.max(10, Math.round(totalBatchCal * portionRatio));
-  const finalP = Math.max(0, Math.round(totalBatchP * portionRatio * 10) / 10);
-  const finalC = Math.max(0, Math.round(totalBatchC * portionRatio * 10) / 10);
-  const finalF = Math.max(0, Math.round(totalBatchF * portionRatio * 10) / 10);
-  const finalFib = Math.max(0, Math.round(totalBatchFib * portionRatio * 10) / 10);
-  const eatenGrams = Math.round(totalBatchGrams * portionRatio);
+  // Calculate final nutrition values strictly for the eaten portion / serving size
+  let finalCal = 0;
+  let finalP = 0;
+  let finalC = 0;
+  let finalF = 0;
+  let finalFib = 0;
+
+  if (detected.length === 0) {
+    // Standard wholesome home-cooked baseline (~160 kcal per 100g)
+    const targetG = eatenGrams > 0 ? eatenGrams : 100;
+    const factor = targetG / 100;
+    finalCal = Math.max(10, Math.round((160 + cookingExtraFat * 9) * factor));
+    finalP = Math.max(0, Math.round(14 * factor * 10) / 10);
+    finalC = Math.max(0, Math.round(12 * factor * 10) / 10);
+    finalF = Math.max(0, Math.round((6 + cookingExtraFat) * factor * 10) / 10);
+    finalFib = Math.max(0, Math.round(1.5 * factor * 10) / 10);
+  } else {
+    totalBatchCal += Math.round(cookingExtraFat * 9);
+    finalCal = Math.max(10, Math.round(totalBatchCal * portionRatio));
+    finalP = Math.max(0, Math.round(totalBatchP * portionRatio * 10) / 10);
+    finalC = Math.max(0, Math.round(totalBatchC * portionRatio * 10) / 10);
+    finalF = Math.max(0, Math.round(totalBatchF * portionRatio * 10) / 10);
+    finalFib = Math.max(0, Math.round(totalBatchFib * portionRatio * 10) / 10);
+  }
 
   const dishName = extractDishName(input.description || "");
 
   return {
     name: dishName,
     category: primaryCategory,
-    servingSize: eatenGrams > 0 ? `${eatenGrams}g` : `1 portion${portionRatio < 1 ? ` (${portionText})` : ""}`,
+    servingSize,
     calories: finalCal,
     protein: finalP,
     carbs: finalC,
     fat: finalF,
     fiber: finalFib,
-    explanation: `Calculated from ${detected.length > 0 ? detected.length : "estimated"} ingredients & cooking method (${cookingAdjustmentNote}). Portion eaten: ${portionText}.`,
+    explanation: `Calculated from ${detected.length > 0 ? detected.length : "estimated"} ingredients & cooking method (${cookingAdjustmentNote}). Scaled strictly for ${servingSize} (${portionText}).`,
     detectedIngredients: detected,
     cookingAdjustments: cookingAdjustmentNote,
     portionEatenRatio: portionRatio,
@@ -367,38 +499,48 @@ ${input.cookingMethod ? `- Cooking method: "${input.cookingMethod}"` : ""}
 ${input.cookedPortionTotal ? `- Batch cooked: "${input.cookedPortionTotal}"` : ""}
 ${input.portionEaten ? `- Portion eaten: "${input.portionEaten}"` : ""}
 
-Instructions:
-1. Parse everything directly from the user's description. The user provides ingredients, weights, cooking method, batch size, and portion eaten all within this single input field.
-2. Extract or infer:
-   - "name": Clean, concise, appetizing food/dish name (e.g., "Homemade Chicken Curry", "2 Fried Eggs with Toast", "Beef Bhuna & Rice", "Oats & Whey Bowl").
-   - "category": Best matching category from: 'rice_grains', 'curry_meat', 'fish_seafood', 'bread_bakery', 'dairy_eggs', 'fruits_veg', 'sweets_desserts', 'snacks_beverages', 'custom'.
-   - "servingSize": Concise serving size string for the portion eaten (e.g., "1 portion (approx 250g)", "1 bowl (150g)", "2 eggs + 2 toasts").
-   - Raw ingredients and measurements (grams, tbsp, cups, pieces), and their respective calories & macros.
-   - Cooking method & added oil/fat:
-     * Deep frying: add 10-15g oil absorption per serving unless already counted.
-     * Pan/stir fry: add 4-7g cooking oil/butter unless already counted.
-     * Boiled / steamed: 0g extra oil.
-     * Curries / gravies: account for stated oil/ghee (typically 1-2 tbsp across the batch).
-   - Portion eaten scaling:
-     * If user states a cooked batch and portion eaten (e.g., "cooked 4 portions, ate 1", "made 500g, ate 150g", "ate half"), scale calories, protein, carbs, fat, and fiber by that exact ratio.
-     * If user simply lists what they ate (e.g., "2 boiled eggs with 1 banana and a glass of milk"), portion eaten ratio is 1.0 (100%).
-3. Calculate final total calories (kcal), protein (g), carbs (g), fat (g), fiber (g) for the EXACT portion eaten.
+CRITICAL BANGLADESHI & SOUTH ASIAN CULINARY CONTEXT:
+- Traditional Bangladeshi, Bengali, and South Asian dishes (Chicken Curry, Beef Bhuna, Kala Bhuna, Dim Bhuna, Macher Jhol, Kacchi Biryani, Tehari, Khichuri, Alu/Potol Vaji, Begun Bhorta, Paratha) are NATURALLY OILY AND SPICED.
+- Spices (turmeric, red chili, cumin, coriander, garam masala, ginger, garlic) are fried and bloomed in generous amounts of mustard oil, soybean oil, or ghee ("koshano" cooking technique).
+- Unless the user explicitly states a diet/zero-oil/boiled preparation, ALWAYS factor in authentic Bangladeshi cooking oil levels:
+  * Bhuna / Kala Bhuna / Rezala / Korma: high oil/ghee (approx 16-24g fat per 150g-200g serving).
+  * Curries / Jhol / Salan: medium-high oil (approx 14-20g fat per 200g serving).
+  * Vaji / Bhaji: sautéed in generous oil (approx 8-12g fat per serving).
+  * Biryani / Tehari / Polao: cooked in ghee/oil (approx 20-35g fat per serving).
+  * Bhorta: finished with pungent raw mustard oil (approx 4-7g fat per serving).
+- For 50g of cooked Bangladeshi meat curry/bhuna, expected calories are ~95-120 kcal, protein ~10-13g, fat ~5-7g.
+
+CRITICAL ACCURACY & SERVING SIZE RULES:
+1. "servingSize" FIELD:
+   - MUST EXACTLY match the portion eaten!
+   - If the user specifies an eaten weight in grams (e.g., "eaten portion 50g", "eaten poriton 50g", "ate 50g", "portion 50g", "50g"), the "servingSize" MUST BE CLEANLY FORMATTED AS THAT WEIGHT: e.g. "50g" (NOT "1 portion", NOT "approx 200g", NOT "1 serving").
+   - If the user cooked a batch and ate a portion (e.g., "cooked 500g chicken curry, ate 50g"), "servingSize" MUST be "50g".
+   - If piece-based (e.g. "2 eggs and 1 toast"), "servingSize" should be "2 eggs + 1 toast".
+
+2. CALORIE & MACRO CALCULATIONS:
+   - "calories", "protein", "carbs", "fat", "fiber" MUST BE STRICTLY CALCULATED FOR THE EXACT "servingSize" (PORTION EATEN).
+   - If a batch was 500g total and the eaten portion was 50g, scale by 50/500 = 10%.
+   - NEVER output batch totals if only a portion was eaten.
+
+3. "category":
+   - Best matching category from: 'rice_grains', 'curry_meat', 'fish_seafood', 'bread_bakery', 'dairy_eggs', 'fruits_veg', 'sweets_desserts', 'snacks_beverages', 'custom'.
 
 Output strictly valid JSON with this exact schema (no markdown wrap, just raw JSON):
 {
-  "name": "Clean concise dish name",
+  "name": "Chicken Curry",
   "category": "curry_meat",
-  "servingSize": "1 portion (approx 200g)",
-  "calories": 320,
-  "protein": 28.5,
-  "carbs": 14.0,
-  "fat": 9.0,
-  "fiber": 2.5,
-  "explanation": "Calculated from 200g chicken breast, 1 potato, 1 tbsp oil. Scaled to 1 of 4 portions (25%).",
-  "cookingAdjustments": "Accounted for 1 tbsp pan-fry oil absorption across portion.",
-  "portionEatenRatio": 0.25,
+  "servingSize": "50g",
+  "calories": 100,
+  "protein": 11.5,
+  "carbs": 2.5,
+  "fat": 5.0,
+  "fiber": 0.5,
+  "explanation": "Calculated from 500g batch chicken curry cooked with spiced oil gravy. Scaled to exact eaten portion of 50g (10% of batch).",
+  "cookingAdjustments": "Accounted for authentic Bangladeshi cooking oil & blooming spices across 50g portion.",
+  "portionEatenRatio": 0.1,
   "detectedIngredients": [
-    { "name": "Chicken breast", "amount": "200g", "calories": 330, "protein": 62, "carbs": 0, "fat": 7.2, "fiber": 0 }
+    { "name": "Chicken breast", "amount": "500g (batch)", "calories": 660, "protein": 124, "carbs": 0, "fat": 14.4, "fiber": 0 },
+    { "name": "Cooking oil & spices", "amount": "2 tbsp oil (batch)", "calories": 240, "protein": 0, "carbs": 2, "fat": 27, "fiber": 0 }
   ]
 }`;
 
@@ -429,19 +571,54 @@ Output strictly valid JSON with this exact schema (no markdown wrap, just raw JS
     }
 
     const parsed = JSON.parse(candidateText);
+
+    // Post-process to guarantee exact serving size and calorie alignment
+    const explicitGrams = extractExplicitEatenGrams(input.description || "");
+    const explicitBatchGrams = extractExplicitBatchGrams(input.description || "");
+
+    let finalServingSize = (parsed.servingSize || "1 portion").trim();
+    let finalCal = Math.round(Number(parsed.calories) || 0);
+    let finalP = Math.round((Number(parsed.protein) || 0) * 10) / 10;
+    let finalC = Math.round((Number(parsed.carbs) || 0) * 10) / 10;
+    let finalF = Math.round((Number(parsed.fat) || 0) * 10) / 10;
+    let finalFib = Math.round((Number(parsed.fiber) || 0) * 10) / 10;
+    let finalRatio = Number(parsed.portionEatenRatio) || 1;
+
+    // Standardize gram-based serving size (e.g. "50 g" -> "50g")
+    const gramInfo = extractGramsFromServing(finalServingSize);
+
+    if (explicitGrams && explicitGrams > 0) {
+      finalServingSize = `${explicitGrams}g`;
+
+      // Safeguard: Check if LLM mistakenly returned whole-batch values for a small eaten portion
+      if (explicitBatchGrams && explicitBatchGrams > explicitGrams) {
+        finalRatio = explicitGrams / explicitBatchGrams;
+        const maxExpectedCal = explicitGrams * 4.5;
+        if (finalCal > maxExpectedCal && finalCal > 160) {
+          finalCal = Math.max(10, Math.round(finalCal * finalRatio));
+          finalP = Math.max(0, Math.round(finalP * finalRatio * 10) / 10);
+          finalC = Math.max(0, Math.round(finalC * finalRatio * 10) / 10);
+          finalF = Math.max(0, Math.round(finalF * finalRatio * 10) / 10);
+          finalFib = Math.max(0, Math.round(finalFib * finalRatio * 10) / 10);
+        }
+      }
+    } else if (gramInfo.hasGrams && gramInfo.grams > 0) {
+      finalServingSize = `${gramInfo.grams}g`;
+    }
+
     return {
       name: parsed.name || "Custom Cooked Food",
       category: parsed.category || "custom",
-      servingSize: parsed.servingSize || "1 portion",
-      calories: Math.round(Number(parsed.calories) || 0),
-      protein: Math.round((Number(parsed.protein) || 0) * 10) / 10,
-      carbs: Math.round((Number(parsed.carbs) || 0) * 10) / 10,
-      fat: Math.round((Number(parsed.fat) || 0) * 10) / 10,
-      fiber: Math.round((Number(parsed.fiber) || 0) * 10) / 10,
+      servingSize: finalServingSize,
+      calories: finalCal,
+      protein: finalP,
+      carbs: finalC,
+      fat: finalF,
+      fiber: finalFib,
       explanation: parsed.explanation || "Calculated with AI recipe analysis",
       detectedIngredients: parsed.detectedIngredients || [],
       cookingAdjustments: parsed.cookingAdjustments || "",
-      portionEatenRatio: Number(parsed.portionEatenRatio) || 1,
+      portionEatenRatio: finalRatio,
       isAIEstimated: true,
     };
   } catch (err) {
