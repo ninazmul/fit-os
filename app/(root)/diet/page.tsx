@@ -47,6 +47,9 @@ import {
   CheckCircle2,
   Calculator,
   Loader2,
+  HelpCircle,
+  Lightbulb,
+  BookOpen,
 } from "lucide-react";
 import type {
   MealType,
@@ -81,6 +84,10 @@ const AdUnit = dynamic(() => import("@/components/shared/AdUnit"), {
 });
 const BarcodeScanner = dynamic(
   () => import("@/components/shared/BarcodeScanner"),
+  { ssr: false },
+);
+const DietUserGuideModal = dynamic(
+  () => import("@/components/shared/DietUserGuideModal"),
   { ssr: false },
 );
 
@@ -138,6 +145,9 @@ export default function DietPage() {
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState<AIEstimateResult | null>(null);
+
+  // Complete User guide modal state
+  const [userGuideOpen, setUserGuideOpen] = useState(false);
 
   const dateStr = format(selectedDate, "yyyy-MM-dd");
 
@@ -490,14 +500,34 @@ export default function DietPage() {
         onLogged={fetchData}
       />
 
+      {/* User Guide Modal */}
+      <DietUserGuideModal
+        open={userGuideOpen}
+        onOpenChange={setUserGuideOpen}
+        onSelectSamplePrompt={(prompt) => {
+          setAiPrompt(prompt);
+          setCustomTab("ai");
+          setCustomFoodModalOpen(true);
+        }}
+      />
+
       {/* Date Navigation & Title */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             Diet & Nutrition Tracker 🥗
+            <button
+              type="button"
+              onClick={() => setUserGuideOpen(true)}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-[11px] font-semibold border border-primary/20 shrink-0"
+              title="Open User Guide"
+            >
+              <BookOpen className="w-3 h-3" />
+              <span>Guide</span>
+            </button>
           </h1>
           <p className="text-xs text-muted-foreground">
-            Log meals, Bangladeshi dishes, saved templates & barcodes
+            Log meals, Bangladeshi dishes, saved templates &amp; barcodes
           </p>
         </div>
 
@@ -1501,8 +1531,8 @@ onOpenChange = { setSaveTemplateModalOpen }
   </DialogContent>
       </Dialog >
 
-  {/* Footer Ad Slot */ }
-  < AdUnit size = "auto" maxWidth = "970px" />
-    </div >
+  {/* Footer Ad Slot */}
+  <AdUnit size="auto" maxWidth="970px" />
+    </div>
   );
 }
