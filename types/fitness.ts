@@ -60,6 +60,7 @@ export interface IFood {
   isBangladeshi?: boolean;
   isCustom?: boolean;
   clerkId?: string; // set if custom
+  isOwner?: boolean; // true if current user owns this custom food
 }
 
 export type MealType = "breakfast" | "lunch" | "dinner" | "snack";

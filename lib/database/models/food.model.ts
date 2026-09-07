@@ -26,6 +26,7 @@ const FoodSchema = new Schema(
 FoodSchema.index({ name: "text" });
 FoodSchema.index({ isCustom: 1, clerkId: 1 });
 FoodSchema.index({ isCustom: 1, category: 1 });
+FoodSchema.index({ isCustom: 1, createdAt: -1 });
 FoodSchema.index({ name: 1, category: 1 });
 
 const Food = models.Food || model("Food", FoodSchema);

@@ -286,6 +286,10 @@ export default function DietPage() {
   const handleEditCustomFood = (e: React.MouseEvent, food: IFood) => {
     e.stopPropagation();
     if (!food._id) return;
+    if (food.isCustom && !food.isOwner) {
+      toast.error("You can only edit custom foods you created.");
+      return;
+    }
     setEditingFoodId(food._id);
     setCustomName(food.name);
     setCustomCategory(food.category || "custom");
@@ -302,8 +306,13 @@ export default function DietPage() {
   const handleDeleteCustomFood = async (
     e: React.MouseEvent,
     foodId: string,
+    food?: IFood,
   ) => {
     e.stopPropagation();
+    if (food && food.isCustom && !food.isOwner) {
+      toast.error("You can only delete custom foods you created.");
+      return;
+    }
     if (!confirm("Are you sure you want to delete this custom food?")) return;
     try {
       await deleteCustomFood(foodId);
@@ -313,8 +322,10 @@ export default function DietPage() {
       }
       const foods = await getFoods(searchQuery, selectedCategory);
       setFoodCatalog(foods);
-    } catch {
-      toast.error("Failed to delete custom food");
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error ? err.message : "Failed to delete custom food";
+      toast.error(msg);
     }
   };
 
@@ -844,7 +855,7 @@ export default function DietPage() {
               <span>Add Food to {activeMealType.toUpperCase()}</span>
             </DialogTitle>
             <DialogDescription className="text-xs">
-              Search Bangladeshi &amp; global dishes or create a custom food.
+              Search Bangladeshi &amp; global dishes, shared community foods, or create custom food.
             </DialogDescription>
           </DialogHeader>
 
@@ -888,11 +899,16 @@ export default function DietPage() {
                           BD
                         </span>
                       )}
-                      {food.isCustom && (
-                        <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-purple-500/15 text-purple-700 dark:text-purple-300 font-medium shrink-0">
-                          Custom
-                        </span>
-                      )}
+                      {food.isCustom &&
+                        (food.isOwner ? (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-purple-500/15 text-purple-700 dark:text-purple-300 font-medium shrink-0">
+                            My Custom
+                          </span>
+                        ) : (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-sky-500/15 text-sky-700 dark:text-sky-300 font-medium shrink-0">
+                            Community
+                          </span>
+                        ))}
                     </p>
                     <p className="text-muted-foreground text-[10px] sm:text-[11px] truncate mt-0.5">
                       {food.servingSize} &middot; P:{food.protein}g | C:
@@ -908,7 +924,7 @@ export default function DietPage() {
                         kcal
                       </span>
                     </div>
-                    {food.isCustom && (
+                    {food.isCustom && food.isOwner && (
                       <div className="flex items-center gap-1 pl-1 border-l border-border/40">
                         <Button
                           type="button"
@@ -916,7 +932,7 @@ export default function DietPage() {
                           variant="ghost"
                           className="h-7 w-7 text-muted-foreground hover:text-primary rounded-lg"
                           onClick={(e) => handleEditCustomFood(e, food)}
-                          title="Edit custom food"
+                          title="Edit my custom food"
                         >
                           <Pencil className="w-3.5 h-3.5" />
                         </Button>
@@ -926,9 +942,9 @@ export default function DietPage() {
                           variant="ghost"
                           className="h-7 w-7 text-muted-foreground hover:text-red-500 rounded-lg"
                           onClick={(e) =>
-                            food._id && handleDeleteCustomFood(e, food._id)
+                            food._id && handleDeleteCustomFood(e, food._id, food)
                           }
-                          title="Delete custom food"
+                          title="Delete my custom food"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </Button>

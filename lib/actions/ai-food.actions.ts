@@ -2,6 +2,8 @@
 
 import type { FoodCategory } from "@/types/fitness";
 import { extractGramsFromServing } from "@/lib/food-portion";
+import { connectToDatabase } from "@/lib/database";
+import Food from "@/lib/database/models/food.model";
 
 export interface AIEstimateInput {
   description: string;
@@ -232,12 +234,16 @@ function extractDishName(text: string): string {
     .trim();
 
   clean = clean.replace(/^(?:i\s+)?(?:ate|eaten|had|eating)\s+/i, "").trim();
+  clean = clean.replace(/^(?:of|some|about|approx|approximately|a|an)\s+/i, "").trim();
   clean = clean.replace(/\s*\b\d+(?:\.\d+)?\s*(?:g|gm|grams?|kg)$/i, "").trim();
 
   // Pick the first clause before commas, semicolons or 'with'
   const firstClause = clean.split(/[,.;]|\bwith\b/)[0]?.trim() || "";
   if (firstClause.length >= 3 && firstClause.length <= 45) {
-    const withoutNumbers = firstClause.replace(/^\d+\s*(?:g|gm|kg|tbsp|tsp|cups?|pcs?|pieces?)\s+/i, "");
+    const withoutNumbers = firstClause
+      .replace(/^\d+\s*(?:g|gm|kg|tbsp|tsp|cups?|pcs?|pieces?)\s+/i, "")
+      .replace(/^(?:of|some|about|approx|approximately|a|an)\s+/i, "")
+      .trim();
     if (withoutNumbers.length >= 3) {
       return withoutNumbers
         .split(/\s+/)
@@ -257,8 +263,148 @@ function extractDishName(text: string): string {
   return clean.slice(0, 35) || "Homemade Custom Food";
 }
 
-/** Fallback deterministic nutrition calculator based on culinary rules */
-function fallbackCalculateNutrition(input: AIEstimateInput): AIEstimateResult {
+export interface CommunityTrainedFood {
+  name: string;
+  category: FoodCategory;
+  servingSize: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber: number;
+  calPer100g?: number;
+  pPer100g?: number;
+  cPer100g?: number;
+  fPer100g?: number;
+  fibPer100g?: number;
+}
+
+/**
+ * Retrieve recent and relevant community custom foods from the database to continuously
+ * train and calibrate the AI in-context over time.
+ */
+export async function getCommunityTrainedFoods(
+  description: string
+): Promise<CommunityTrainedFood[]> {
+  try {
+    await connectToDatabase();
+
+    // 1. Extract search tokens from user query
+    const tokens = (description || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, " ")
+      .split(/\s+/)
+      .filter(
+        (w) =>
+          w.length >= 3 &&
+          ![
+            "and",
+            "with",
+            "the",
+            "for",
+            "ate",
+            "had",
+            "portion",
+            "poriton",
+            "cooked",
+            "made",
+            "grams",
+            "gram",
+            "size",
+            "some",
+            "dish",
+            "bowl",
+            "plate",
+          ].includes(w)
+      );
+
+    // 2. Fetch the most recent custom foods added to the database ("trained in by time")
+    const recentCustom = await Food.find({ isCustom: true })
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .select("name category servingSize calories protein carbs fat fiber")
+      .lean();
+
+    // 3. If there are keywords, fetch matching custom foods
+    let matchedCustom: typeof recentCustom = [];
+    if (tokens.length > 0) {
+      const orConditions = tokens.slice(0, 6).map((t) => ({
+        name: { $regex: t, $options: "i" },
+      }));
+      matchedCustom = await Food.find({
+        isCustom: true,
+        $or: orConditions,
+      })
+        .sort({ createdAt: -1 })
+        .limit(20)
+        .select("name category servingSize calories protein carbs fat fiber")
+        .lean();
+    }
+
+    // Merge and deduplicate
+    const map = new Map<string, CommunityTrainedFood>();
+    for (const item of [...matchedCustom, ...recentCustom]) {
+      const id = String(item._id);
+      if (!map.has(id)) {
+        const gramsInfo = extractGramsFromServing(item.servingSize || "100g");
+        const grams =
+          gramsInfo.hasGrams && gramsInfo.grams > 0 ? gramsInfo.grams : 100;
+        const cal = Number(item.calories) || 0;
+        const p = Number(item.protein) || 0;
+        const c = Number(item.carbs) || 0;
+        const f = Number(item.fat) || 0;
+        const fib = Number(item.fiber) || 0;
+
+        map.set(id, {
+          name: item.name,
+          category: (item.category as FoodCategory) || "custom",
+          servingSize: item.servingSize || "100g",
+          calories: cal,
+          protein: p,
+          carbs: c,
+          fat: f,
+          fiber: fib,
+          calPer100g: Math.round((cal / grams) * 100),
+          pPer100g: Math.round((p / grams) * 100 * 10) / 10,
+          cPer100g: Math.round((c / grams) * 100 * 10) / 10,
+          fPer100g: Math.round((f / grams) * 100 * 10) / 10,
+          fibPer100g: Math.round((fib / grams) * 100 * 10) / 10,
+        });
+      }
+    }
+
+    return Array.from(map.values());
+  } catch (err) {
+    console.warn("Could not query community custom foods for AI training:", err);
+    return [];
+  }
+}
+
+/** Format community custom foods as dynamic few-shot training context for the LLM */
+function formatCommunityTrainingPrompt(
+  communityFoods: CommunityTrainedFood[]
+): string {
+  if (!communityFoods || communityFoods.length === 0) return "";
+
+  const examples = communityFoods
+    .slice(0, 25)
+    .map(
+      (f) =>
+        `- "${f.name}" (${f.servingSize}): ${f.calories} kcal | P: ${f.protein}g | C: ${f.carbs}g | F: ${f.fat}g | Fiber: ${f.fiber}g [Category: ${f.category}]`
+    );
+
+  return `
+DYNAMIC COMMUNITY TRAINING DATA (Continuously learned from real user custom foods over time):
+The following entries are actual custom foods created & verified by community users in this database. Continuously adapt your macro estimates, authentic Bangladeshi oil/spice density factors, and realistic portion sizes based on this evolving knowledge base:
+${examples.join("\n")}
+`;
+}
+
+/** Fallback deterministic nutrition calculator based on culinary rules and community trained foods */
+function fallbackCalculateNutrition(
+  input: AIEstimateInput,
+  communityFoods?: CommunityTrainedFood[]
+): AIEstimateResult {
   const fullText = [
     input.description || "",
     input.ingredients || "",
@@ -275,35 +421,89 @@ function fallbackCalculateNutrition(input: AIEstimateInput): AIEstimateResult {
   // Parse cooking method adjustments - specialized for Bangladeshi & South Asian cooking (rich in oil & spices)
   let cookingExtraFat = 0; // extra grams of fat per batch
   let cookingAdjustmentNote = "Standard cooking.";
-  const hasExplicitOilInText = fullText.includes("oil") || fullText.includes("ghee") || fullText.includes("butter");
+  const hasExplicitOilInText =
+    fullText.includes("oil") ||
+    fullText.includes("ghee") ||
+    fullText.includes("butter");
 
-  if (fullText.includes("deep fry") || fullText.includes("deep-fried") || fullText.includes("crispy fried") || fullText.includes("singara") || fullText.includes("piyaju") || fullText.includes("beguni")) {
+  if (
+    fullText.includes("deep fry") ||
+    fullText.includes("deep-fried") ||
+    fullText.includes("crispy fried") ||
+    fullText.includes("singara") ||
+    fullText.includes("piyaju") ||
+    fullText.includes("beguni")
+  ) {
     cookingExtraFat = hasExplicitOilInText ? 4 : 16;
-    cookingAdjustmentNote = "Deep fried (Bangladeshi style): +16g oil absorption accounted for.";
-  } else if (fullText.includes("kala bhuna") || fullText.includes("bhuna") || fullText.includes("koshano")) {
+    cookingAdjustmentNote =
+      "Deep fried (Bangladeshi style): +16g oil absorption accounted for.";
+  } else if (
+    fullText.includes("kala bhuna") ||
+    fullText.includes("bhuna") ||
+    fullText.includes("koshano")
+  ) {
     cookingExtraFat = hasExplicitOilInText ? 4 : 16;
-    cookingAdjustmentNote = "Traditional Bangladeshi Bhuna (braised in rich spiced oil/ghee): +16g cooking fat accounted for.";
-  } else if (fullText.includes("kacchi") || fullText.includes("tehari") || fullText.includes("biryani") || fullText.includes("morog polao")) {
+    cookingAdjustmentNote =
+      "Traditional Bangladeshi Bhuna (braised in rich spiced oil/ghee): +16g cooking fat accounted for.";
+  } else if (
+    fullText.includes("kacchi") ||
+    fullText.includes("tehari") ||
+    fullText.includes("biryani") ||
+    fullText.includes("morog polao")
+  ) {
     cookingExtraFat = hasExplicitOilInText ? 4 : 18;
-    cookingAdjustmentNote = "Rich Bangladeshi Biryani/Tehari (cooked in mustard oil/ghee): +18g fat accounted for.";
-  } else if (fullText.includes("curry") || fullText.includes("jhol") || fullText.includes("torkari") || fullText.includes("rezala") || fullText.includes("korma")) {
+    cookingAdjustmentNote =
+      "Rich Bangladeshi Biryani/Tehari (cooked in mustard oil/ghee): +18g fat accounted for.";
+  } else if (
+    fullText.includes("curry") ||
+    fullText.includes("jhol") ||
+    fullText.includes("torkari") ||
+    fullText.includes("rezala") ||
+    fullText.includes("korma")
+  ) {
     cookingExtraFat = hasExplicitOilInText ? 3 : 14;
-    cookingAdjustmentNote = "Bangladeshi spiced curry/jhol gravy: +14g cooking oil accounted for.";
-  } else if (fullText.includes("vaji") || fullText.includes("bhaji") || fullText.includes("pan fry") || fullText.includes("pan-fried") || fullText.includes("stir fry") || fullText.includes("sauté") || fullText.includes("saute")) {
+    cookingAdjustmentNote =
+      "Bangladeshi spiced curry/jhol gravy: +14g cooking oil accounted for.";
+  } else if (
+    fullText.includes("vaji") ||
+    fullText.includes("bhaji") ||
+    fullText.includes("pan fry") ||
+    fullText.includes("pan-fried") ||
+    fullText.includes("stir fry") ||
+    fullText.includes("sauté") ||
+    fullText.includes("saute")
+  ) {
     cookingExtraFat = hasExplicitOilInText ? 2 : 10;
-    cookingAdjustmentNote = "Sautéed / Vaji (in spiced oil): +10g cooking fat accounted for.";
+    cookingAdjustmentNote =
+      "Sautéed / Vaji (in spiced oil): +10g cooking fat accounted for.";
   } else if (fullText.includes("bhorta") || fullText.includes("vorta")) {
     cookingExtraFat = hasExplicitOilInText ? 2 : 6;
-    cookingAdjustmentNote = "Bangladeshi Bhorta (finished with raw mustard oil): +6g mustard oil accounted for.";
-  } else if (fullText.includes("boil") || fullText.includes("steam") || fullText.includes("steamed")) {
+    cookingAdjustmentNote =
+      "Bangladeshi Bhorta (finished with raw mustard oil): +6g mustard oil accounted for.";
+  } else if (
+    fullText.includes("boil") ||
+    fullText.includes("steam") ||
+    fullText.includes("steamed")
+  ) {
     cookingExtraFat = 0;
     cookingAdjustmentNote = "Boiled / Steamed: No extra cooking fat added.";
-  } else if (fullText.includes("bake") || fullText.includes("baked") || fullText.includes("roast") || fullText.includes("grilled")) {
+  } else if (
+    fullText.includes("bake") ||
+    fullText.includes("baked") ||
+    fullText.includes("roast") ||
+    fullText.includes("grilled")
+  ) {
     cookingExtraFat = 4;
     cookingAdjustmentNote = "Baked / Grilled: +4g light coating oil.";
-  } else if (fullText.includes("spicy") || fullText.includes("oily") || fullText.includes("bangladeshi") || fullText.includes("desi")) {
+  } else if (
+    fullText.includes("spicy") ||
+    fullText.includes("oily") ||
+    fullText.includes("bangladeshi") ||
+    fullText.includes("desi")
+  ) {
     cookingExtraFat = hasExplicitOilInText ? 3 : 12;
-    cookingAdjustmentNote = "Traditional Bangladeshi oily/spicy preparation: +12g cooking fat accounted for.";
+    cookingAdjustmentNote =
+      "Traditional Bangladeshi oily/spicy preparation: +12g cooking fat accounted for.";
   }
 
   // Parse lines or comma / 'with' / 'and' separated ingredients
@@ -381,13 +581,15 @@ function fallbackCalculateNutrition(input: AIEstimateInput): AIEstimateResult {
       portionText = `${explicitEatenG}g portion`;
     }
   } else {
-    // Check for fraction or portion counts (e.g. "cooked 4 servings, ate 1", "1 of 4", "half", "quarter", "25%")
+    // Check for fraction or portion counts
     const cookedAteMatch = fullText.match(
       /(?:cooked|made|total)\s*(\d+)\s*(?:servings?|portions?).*?(?:ate|eat|had)\s*(\d+)/
     );
     const fractionMatch = fullText.match(/(\d+)\s*(?:\/|out of|of)\s*(\d+)/);
     const percentMatch = fullText.match(/(\d+)\s*%/);
-    const gramPortionMatch = fullText.match(/ate\s*(\d+)\s*g.*(?:of|total)\s*(\d+)\s*g/);
+    const gramPortionMatch = fullText.match(
+      /ate\s*(\d+)\s*g.*(?:of|total)\s*(\d+)\s*g/
+    );
 
     if (cookedAteMatch) {
       const totalS = parseFloat(cookedAteMatch[1]);
@@ -431,7 +633,27 @@ function fallbackCalculateNutrition(input: AIEstimateInput): AIEstimateResult {
 
     if (!eatenGrams) {
       eatenGrams = Math.round(totalBatchGrams * portionRatio);
-      servingSize = eatenGrams > 0 ? `${eatenGrams}g` : `1 portion${portionRatio < 1 ? ` (${portionText})` : ""}`;
+      servingSize =
+        eatenGrams > 0
+          ? `${eatenGrams}g`
+          : `1 portion${portionRatio < 1 ? ` (${portionText})` : ""}`;
+    }
+  }
+
+  // Check if any community trained food matches the user description
+  let matchedCommunityFood: CommunityTrainedFood | null = null;
+  if (communityFoods && communityFoods.length > 0) {
+    for (const cf of communityFoods) {
+      const cfNameLower = cf.name.toLowerCase().trim();
+      const cfWords = cfNameLower.split(/\s+/).filter((w) => w.length >= 3);
+      if (
+        fullText.includes(cfNameLower) ||
+        (cfWords.length >= 2 && cfWords.every((w) => fullText.includes(w))) ||
+        (cfWords.length === 1 && fullText.includes(cfWords[0]))
+      ) {
+        matchedCommunityFood = cf;
+        break;
+      }
     }
   }
 
@@ -443,14 +665,39 @@ function fallbackCalculateNutrition(input: AIEstimateInput): AIEstimateResult {
   let finalFib = 0;
 
   if (detected.length === 0) {
-    // Standard wholesome home-cooked baseline (~160 kcal per 100g)
     const targetG = eatenGrams > 0 ? eatenGrams : 100;
     const factor = targetG / 100;
-    finalCal = Math.max(10, Math.round((160 + cookingExtraFat * 9) * factor));
-    finalP = Math.max(0, Math.round(14 * factor * 10) / 10);
-    finalC = Math.max(0, Math.round(12 * factor * 10) / 10);
-    finalF = Math.max(0, Math.round((6 + cookingExtraFat) * factor * 10) / 10);
-    finalFib = Math.max(0, Math.round(1.5 * factor * 10) / 10);
+
+    if (matchedCommunityFood) {
+      // Use community-trained food calibration
+      const calPer100 = matchedCommunityFood.calPer100g || 160;
+      const pPer100 = matchedCommunityFood.pPer100g || 14;
+      const cPer100 = matchedCommunityFood.cPer100g || 12;
+      const fPer100 = matchedCommunityFood.fPer100g || 6;
+      const fibPer100 = matchedCommunityFood.fibPer100g || 1.5;
+
+      finalCal = Math.max(
+        10,
+        Math.round((calPer100 + cookingExtraFat * 9) * factor)
+      );
+      finalP = Math.max(0, Math.round(pPer100 * factor * 10) / 10);
+      finalC = Math.max(0, Math.round(cPer100 * factor * 10) / 10);
+      finalF = Math.max(
+        0,
+        Math.round((fPer100 + cookingExtraFat) * factor * 10) / 10
+      );
+      finalFib = Math.max(0, Math.round(fibPer100 * factor * 10) / 10);
+      if (primaryCategory === "custom") {
+        primaryCategory = matchedCommunityFood.category;
+      }
+    } else {
+      // Standard wholesome home-cooked baseline (~160 kcal per 100g)
+      finalCal = Math.max(10, Math.round((160 + cookingExtraFat * 9) * factor));
+      finalP = Math.max(0, Math.round(14 * factor * 10) / 10);
+      finalC = Math.max(0, Math.round(12 * factor * 10) / 10);
+      finalF = Math.max(0, Math.round((6 + cookingExtraFat) * factor * 10) / 10);
+      finalFib = Math.max(0, Math.round(1.5 * factor * 10) / 10);
+    }
   } else {
     totalBatchCal += Math.round(cookingExtraFat * 9);
     finalCal = Math.max(10, Math.round(totalBatchCal * portionRatio));
@@ -460,7 +707,15 @@ function fallbackCalculateNutrition(input: AIEstimateInput): AIEstimateResult {
     finalFib = Math.max(0, Math.round(totalBatchFib * portionRatio * 10) / 10);
   }
 
-  const dishName = extractDishName(input.description || "");
+  const dishName =
+    matchedCommunityFood &&
+    (!input.description || input.description.length <= 40)
+      ? matchedCommunityFood.name
+      : extractDishName(input.description || "");
+
+  const explanation = matchedCommunityFood
+    ? `Calculated using community-trained profile from "${matchedCommunityFood.name}" (${cookingAdjustmentNote}). Scaled strictly for ${servingSize} (${portionText}).`
+    : `Calculated from ${detected.length > 0 ? detected.length : "estimated"} ingredients & cooking method (${cookingAdjustmentNote}). Scaled strictly for ${servingSize} (${portionText}).`;
 
   return {
     name: dishName,
@@ -471,7 +726,7 @@ function fallbackCalculateNutrition(input: AIEstimateInput): AIEstimateResult {
     carbs: finalC,
     fat: finalF,
     fiber: finalFib,
-    explanation: `Calculated from ${detected.length > 0 ? detected.length : "estimated"} ingredients & cooking method (${cookingAdjustmentNote}). Scaled strictly for ${servingSize} (${portionText}).`,
+    explanation,
     detectedIngredients: detected,
     cookingAdjustments: cookingAdjustmentNote,
     portionEatenRatio: portionRatio,
@@ -480,15 +735,27 @@ function fallbackCalculateNutrition(input: AIEstimateInput): AIEstimateResult {
 }
 
 /** Call Gemini / LLM API if key is available, otherwise use culinary engine */
-export async function estimateFoodNutritionWithAI(input: AIEstimateInput): Promise<AIEstimateResult> {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY || process.env.GOOGLE_API_KEY;
+export async function estimateFoodNutritionWithAI(
+  input: AIEstimateInput
+): Promise<AIEstimateResult> {
+  const apiKey =
+    process.env.GEMINI_API_KEY ||
+    process.env.GOOGLE_AI_API_KEY ||
+    process.env.GOOGLE_API_KEY;
+
+  // Retrieve community trained foods from database to continuously train/calibrate AI
+  const communityFoods = await getCommunityTrainedFoods(
+    input.description || ""
+  );
 
   if (!apiKey) {
-    // If no API key configured, use deterministic culinary calculation engine
-    return fallbackCalculateNutrition(input);
+    // If no API key configured, use deterministic culinary calculation engine with community training
+    return fallbackCalculateNutrition(input, communityFoods);
   }
 
   try {
+    const communityTrainingBlock = formatCommunityTrainingPrompt(communityFoods);
+
     const systemPrompt = `You are an expert culinary nutritionist & macro calculation AI for a fitness application.
 Your goal is to parse a home-cooked dish recipe or food description from a single free-form user description, and calculate precise nutritional values to fill required fields for the exact portion eaten.
 
@@ -498,6 +765,12 @@ ${input.ingredients ? `- Additional ingredients note: "${input.ingredients}"` : 
 ${input.cookingMethod ? `- Cooking method: "${input.cookingMethod}"` : ""}
 ${input.cookedPortionTotal ? `- Batch cooked: "${input.cookedPortionTotal}"` : ""}
 ${input.portionEaten ? `- Portion eaten: "${input.portionEaten}"` : ""}
+${communityTrainingBlock}
+CRITICAL COMMUNITY DATABASE TRAINING DIRECTIVE:
+- The database entries above are real custom foods created and verified by users over time ("trained in by time").
+- Use these evolving community custom food entries as ground-truth few-shot examples to continuously refine and calibrate your estimates:
+  * If the user's dish or ingredients resemble any community entry, adopt its realistic calorie density and macro balance.
+  * Continuously calibrate regional cooking oil, spice blooming, and realistic home portion weights from this community knowledge base.
 
 CRITICAL BANGLADESHI & SOUTH ASIAN CULINARY CONTEXT:
 - Traditional Bangladeshi, Bengali, and South Asian dishes (Chicken Curry, Beef Bhuna, Kala Bhuna, Dim Bhuna, Macher Jhol, Kacchi Biryani, Tehari, Khichuri, Alu/Potol Vaji, Begun Bhorta, Paratha) are NATURALLY OILY AND SPICED.
@@ -544,8 +817,8 @@ Output strictly valid JSON with this exact schema (no markdown wrap, just raw JS
   ]
 }`;
 
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    let res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -560,21 +833,43 @@ Output strictly valid JSON with this exact schema (no markdown wrap, just raw JS
     );
 
     if (!res.ok) {
-      console.warn("Gemini API error, falling back to local nutrition engine:", await res.text());
-      return fallbackCalculateNutrition(input);
+      res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: systemPrompt }] }],
+            generationConfig: {
+              temperature: 0.2,
+              responseMimeType: "application/json",
+            },
+          }),
+        }
+      );
+    }
+
+    if (!res.ok) {
+      console.warn(
+        "Gemini API error, falling back to local nutrition engine:",
+        await res.text()
+      );
+      return fallbackCalculateNutrition(input, communityFoods);
     }
 
     const data = await res.json();
     const candidateText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!candidateText) {
-      return fallbackCalculateNutrition(input);
+      return fallbackCalculateNutrition(input, communityFoods);
     }
 
     const parsed = JSON.parse(candidateText);
 
     // Post-process to guarantee exact serving size and calorie alignment
     const explicitGrams = extractExplicitEatenGrams(input.description || "");
-    const explicitBatchGrams = extractExplicitBatchGrams(input.description || "");
+    const explicitBatchGrams = extractExplicitBatchGrams(
+      input.description || ""
+    );
 
     let finalServingSize = (parsed.servingSize || "1 portion").trim();
     let finalCal = Math.round(Number(parsed.calories) || 0);
@@ -623,6 +918,6 @@ Output strictly valid JSON with this exact schema (no markdown wrap, just raw JS
     };
   } catch (err) {
     console.error("AI estimation error:", err);
-    return fallbackCalculateNutrition(input);
+    return fallbackCalculateNutrition(input, communityFoods);
   }
 }

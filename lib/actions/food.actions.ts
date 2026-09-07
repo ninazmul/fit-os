@@ -11,6 +11,7 @@ type FoodListItem = FoodItem & {
   _id?: string;
   isCustom?: boolean;
   clerkId?: string;
+  isOwner?: boolean;
 };
 
 export async function getFoods(query?: string, category?: string) {
@@ -18,9 +19,8 @@ export async function getFoods(query?: string, category?: string) {
   const user = await currentUser();
   if (!user) throw new Error("Unauthorized");
 
-  const conditions: Record<string, unknown>[] = [
-    { $or: [{ isCustom: false }, { clerkId: user.id }] },
-  ];
+  // Allow all users to access both standard foods and community custom foods
+  const conditions: Record<string, unknown>[] = [];
 
   if (query && query.trim()) {
     conditions.push({
@@ -29,16 +29,27 @@ export async function getFoods(query?: string, category?: string) {
   }
 
   if (category && category !== "all") {
-    conditions.push({
-      $or: [{ category }, { displayCategory: category }],
-    });
+    if (category === "custom") {
+      conditions.push({ isCustom: true });
+    } else {
+      conditions.push({
+        $or: [{ category }, { displayCategory: category }],
+      });
+    }
   }
 
-  const filter = conditions.length === 1 ? conditions[0] : { $and: conditions };
+  const filter =
+    conditions.length === 0
+      ? {}
+      : conditions.length === 1
+        ? conditions[0]
+        : { $and: conditions };
 
   let dbFoods = (await Food.find(filter)
-    .select("name category displayCategory servingSize calories protein carbs fat fiber isBangladeshi isCustom")
-    .sort({ name: 1 })
+    .select(
+      "name category displayCategory servingSize calories protein carbs fat fiber isBangladeshi isCustom clerkId"
+    )
+    .sort({ isCustom: -1, name: 1 })
     .limit(100)
     .lean()) as unknown as FoodListItem[];
 
@@ -56,7 +67,14 @@ export async function getFoods(query?: string, category?: string) {
     dbFoods = filtered.slice(0, 100);
   }
 
-  return JSON.parse(JSON.stringify(dbFoods));
+  // Set isOwner to true only if food is custom and was created by current user
+  const foodsWithOwnership = dbFoods.map((f) => ({
+    ...f,
+    _id: f._id ? String(f._id) : undefined,
+    isOwner: Boolean(f.isCustom && f.clerkId && f.clerkId === user.id),
+  }));
+
+  return JSON.parse(JSON.stringify(foodsWithOwnership));
 }
 
 export async function createCustomFood(formData: FoodFormValues) {
@@ -73,23 +91,39 @@ export async function createCustomFood(formData: FoodFormValues) {
   });
 
   revalidatePath("/diet");
-  return JSON.parse(JSON.stringify(food));
+  const result = JSON.parse(JSON.stringify(food));
+  return { ...result, isOwner: true };
 }
 
-export async function updateCustomFood(foodId: string, formData: FoodFormValues) {
+export async function updateCustomFood(
+  foodId: string,
+  formData: FoodFormValues
+) {
   await connectToDatabase();
   const user = await currentUser();
   if (!user) throw new Error("Unauthorized");
 
+  const existingFood = await Food.findById(foodId);
+  if (!existingFood) {
+    throw new Error("Food not found");
+  }
+
+  // Only the original creator can edit their custom food
+  if (!existingFood.isCustom || existingFood.clerkId !== user.id) {
+    throw new Error(
+      "Unauthorized: You can only edit custom foods that you created."
+    );
+  }
+
   const validated = foodSchema.parse(formData);
-  const food = await Food.findOneAndUpdate(
-    { _id: foodId, clerkId: user.id, isCustom: true },
+  const updatedFood = await Food.findByIdAndUpdate(
+    foodId,
     { ...validated },
     { new: true }
   );
 
   revalidatePath("/diet");
-  return JSON.parse(JSON.stringify(food));
+  return JSON.parse(JSON.stringify(updatedFood));
 }
 
 export async function deleteCustomFood(foodId: string) {
@@ -97,7 +131,19 @@ export async function deleteCustomFood(foodId: string) {
   const user = await currentUser();
   if (!user) throw new Error("Unauthorized");
 
-  await Food.findOneAndDelete({ _id: foodId, clerkId: user.id, isCustom: true });
+  const existingFood = await Food.findById(foodId);
+  if (!existingFood) {
+    throw new Error("Food not found");
+  }
+
+  // Only the original creator can delete their custom food
+  if (!existingFood.isCustom || existingFood.clerkId !== user.id) {
+    throw new Error(
+      "Unauthorized: You can only delete custom foods that you created."
+    );
+  }
+
+  await Food.findByIdAndDelete(foodId);
   revalidatePath("/diet");
 }
 
