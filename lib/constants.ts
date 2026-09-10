@@ -12,12 +12,12 @@ export const APP_CONFIG = {
   description:
     "NutriBD is an AI-powered fitness and nutrition platform with Google Gemini AI coaching, BMI, BMR, TDEE, body fat calculators, calorie counter, workout tracker and Bangladeshi food database.",
   author: {
-    name: "ArtistyCode Studio",
-    url: "https://www.artistycode.studio/",
+    name: "RIZMEC",
+    url: "https://rizmec.com",
   },
   links: {
     siteUrl: process.env.NEXT_PUBLIC_SITE_URL || "https://nutribd.com",
-    authorUrl: "https://www.artistycode.studio/",
+    authorUrl: "https://rizmec.com",
     github: "https://github.com/ninazmul/fit-os.git",
   },
   assets: {
