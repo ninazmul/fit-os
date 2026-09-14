@@ -353,8 +353,8 @@ Distributed under the **MIT License**. See `LICENSE` for details.
 
 ## 👤 Author & Credits
 
-**N. I. Nazmul** — *ArtistyCode Studio*
-- Website: [artistycode.studio](https://www.artistycode.studio/)
+**N. I. Nazmul** — *RIZMEC*
+- Website: [rizmec.com](https://www.rizmec.com/)
 - GitHub: [@ninazmul](https://github.com/ninazmul)
 - Email: [nazmulsaw@gmail.com](mailto:nazmulsaw@gmail.com)
 

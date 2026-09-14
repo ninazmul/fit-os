@@ -2,7 +2,7 @@
 
 **Version:** 3.0.1  
 **Architecture:** Next.js 16 (App Router + Turbopack), React 19, TypeScript, Mongoose 8, Clerk Authentication, Google Gemini AI  
-**Author:** N. I. Nazmul (ArtistyCode Studio)  
+**Author:** N. I. Nazmul (RIZMEC)  
 **Repository:** [github.com/ninazmul/nutribd](https://github.com/ninazmul/fit-os.git)
 
 ---

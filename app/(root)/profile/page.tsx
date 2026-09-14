@@ -54,16 +54,16 @@ const MEASUREMENT_CONFIG: {
   label: string;
   icon: string;
 }[] = [
-  { key: "chest", label: "Chest", icon: "👕" },
-  { key: "waist", label: "Waist", icon: "👖" },
-  { key: "hip", label: "Hip", icon: "🦴" },
-  { key: "shoulder", label: "Shoulders", icon: "💪" },
-  { key: "neck", label: "Neck", icon: "🧣" },
-  { key: "arm", label: "Arm (Bicep)", icon: "💪" },
-  { key: "forearm", label: "Forearm", icon: "✊" },
-  { key: "thigh", label: "Thigh", icon: "🦵" },
-  { key: "calf", label: "Calf", icon: "🦶" },
-];
+    { key: "chest", label: "Chest", icon: "👕" },
+    { key: "waist", label: "Waist", icon: "👖" },
+    { key: "hip", label: "Hip", icon: "🦴" },
+    { key: "shoulder", label: "Shoulders", icon: "💪" },
+    { key: "neck", label: "Neck", icon: "🧣" },
+    { key: "arm", label: "Arm (Bicep)", icon: "💪" },
+    { key: "forearm", label: "Forearm", icon: "✊" },
+    { key: "thigh", label: "Thigh", icon: "🦵" },
+    { key: "calf", label: "Calf", icon: "🦶" },
+  ];
 
 function TrendingBadge({ change }: { change: number | null | undefined }) {
   if (change === null || change === undefined) return null;
@@ -186,9 +186,9 @@ export default function ProfilePage() {
       weightProgressPct =
         totalJourney > 0
           ? Math.min(
-              100,
-              Math.max(0, Math.round((already / totalJourney) * 100)),
-            )
+            100,
+            Math.max(0, Math.round((already / totalJourney) * 100)),
+          )
           : 100;
     } else if (curW < tgtW) {
       weightDiffLabel = "Weight to Gain";
@@ -268,12 +268,12 @@ export default function ProfilePage() {
           <p className="mt-2 flex items-center gap-1 text-[11px] text-muted-foreground">
             Developed by{" "}
             <a
-              href="https://www.artistycode.studio/"
+              href="https://www.rizmec.com/"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
             >
-              ArtistyCode Studio
+              RIZMEC
               <ExternalLink className="w-2.5 h-2.5" />
             </a>
           </p>
@@ -940,21 +940,19 @@ export default function ProfilePage() {
                 <h3 className="font-bold text-xs flex items-center gap-1.5 text-red-500 dark:text-red-400">
                   <Heart className="w-3.5 h-3.5" /> Longevity Roadmap
                 </h3>
-                <div className={`p-3 rounded-xl border space-y-1 ${
-                  aiAssessment.longevityRoadmap.cardiovascularRiskLevel === "Low"
+                <div className={`p-3 rounded-xl border space-y-1 ${aiAssessment.longevityRoadmap.cardiovascularRiskLevel === "Low"
                     ? "bg-emerald-500/5 border-emerald-500/20"
                     : aiAssessment.longevityRoadmap.cardiovascularRiskLevel === "Moderate"
-                    ? "bg-amber-500/5 border-amber-500/20"
-                    : "bg-red-500/5 border-red-500/20"
-                }`}>
+                      ? "bg-amber-500/5 border-amber-500/20"
+                      : "bg-red-500/5 border-red-500/20"
+                  }`}>
                   <p className="text-[10px] text-muted-foreground">Cardiovascular Risk</p>
-                  <p className={`text-sm font-black ${
-                    aiAssessment.longevityRoadmap.cardiovascularRiskLevel === "Low"
+                  <p className={`text-sm font-black ${aiAssessment.longevityRoadmap.cardiovascularRiskLevel === "Low"
                       ? "text-emerald-600 dark:text-emerald-400"
                       : aiAssessment.longevityRoadmap.cardiovascularRiskLevel === "Moderate"
-                      ? "text-amber-600 dark:text-amber-400"
-                      : "text-red-600 dark:text-red-400"
-                  }`}>{aiAssessment.longevityRoadmap.cardiovascularRiskLevel} Risk</p>
+                        ? "text-amber-600 dark:text-amber-400"
+                        : "text-red-600 dark:text-red-400"
+                    }`}>{aiAssessment.longevityRoadmap.cardiovascularRiskLevel} Risk</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-[10px] font-bold text-muted-foreground">Preventive Habits</p>
