@@ -42,92 +42,1258 @@ export interface AIEstimateResult {
 // Built-in culinary nutrition database for deterministic recipe breakdown & offline/fallback AI estimation
 const NUTRITION_BASE: Record<
   string,
-  { calPer100g: number; p: number; c: number; f: number; fib: number; defaultCat: FoodCategory }
+  {
+    calPer100g: number;
+    p: number;
+    c: number;
+    f: number;
+    fib: number;
+    defaultCat: FoodCategory;
+  }
 > = {
-  chicken: { calPer100g: 165, p: 31, c: 0, f: 3.6, fib: 0, defaultCat: "curry_meat" },
-  chickenbreast: { calPer100g: 165, p: 31, c: 0, f: 3.6, fib: 0, defaultCat: "curry_meat" },
-  chickenthigh: { calPer100g: 209, p: 26, c: 0, f: 10.9, fib: 0, defaultCat: "curry_meat" },
-  beef: { calPer100g: 250, p: 26, c: 0, f: 15, fib: 0, defaultCat: "curry_meat" },
-  mutton: { calPer100g: 294, p: 25, c: 0, f: 21, fib: 0, defaultCat: "curry_meat" },
-  goat: { calPer100g: 143, p: 27, c: 0, f: 3, fib: 0, defaultCat: "curry_meat" },
-  fish: { calPer100g: 140, p: 22, c: 0, f: 5, fib: 0, defaultCat: "fish_seafood" },
-  salmon: { calPer100g: 208, p: 20, c: 0, f: 13, fib: 0, defaultCat: "fish_seafood" },
-  tuna: { calPer100g: 130, p: 28, c: 0, f: 1, fib: 0, defaultCat: "fish_seafood" },
-  shrimp: { calPer100g: 99, p: 24, c: 0.2, f: 0.3, fib: 0, defaultCat: "fish_seafood" },
-  prawn: { calPer100g: 105, p: 24, c: 0.5, f: 0.8, fib: 0, defaultCat: "fish_seafood" },
-  hilsa: { calPer100g: 310, p: 21.8, c: 2.9, f: 24, fib: 0, defaultCat: "fish_seafood" },
-  rui: { calPer100g: 128, p: 19.7, c: 4.4, f: 3.5, fib: 0, defaultCat: "fish_seafood" },
-  tilapia: { calPer100g: 128, p: 26, c: 0, f: 2.7, fib: 0, defaultCat: "fish_seafood" },
-  egg: { calPer100g: 143, p: 12.6, c: 0.7, f: 9.5, fib: 0, defaultCat: "dairy_eggs" }, // ~70 cal each (50g)
-  eggwhite: { calPer100g: 52, p: 10.9, c: 0.7, f: 0.2, fib: 0, defaultCat: "dairy_eggs" },
-  rice: { calPer100g: 130, p: 2.7, c: 28, f: 0.3, fib: 0.4, defaultCat: "rice_grains" }, // cooked
-  rawrice: { calPer100g: 360, p: 7, c: 79, f: 0.6, fib: 1.3, defaultCat: "rice_grains" },
-  brownrice: { calPer100g: 111, p: 2.6, c: 23, f: 0.9, fib: 1.8, defaultCat: "rice_grains" },
-  basmati: { calPer100g: 121, p: 3.5, c: 25, f: 0.4, fib: 0.5, defaultCat: "rice_grains" },
-  dal: { calPer100g: 116, p: 9, c: 20, f: 0.4, fib: 7.9, defaultCat: "curry_meat" }, // cooked lentils
-  lentil: { calPer100g: 116, p: 9, c: 20, f: 0.4, fib: 7.9, defaultCat: "curry_meat" },
-  chickpea: { calPer100g: 164, p: 8.9, c: 27.4, f: 2.6, fib: 7.6, defaultCat: "rice_grains" },
-  potato: { calPer100g: 87, p: 1.9, c: 20.1, f: 0.1, fib: 1.8, defaultCat: "fruits_veg" },
-  onion: { calPer100g: 40, p: 1.1, c: 9.3, f: 0.1, fib: 1.7, defaultCat: "fruits_veg" },
-  tomato: { calPer100g: 18, p: 0.9, c: 3.9, f: 0.2, fib: 1.2, defaultCat: "fruits_veg" },
-  garlic: { calPer100g: 149, p: 6.4, c: 33, f: 0.5, fib: 2.1, defaultCat: "fruits_veg" },
-  ginger: { calPer100g: 80, p: 1.8, c: 17.8, f: 0.7, fib: 2, defaultCat: "fruits_veg" },
-  spinach: { calPer100g: 23, p: 2.9, c: 3.6, f: 0.4, fib: 2.2, defaultCat: "fruits_veg" },
-  broccoli: { calPer100g: 34, p: 2.8, c: 7, f: 0.4, fib: 2.6, defaultCat: "fruits_veg" },
-  cauliflower: { calPer100g: 25, p: 1.9, c: 5, f: 0.3, fib: 2, defaultCat: "fruits_veg" },
-  carrot: { calPer100g: 41, p: 0.9, c: 9.6, f: 0.2, fib: 2.8, defaultCat: "fruits_veg" },
+  chicken: {
+    calPer100g: 165,
+    p: 31,
+    c: 0,
+    f: 3.6,
+    fib: 0,
+    defaultCat: "curry_meat",
+  },
+  chickenbreast: {
+    calPer100g: 165,
+    p: 31,
+    c: 0,
+    f: 3.6,
+    fib: 0,
+    defaultCat: "curry_meat",
+  },
+  chickenthigh: {
+    calPer100g: 209,
+    p: 26,
+    c: 0,
+    f: 10.9,
+    fib: 0,
+    defaultCat: "curry_meat",
+  },
+  beef: {
+    calPer100g: 250,
+    p: 26,
+    c: 0,
+    f: 15,
+    fib: 0,
+    defaultCat: "curry_meat",
+  },
+  mutton: {
+    calPer100g: 294,
+    p: 25,
+    c: 0,
+    f: 21,
+    fib: 0,
+    defaultCat: "curry_meat",
+  },
+  goat: {
+    calPer100g: 143,
+    p: 27,
+    c: 0,
+    f: 3,
+    fib: 0,
+    defaultCat: "curry_meat",
+  },
+  fish: {
+    calPer100g: 140,
+    p: 22,
+    c: 0,
+    f: 5,
+    fib: 0,
+    defaultCat: "fish_seafood",
+  },
+  salmon: {
+    calPer100g: 208,
+    p: 20,
+    c: 0,
+    f: 13,
+    fib: 0,
+    defaultCat: "fish_seafood",
+  },
+  tuna: {
+    calPer100g: 130,
+    p: 28,
+    c: 0,
+    f: 1,
+    fib: 0,
+    defaultCat: "fish_seafood",
+  },
+  shrimp: {
+    calPer100g: 99,
+    p: 24,
+    c: 0.2,
+    f: 0.3,
+    fib: 0,
+    defaultCat: "fish_seafood",
+  },
+  prawn: {
+    calPer100g: 105,
+    p: 24,
+    c: 0.5,
+    f: 0.8,
+    fib: 0,
+    defaultCat: "fish_seafood",
+  },
+  hilsa: {
+    calPer100g: 310,
+    p: 21.8,
+    c: 2.9,
+    f: 24,
+    fib: 0,
+    defaultCat: "fish_seafood",
+  },
+  rui: {
+    calPer100g: 128,
+    p: 19.7,
+    c: 4.4,
+    f: 3.5,
+    fib: 0,
+    defaultCat: "fish_seafood",
+  },
+  tilapia: {
+    calPer100g: 128,
+    p: 26,
+    c: 0,
+    f: 2.7,
+    fib: 0,
+    defaultCat: "fish_seafood",
+  },
+  egg: {
+    calPer100g: 143,
+    p: 12.6,
+    c: 0.7,
+    f: 9.5,
+    fib: 0,
+    defaultCat: "dairy_eggs",
+  }, // ~70 cal each (50g)
+  eggwhite: {
+    calPer100g: 52,
+    p: 10.9,
+    c: 0.7,
+    f: 0.2,
+    fib: 0,
+    defaultCat: "dairy_eggs",
+  },
+  rice: {
+    calPer100g: 130,
+    p: 2.7,
+    c: 28,
+    f: 0.3,
+    fib: 0.4,
+    defaultCat: "rice_grains",
+  }, // cooked
+  rawrice: {
+    calPer100g: 360,
+    p: 7,
+    c: 79,
+    f: 0.6,
+    fib: 1.3,
+    defaultCat: "rice_grains",
+  },
+  brownrice: {
+    calPer100g: 111,
+    p: 2.6,
+    c: 23,
+    f: 0.9,
+    fib: 1.8,
+    defaultCat: "rice_grains",
+  },
+  basmati: {
+    calPer100g: 121,
+    p: 3.5,
+    c: 25,
+    f: 0.4,
+    fib: 0.5,
+    defaultCat: "rice_grains",
+  },
+  dal: {
+    calPer100g: 116,
+    p: 9,
+    c: 20,
+    f: 0.4,
+    fib: 7.9,
+    defaultCat: "curry_meat",
+  }, // cooked lentils
+  lentil: {
+    calPer100g: 116,
+    p: 9,
+    c: 20,
+    f: 0.4,
+    fib: 7.9,
+    defaultCat: "curry_meat",
+  },
+  chickpea: {
+    calPer100g: 164,
+    p: 8.9,
+    c: 27.4,
+    f: 2.6,
+    fib: 7.6,
+    defaultCat: "rice_grains",
+  },
+  potato: {
+    calPer100g: 87,
+    p: 1.9,
+    c: 20.1,
+    f: 0.1,
+    fib: 1.8,
+    defaultCat: "fruits_veg",
+  },
+  onion: {
+    calPer100g: 40,
+    p: 1.1,
+    c: 9.3,
+    f: 0.1,
+    fib: 1.7,
+    defaultCat: "fruits_veg",
+  },
+  tomato: {
+    calPer100g: 18,
+    p: 0.9,
+    c: 3.9,
+    f: 0.2,
+    fib: 1.2,
+    defaultCat: "fruits_veg",
+  },
+  garlic: {
+    calPer100g: 149,
+    p: 6.4,
+    c: 33,
+    f: 0.5,
+    fib: 2.1,
+    defaultCat: "fruits_veg",
+  },
+  ginger: {
+    calPer100g: 80,
+    p: 1.8,
+    c: 17.8,
+    f: 0.7,
+    fib: 2,
+    defaultCat: "fruits_veg",
+  },
+  spinach: {
+    calPer100g: 23,
+    p: 2.9,
+    c: 3.6,
+    f: 0.4,
+    fib: 2.2,
+    defaultCat: "fruits_veg",
+  },
+  broccoli: {
+    calPer100g: 34,
+    p: 2.8,
+    c: 7,
+    f: 0.4,
+    fib: 2.6,
+    defaultCat: "fruits_veg",
+  },
+  cauliflower: {
+    calPer100g: 25,
+    p: 1.9,
+    c: 5,
+    f: 0.3,
+    fib: 2,
+    defaultCat: "fruits_veg",
+  },
+  carrot: {
+    calPer100g: 41,
+    p: 0.9,
+    c: 9.6,
+    f: 0.2,
+    fib: 2.8,
+    defaultCat: "fruits_veg",
+  },
   oil: { calPer100g: 884, p: 0, c: 0, f: 100, fib: 0, defaultCat: "custom" }, // 1 tbsp ~14g = 124 cal
-  oliveoil: { calPer100g: 884, p: 0, c: 0, f: 100, fib: 0, defaultCat: "custom" },
-  mustardoil: { calPer100g: 884, p: 0, c: 0, f: 100, fib: 0, defaultCat: "custom" },
-  soybeanoil: { calPer100g: 884, p: 0, c: 0, f: 100, fib: 0, defaultCat: "custom" },
-  ghee: { calPer100g: 900, p: 0, c: 0, f: 99.5, fib: 0, defaultCat: "dairy_eggs" },
-  butter: { calPer100g: 717, p: 0.9, c: 0.1, f: 81, fib: 0, defaultCat: "dairy_eggs" },
-  paneer: { calPer100g: 296, p: 18.3, c: 4.5, f: 22.5, fib: 0, defaultCat: "dairy_eggs" },
-  cheese: { calPer100g: 402, p: 25, c: 1.3, f: 33, fib: 0, defaultCat: "dairy_eggs" },
-  milk: { calPer100g: 61, p: 3.2, c: 4.8, f: 3.3, fib: 0, defaultCat: "dairy_eggs" },
-  curd: { calPer100g: 98, p: 3.5, c: 4.7, f: 4.3, fib: 0, defaultCat: "dairy_eggs" },
-  yogurt: { calPer100g: 61, p: 3.5, c: 4.7, f: 3.3, fib: 0, defaultCat: "dairy_eggs" },
-  roti: { calPer100g: 264, p: 9, c: 55, f: 3.5, fib: 7, defaultCat: "bread_bakery" }, // 1 roti ~35g = 90 cal
-  bread: { calPer100g: 265, p: 9, c: 49, f: 3.2, fib: 2.7, defaultCat: "bread_bakery" },
-  oats: { calPer100g: 389, p: 16.9, c: 66.3, f: 6.9, fib: 10.6, defaultCat: "rice_grains" },
-  flour: { calPer100g: 364, p: 10, c: 76, f: 1, fib: 2.7, defaultCat: "bread_bakery" },
-  sugar: { calPer100g: 387, p: 0, c: 100, f: 0, fib: 0, defaultCat: "sweets_desserts" },
-  whey: { calPer100g: 400, p: 80, c: 6.7, f: 5, fib: 0, defaultCat: "dairy_eggs" }, // ~1 scoop 30g = 120 cal, 24g P
-  proteinpowder: { calPer100g: 400, p: 80, c: 6.7, f: 5, fib: 0, defaultCat: "dairy_eggs" },
-  banana: { calPer100g: 89, p: 1.1, c: 22.8, f: 0.3, fib: 2.6, defaultCat: "fruits_veg" },
-  peanutbutter: { calPer100g: 588, p: 25, c: 20, f: 50, fib: 6, defaultCat: "custom" },
-  apple: { calPer100g: 52, p: 0.3, c: 14, f: 0.2, fib: 2.4, defaultCat: "fruits_veg" },
-  pasta: { calPer100g: 158, p: 5.8, c: 31, f: 0.9, fib: 1.8, defaultCat: "rice_grains" },
-  tofu: { calPer100g: 76, p: 8, c: 1.9, f: 4.8, fib: 0.3, defaultCat: "dairy_eggs" },
-  kalabhuna: { calPer100g: 250, p: 18.5, c: 3.5, f: 18.5, fib: 0.5, defaultCat: "curry_meat" },
-  bhuna: { calPer100g: 215, p: 17, c: 4, f: 15, fib: 0.5, defaultCat: "curry_meat" },
-  kacchi: { calPer100g: 185, p: 8, c: 18, f: 9, fib: 0.5, defaultCat: "rice_grains" },
-  biryani: { calPer100g: 175, p: 8, c: 19, f: 7.5, fib: 0.5, defaultCat: "rice_grains" },
-  tehari: { calPer100g: 175, p: 6.5, c: 21, f: 7.5, fib: 0.5, defaultCat: "rice_grains" },
-  polao: { calPer100g: 180, p: 3.6, c: 27, f: 6, fib: 0.5, defaultCat: "rice_grains" },
-  khichuri: { calPer100g: 130, p: 4, c: 20, f: 3.5, fib: 1.5, defaultCat: "rice_grains" },
-  bhorta: { calPer100g: 125, p: 2.5, c: 16, f: 6, fib: 2, defaultCat: "fruits_veg" },
-  vaji: { calPer100g: 140, p: 2.5, c: 14, f: 8, fib: 2.5, defaultCat: "fruits_veg" },
-  bhaji: { calPer100g: 140, p: 2.5, c: 14, f: 8, fib: 2.5, defaultCat: "fruits_veg" },
-  paratha: { calPer100g: 330, p: 6, c: 45, f: 14, fib: 3, defaultCat: "bread_bakery" },
-  singara: { calPer100g: 250, p: 5, c: 30, f: 13, fib: 2.5, defaultCat: "snacks_beverages" },
-  fuchka: { calPer100g: 210, p: 4, c: 32, f: 7.5, fib: 2.5, defaultCat: "snacks_beverages" },
-  chotpoti: { calPer100g: 124, p: 5.6, c: 19.2, f: 2.8, fib: 3.2, defaultCat: "snacks_beverages" },
+  oliveoil: {
+    calPer100g: 884,
+    p: 0,
+    c: 0,
+    f: 100,
+    fib: 0,
+    defaultCat: "custom",
+  },
+  mustardoil: {
+    calPer100g: 884,
+    p: 0,
+    c: 0,
+    f: 100,
+    fib: 0,
+    defaultCat: "custom",
+  },
+  soybeanoil: {
+    calPer100g: 884,
+    p: 0,
+    c: 0,
+    f: 100,
+    fib: 0,
+    defaultCat: "custom",
+  },
+  ghee: {
+    calPer100g: 900,
+    p: 0,
+    c: 0,
+    f: 99.5,
+    fib: 0,
+    defaultCat: "dairy_eggs",
+  },
+  butter: {
+    calPer100g: 717,
+    p: 0.9,
+    c: 0.1,
+    f: 81,
+    fib: 0,
+    defaultCat: "dairy_eggs",
+  },
+  paneer: {
+    calPer100g: 296,
+    p: 18.3,
+    c: 4.5,
+    f: 22.5,
+    fib: 0,
+    defaultCat: "dairy_eggs",
+  },
+  cheese: {
+    calPer100g: 402,
+    p: 25,
+    c: 1.3,
+    f: 33,
+    fib: 0,
+    defaultCat: "dairy_eggs",
+  },
+  milk: {
+    calPer100g: 61,
+    p: 3.2,
+    c: 4.8,
+    f: 3.3,
+    fib: 0,
+    defaultCat: "dairy_eggs",
+  },
+  curd: {
+    calPer100g: 98,
+    p: 3.5,
+    c: 4.7,
+    f: 4.3,
+    fib: 0,
+    defaultCat: "dairy_eggs",
+  },
+  yogurt: {
+    calPer100g: 61,
+    p: 3.5,
+    c: 4.7,
+    f: 3.3,
+    fib: 0,
+    defaultCat: "dairy_eggs",
+  },
+  roti: {
+    calPer100g: 264,
+    p: 9,
+    c: 55,
+    f: 3.5,
+    fib: 7,
+    defaultCat: "bread_bakery",
+  }, // 1 roti ~35g = 90 cal
+  bread: {
+    calPer100g: 265,
+    p: 9,
+    c: 49,
+    f: 3.2,
+    fib: 2.7,
+    defaultCat: "bread_bakery",
+  },
+  oats: {
+    calPer100g: 389,
+    p: 16.9,
+    c: 66.3,
+    f: 6.9,
+    fib: 10.6,
+    defaultCat: "rice_grains",
+  },
+  flour: {
+    calPer100g: 364,
+    p: 10,
+    c: 76,
+    f: 1,
+    fib: 2.7,
+    defaultCat: "bread_bakery",
+  },
+  sugar: {
+    calPer100g: 387,
+    p: 0,
+    c: 100,
+    f: 0,
+    fib: 0,
+    defaultCat: "sweets_desserts",
+  },
+  whey: {
+    calPer100g: 400,
+    p: 80,
+    c: 6.7,
+    f: 5,
+    fib: 0,
+    defaultCat: "dairy_eggs",
+  }, // ~1 scoop 30g = 120 cal, 24g P
+  proteinpowder: {
+    calPer100g: 400,
+    p: 80,
+    c: 6.7,
+    f: 5,
+    fib: 0,
+    defaultCat: "dairy_eggs",
+  },
+  banana: {
+    calPer100g: 89,
+    p: 1.1,
+    c: 22.8,
+    f: 0.3,
+    fib: 2.6,
+    defaultCat: "fruits_veg",
+  },
+  peanutbutter: {
+    calPer100g: 588,
+    p: 25,
+    c: 20,
+    f: 50,
+    fib: 6,
+    defaultCat: "custom",
+  },
+  apple: {
+    calPer100g: 52,
+    p: 0.3,
+    c: 14,
+    f: 0.2,
+    fib: 2.4,
+    defaultCat: "fruits_veg",
+  },
+  pasta: {
+    calPer100g: 158,
+    p: 5.8,
+    c: 31,
+    f: 0.9,
+    fib: 1.8,
+    defaultCat: "rice_grains",
+  },
+  tofu: {
+    calPer100g: 76,
+    p: 8,
+    c: 1.9,
+    f: 4.8,
+    fib: 0.3,
+    defaultCat: "dairy_eggs",
+  },
+  kalabhuna: {
+    calPer100g: 250,
+    p: 18.5,
+    c: 3.5,
+    f: 18.5,
+    fib: 0.5,
+    defaultCat: "curry_meat",
+  },
+  bhuna: {
+    calPer100g: 215,
+    p: 17,
+    c: 4,
+    f: 15,
+    fib: 0.5,
+    defaultCat: "curry_meat",
+  },
+  kacchi: {
+    calPer100g: 185,
+    p: 8,
+    c: 18,
+    f: 9,
+    fib: 0.5,
+    defaultCat: "rice_grains",
+  },
+  biryani: {
+    calPer100g: 175,
+    p: 8,
+    c: 19,
+    f: 7.5,
+    fib: 0.5,
+    defaultCat: "rice_grains",
+  },
+  tehari: {
+    calPer100g: 175,
+    p: 6.5,
+    c: 21,
+    f: 7.5,
+    fib: 0.5,
+    defaultCat: "rice_grains",
+  },
+  polao: {
+    calPer100g: 180,
+    p: 3.6,
+    c: 27,
+    f: 6,
+    fib: 0.5,
+    defaultCat: "rice_grains",
+  },
+  khichuri: {
+    calPer100g: 130,
+    p: 4,
+    c: 20,
+    f: 3.5,
+    fib: 1.5,
+    defaultCat: "rice_grains",
+  },
+  bhorta: {
+    calPer100g: 125,
+    p: 2.5,
+    c: 16,
+    f: 6,
+    fib: 2,
+    defaultCat: "fruits_veg",
+  },
+  vaji: {
+    calPer100g: 140,
+    p: 2.5,
+    c: 14,
+    f: 8,
+    fib: 2.5,
+    defaultCat: "fruits_veg",
+  },
+  bhaji: {
+    calPer100g: 140,
+    p: 2.5,
+    c: 14,
+    f: 8,
+    fib: 2.5,
+    defaultCat: "fruits_veg",
+  },
+  paratha: {
+    calPer100g: 330,
+    p: 6,
+    c: 45,
+    f: 14,
+    fib: 3,
+    defaultCat: "bread_bakery",
+  },
+  singara: {
+    calPer100g: 250,
+    p: 5,
+    c: 30,
+    f: 13,
+    fib: 2.5,
+    defaultCat: "snacks_beverages",
+  },
+  fuchka: {
+    calPer100g: 210,
+    p: 4,
+    c: 32,
+    f: 7.5,
+    fib: 2.5,
+    defaultCat: "snacks_beverages",
+  },
+  chotpoti: {
+    calPer100g: 124,
+    p: 5.6,
+    c: 19.2,
+    f: 2.8,
+    fib: 3.2,
+    defaultCat: "snacks_beverages",
+  },
+
+  // ===== Bangladeshi fish (mach) — per 100g cooked =====
+  ilish: {
+    calPer100g: 310,
+    p: 21.8,
+    c: 2.9,
+    f: 24,
+    fib: 0,
+    defaultCat: "fish_seafood",
+  },
+  chital: {
+    calPer100g: 135,
+    p: 19,
+    c: 0,
+    f: 6,
+    fib: 0,
+    defaultCat: "fish_seafood",
+  },
+  pangash: {
+    calPer100g: 170,
+    p: 15,
+    c: 0,
+    f: 12,
+    fib: 0,
+    defaultCat: "fish_seafood",
+  },
+  koi: {
+    calPer100g: 125,
+    p: 22,
+    c: 0,
+    f: 3.5,
+    fib: 0,
+    defaultCat: "fish_seafood",
+  },
+  shing: {
+    calPer100g: 110,
+    p: 20,
+    c: 0,
+    f: 3,
+    fib: 0,
+    defaultCat: "fish_seafood",
+  },
+  magur: {
+    calPer100g: 105,
+    p: 21,
+    c: 0,
+    f: 2.5,
+    fib: 0,
+    defaultCat: "fish_seafood",
+  },
+  pabda: {
+    calPer100g: 120,
+    p: 20,
+    c: 0,
+    f: 4.5,
+    fib: 0,
+    defaultCat: "fish_seafood",
+  },
+  rupchanda: {
+    calPer100g: 150,
+    p: 20,
+    c: 0,
+    f: 8,
+    fib: 0,
+    defaultCat: "fish_seafood",
+  },
+  katla: {
+    calPer100g: 130,
+    p: 19,
+    c: 0,
+    f: 5,
+    fib: 0,
+    defaultCat: "fish_seafood",
+  },
+  mrigal: {
+    calPer100g: 128,
+    p: 19,
+    c: 0,
+    f: 4.5,
+    fib: 0,
+    defaultCat: "fish_seafood",
+  },
+  taki: {
+    calPer100g: 115,
+    p: 22,
+    c: 0,
+    f: 3,
+    fib: 0,
+    defaultCat: "fish_seafood",
+  },
+  punti: {
+    calPer100g: 120,
+    p: 21,
+    c: 0,
+    f: 4,
+    fib: 0,
+    defaultCat: "fish_seafood",
+  },
+  mola: {
+    calPer100g: 95,
+    p: 18,
+    c: 1,
+    f: 2.5,
+    fib: 0,
+    defaultCat: "fish_seafood",
+  },
+  baila: {
+    calPer100g: 110,
+    p: 20,
+    c: 0,
+    f: 3.5,
+    fib: 0,
+    defaultCat: "fish_seafood",
+  },
+  chapila: {
+    calPer100g: 100,
+    p: 19,
+    c: 1.5,
+    f: 2.8,
+    fib: 0,
+    defaultCat: "fish_seafood",
+  },
+  chingri: {
+    calPer100g: 105,
+    p: 24,
+    c: 0.5,
+    f: 0.8,
+    fib: 0,
+    defaultCat: "fish_seafood",
+  },
+  shutki: {
+    calPer100g: 280,
+    p: 45,
+    c: 0,
+    f: 10,
+    fib: 0,
+    defaultCat: "fish_seafood",
+  },
+
+  // ===== Bangladeshi meat =====
+  murgi: {
+    calPer100g: 165,
+    p: 31,
+    c: 0,
+    f: 3.6,
+    fib: 0,
+    defaultCat: "curry_meat",
+  },
+  khashi: {
+    calPer100g: 294,
+    p: 25,
+    c: 0,
+    f: 21,
+    fib: 0,
+    defaultCat: "curry_meat",
+  },
+  kaleji: {
+    calPer100g: 135,
+    p: 20,
+    c: 4,
+    f: 4.5,
+    fib: 0,
+    defaultCat: "curry_meat",
+  }, // liver (kolija)
+  gurda: {
+    calPer100g: 103,
+    p: 17,
+    c: 0.8,
+    f: 3.2,
+    fib: 0,
+    defaultCat: "curry_meat",
+  }, // kidney
+
+  // ===== Bangladeshi main dishes =====
+  morogpolao: {
+    calPer100g: 180,
+    p: 8,
+    c: 22,
+    f: 6.5,
+    fib: 0.5,
+    defaultCat: "rice_grains",
+  },
+  roast: {
+    calPer100g: 215,
+    p: 20,
+    c: 4,
+    f: 12,
+    fib: 0.3,
+    defaultCat: "curry_meat",
+  }, // chicken roast
+  rezala: {
+    calPer100g: 150,
+    p: 9,
+    c: 7,
+    f: 9,
+    fib: 0.5,
+    defaultCat: "curry_meat",
+  },
+  korma: {
+    calPer100g: 195,
+    p: 11,
+    c: 6,
+    f: 13,
+    fib: 0.5,
+    defaultCat: "curry_meat",
+  },
+  chap: {
+    calPer100g: 260,
+    p: 19,
+    c: 4,
+    f: 18,
+    fib: 0.5,
+    defaultCat: "curry_meat",
+  }, // beef chap
+  nihari: {
+    calPer100g: 180,
+    p: 12,
+    c: 6,
+    f: 11,
+    fib: 0.5,
+    defaultCat: "curry_meat",
+  },
+  paya: {
+    calPer100g: 160,
+    p: 14,
+    c: 3,
+    f: 9.5,
+    fib: 0,
+    defaultCat: "curry_meat",
+  },
+  haleem: {
+    calPer100g: 150,
+    p: 9,
+    c: 13,
+    f: 6.5,
+    fib: 2,
+    defaultCat: "curry_meat",
+  },
+  kabab: {
+    calPer100g: 250,
+    p: 18,
+    c: 5,
+    f: 17,
+    fib: 0.5,
+    defaultCat: "curry_meat",
+  },
+  tikka: {
+    calPer100g: 180,
+    p: 22,
+    c: 4,
+    f: 8,
+    fib: 0.5,
+    defaultCat: "curry_meat",
+  },
+  jhol: { calPer100g: 115, p: 6, c: 7, f: 7, fib: 1, defaultCat: "curry_meat" },
+
+  // ===== Bangladeshi vegetable dishes =====
+  dalna: {
+    calPer100g: 130,
+    p: 4,
+    c: 12,
+    f: 7,
+    fib: 2,
+    defaultCat: "fruits_veg",
+  },
+  shukto: {
+    calPer100g: 95,
+    p: 2,
+    c: 10,
+    f: 5,
+    fib: 3,
+    defaultCat: "fruits_veg",
+  },
+  labra: {
+    calPer100g: 90,
+    p: 2.5,
+    c: 11,
+    f: 4,
+    fib: 3.5,
+    defaultCat: "fruits_veg",
+  },
+  charchari: {
+    calPer100g: 110,
+    p: 2.5,
+    c: 9,
+    f: 7,
+    fib: 3,
+    defaultCat: "fruits_veg",
+  },
+  ghanto: {
+    calPer100g: 120,
+    p: 3,
+    c: 14,
+    f: 6,
+    fib: 3.5,
+    defaultCat: "fruits_veg",
+  },
+  shak: { calPer100g: 60, p: 3, c: 6, f: 3, fib: 3, defaultCat: "fruits_veg" }, // leafy greens
+  posto: {
+    calPer100g: 180,
+    p: 4,
+    c: 6,
+    f: 15,
+    fib: 2,
+    defaultCat: "fruits_veg",
+  }, // poppy seed
+  niramish: {
+    calPer100g: 120,
+    p: 3,
+    c: 12,
+    f: 7,
+    fib: 3,
+    defaultCat: "fruits_veg",
+  },
+  alubhorta: {
+    calPer100g: 130,
+    p: 2.2,
+    c: 21,
+    f: 4,
+    fib: 2,
+    defaultCat: "fruits_veg",
+  },
+  begunbhorta: {
+    calPer100g: 120,
+    p: 2.5,
+    c: 12,
+    f: 7,
+    fib: 3,
+    defaultCat: "fruits_veg",
+  },
+  laubhorta: {
+    calPer100g: 95,
+    p: 1.5,
+    c: 10,
+    f: 5.5,
+    fib: 2,
+    defaultCat: "fruits_veg",
+  },
+
+  // ===== Bangladeshi breads & rice =====
+  luchi: {
+    calPer100g: 400,
+    p: 7,
+    c: 50,
+    f: 19,
+    fib: 2.5,
+    defaultCat: "bread_bakery",
+  },
+  kochuri: {
+    calPer100g: 360,
+    p: 6,
+    c: 45,
+    f: 17,
+    fib: 3,
+    defaultCat: "bread_bakery",
+  },
+  puri: {
+    calPer100g: 400,
+    p: 7,
+    c: 50,
+    f: 19,
+    fib: 2.5,
+    defaultCat: "bread_bakery",
+  },
+  chira: {
+    calPer100g: 350,
+    p: 6.5,
+    c: 78,
+    f: 1,
+    fib: 2,
+    defaultCat: "rice_grains",
+  }, // flattened rice
+  muri: {
+    calPer100g: 325,
+    p: 6,
+    c: 76,
+    f: 1.5,
+    fib: 3,
+    defaultCat: "rice_grains",
+  }, // puffed rice
+  atta: {
+    calPer100g: 340,
+    p: 12,
+    c: 71,
+    f: 2.5,
+    fib: 3,
+    defaultCat: "bread_bakery",
+  },
+  suji: {
+    calPer100g: 360,
+    p: 11,
+    c: 73,
+    f: 1.5,
+    fib: 3,
+    defaultCat: "bread_bakery",
+  },
+  masoordal: {
+    calPer100g: 116,
+    p: 9,
+    c: 20,
+    f: 0.4,
+    fib: 7.9,
+    defaultCat: "curry_meat",
+  },
+  mugdal: {
+    calPer100g: 105,
+    p: 7.5,
+    c: 19,
+    f: 0.5,
+    fib: 6,
+    defaultCat: "curry_meat",
+  },
+  chola: {
+    calPer100g: 164,
+    p: 8.9,
+    c: 27.4,
+    f: 2.6,
+    fib: 7.6,
+    defaultCat: "curry_meat",
+  },
+
+  // ===== Bangladeshi snacks & street food =====
+  samosa: {
+    calPer100g: 260,
+    p: 6,
+    c: 30,
+    f: 13,
+    fib: 2.5,
+    defaultCat: "snacks_beverages",
+  },
+  piyaju: {
+    calPer100g: 300,
+    p: 8,
+    c: 28,
+    f: 17,
+    fib: 3,
+    defaultCat: "snacks_beverages",
+  },
+  beguni: {
+    calPer100g: 250,
+    p: 5,
+    c: 24,
+    f: 14,
+    fib: 3,
+    defaultCat: "snacks_beverages",
+  },
+  chanachur: {
+    calPer100g: 480,
+    p: 12,
+    c: 55,
+    f: 24,
+    fib: 4,
+    defaultCat: "snacks_beverages",
+  },
+  jhalmuri: {
+    calPer100g: 230,
+    p: 4,
+    c: 42,
+    f: 7,
+    fib: 3,
+    defaultCat: "snacks_beverages",
+  },
+  bakorkhani: {
+    calPer100g: 450,
+    p: 8,
+    c: 55,
+    f: 22,
+    fib: 2,
+    defaultCat: "snacks_beverages",
+  },
+
+  // ===== Bangladeshi sweets =====
+  jilapi: {
+    calPer100g: 360,
+    p: 2,
+    c: 76,
+    f: 8,
+    fib: 0.5,
+    defaultCat: "sweets_desserts",
+  },
+  roshogolla: {
+    calPer100g: 320,
+    p: 4,
+    c: 72,
+    f: 4,
+    fib: 0.3,
+    defaultCat: "sweets_desserts",
+  },
+  mishtidoi: {
+    calPer100g: 200,
+    p: 5,
+    c: 27,
+    f: 8,
+    fib: 0,
+    defaultCat: "sweets_desserts",
+  },
+  doi: { calPer100g: 120, p: 4, c: 12, f: 6, fib: 0, defaultCat: "dairy_eggs" },
+  chomchom: {
+    calPer100g: 330,
+    p: 4,
+    c: 70,
+    f: 5,
+    fib: 0.4,
+    defaultCat: "sweets_desserts",
+  },
+  sandesh: {
+    calPer100g: 350,
+    p: 8,
+    c: 65,
+    f: 8,
+    fib: 0.3,
+    defaultCat: "sweets_desserts",
+  },
+  halwa: {
+    calPer100g: 380,
+    p: 4,
+    c: 60,
+    f: 15,
+    fib: 1,
+    defaultCat: "sweets_desserts",
+  },
+  firni: {
+    calPer100g: 180,
+    p: 3.5,
+    c: 32,
+    f: 4.5,
+    fib: 0.2,
+    defaultCat: "sweets_desserts",
+  },
+  payesh: {
+    calPer100g: 170,
+    p: 3.5,
+    c: 30,
+    f: 4.5,
+    fib: 0.2,
+    defaultCat: "sweets_desserts",
+  },
+  naru: {
+    calPer100g: 420,
+    p: 4,
+    c: 70,
+    f: 15,
+    fib: 1.5,
+    defaultCat: "sweets_desserts",
+  },
+
+  // ===== Bangladeshi drinks =====
+  cha: {
+    calPer100g: 45,
+    p: 1.5,
+    c: 5,
+    f: 2,
+    fib: 0,
+    defaultCat: "snacks_beverages",
+  }, // milk tea
+  borhani: {
+    calPer100g: 60,
+    p: 2.5,
+    c: 6,
+    f: 3,
+    fib: 0.5,
+    defaultCat: "snacks_beverages",
+  },
+  lassi: {
+    calPer100g: 90,
+    p: 3.5,
+    c: 12,
+    f: 3,
+    fib: 0,
+    defaultCat: "snacks_beverages",
+  },
+  faluda: {
+    calPer100g: 160,
+    p: 3,
+    c: 30,
+    f: 4,
+    fib: 0.5,
+    defaultCat: "snacks_beverages",
+  },
 };
 
-/** Parse quantity and gram weight from ingredient snippet */
-function parseIngredientSnippet(text: string): { name: string; grams: number; baseKey: string | null } {
-  const lower = text.toLowerCase().trim();
-  let grams = 100; // default assumption
+/**
+ * Bangladeshi / Bengali colloquial & romanised aliases mapped to canonical
+ * NUTRITION_BASE keys. Applied before matching so everyday Dhaka/Bengali words
+ * resolve to the correct entry (e.g. "murgir jhol" -> chicken + curry).
+ */
+const KEY_ALIASES: Record<string, string> = {
+  "chicken breast": "chickenbreast",
+  "chicken thigh": "chickenthigh",
+  "egg white": "eggwhite",
+  "brown rice": "brownrice",
+  "raw rice": "rawrice",
+  "mustard oil": "mustardoil",
+  "soybean oil": "soybeanoil",
+  "soya oil": "soybeanoil",
+  "olive oil": "oliveoil",
+  "peanut butter": "peanutbutter",
+  "protein powder": "proteinpowder",
+  "kala bhuna": "kalabhuna",
+  "morog polao": "morogpolao",
+  "gorur mangsho": "beef",
+  goru: "beef",
+  "khashir mangsho": "khashi",
+  khashi: "khashi",
+  murgi: "murgi",
+  murgir: "murgi",
+  "murgir kolija": "kaleji",
+  kolija: "kaleji",
+  dim: "egg",
+  mach: "fish",
+  maach: "fish",
+  macher: "fish",
+  ilish: "ilish",
+  bhat: "rice",
+  chal: "rawrice",
+  "masoor dal": "masoordal",
+  "mug dal": "mugdal",
+  "mung dal": "mugdal",
+  "alu bhorta": "alubhorta",
+  "begun bhorta": "begunbhorta",
+  "lau bhorta": "laubhorta",
+  "misti doi": "mishtidoi",
+  ruti: "roti",
+  porota: "paratha",
+  aloo: "potato",
+  alur: "potato",
+  peyaj: "onion",
+  roshun: "garlic",
+  ada: "ginger",
+  "kacha lonka": "tomato",
+};
 
-  // Look for gram matches (e.g. 200g, 250 g, 500gm, 1kg)
-  const kgMatch = lower.match(/(\d+(?:\.\d+)?)\s*(?:kg|kilos?)/);
-  const gMatch = lower.match(/(\d+(?:\.\d+)?)\s*(?:g|gm|grams?)/);
-  const tbspMatch = lower.match(/(\d+(?:\.\d+)?)\s*(?:tbsp|tablespoon|tbsps|tablespoons)/);
-  const tspMatch = lower.match(/(\d+(?:\.\d+)?)\s*(?:tsp|teaspoon|tsps|teaspoons)/);
-  const cupMatch = lower.match(/(\d+(?:\.\d+)?)\s*(?:cups?|katori|bowl)/);
-  const scoopMatch = lower.match(/(\d+(?:\.\d+)?)\s*scoops?/);
-  const pieceMatch = lower.match(/(\d+(?:\.\d+)?)\s*(?:pcs?|pieces?|slice|slices?|egg|eggs)/);
+/** Precompiled word-boundary matchers (longest key first) to avoid substring
+ *  false positives such as "boiled" matching "oil" or "eggplant" matching "egg". */
+const KEY_PATTERNS: { key: string; re: RegExp }[] = Object.keys(NUTRITION_BASE)
+  .map((key) => ({ key, re: new RegExp(`\\b${key}s?\\b`, "i") }))
+  .sort((a, b) => b.key.length - a.key.length);
+
+/** Normalise colloquial phrases to canonical keys before ingredient matching */
+function canonicalize(text: string): string {
+  let t = text.toLowerCase();
+  for (const [phrase, key] of Object.entries(KEY_ALIASES)) {
+    t = t.replace(new RegExp(phrase.replace(/\s+/g, "\\s+"), "g"), key);
+  }
+  return t;
+}
+
+/** Per-piece gram weights for count based Bangladeshi household portions */
+const PIECE_GRAMS: { re: RegExp; grams: number }[] = [
+  { re: /\b(eggs?|dim)\b/, grams: 50 },
+  { re: /\b(rutis?|rotis?|chapatis?)\b/, grams: 35 },
+  { re: /\b(porotas?|parathas?)\b/, grams: 60 },
+  { re: /\b(luchis?)\b/, grams: 30 },
+  { re: /\b(kochuris?)\b/, grams: 45 },
+  { re: /\b(singaras?|samosas?)\b/, grams: 40 },
+  { re: /\b(piyajus?|begunis?)\b/, grams: 45 },
+  { re: /\b(bananas?|kolas?)\b/, grams: 118 },
+  { re: /\b(breads?|slices?)\b/, grams: 30 },
+  { re: /\b(chingris?|prawns?|shrimps?)\b/, grams: 15 },
+  { re: /\b(mishtidoi|doi)\b/, grams: 120 },
+];
+
+/** Resolve gram weight for a piece/count quantity based on the food described */
+function gramsForCount(count: number, text: string): number {
+  const lower = canonicalize(text);
+  for (const { re, grams } of PIECE_GRAMS) {
+    if (re.test(lower)) return count * grams;
+  }
+  return count * 75;
+}
+
+/** Parse quantity and gram weight from ingredient snippet */
+function parseIngredientSnippet(text: string): {
+  name: string;
+  grams: number;
+  baseKey: string | null;
+} {
+  const lower = text.toLowerCase().trim();
+  const matchText = canonicalize(text);
+  let grams: number | null = null;
+
+  // Weight based units
+  const kgMatch = lower.match(/(\d+(?:\.\d+)?)\s*(?:kg|kilos?)\b/);
+  const gMatch = lower.match(/(\d+(?:\.\d+)?)\s*(?:g|gm|grams?)\b/);
+  // Volume / Bangladeshi household units (katori, bati, chamoch, thala)
+  const tbspMatch = lower.match(
+    /(\d+(?:\.\d+)?)\s*(?:tbsp|tablespoons?|tbsps?|chamoch)\b/,
+  );
+  const tspMatch = lower.match(/(\d+(?:\.\d+)?)\s*(?:tsp|teaspoons?|tsps?)\b/);
+  const cupMatch = lower.match(
+    /(\d+(?:\.\d+)?)\s*(?:cups?|katori|bati|bowls?)\b/,
+  );
+  const plateMatch = lower.match(/(\d+(?:\.\d+)?)\s*(?:plates?|thala)\b/);
+  const scoopMatch = lower.match(/(\d+(?:\.\d+)?)\s*scoops?\b/);
+  // Piece / count units (BD style: "2 ruti", "3 eggs", "1 plate")
+  const pieceMatch = lower.match(
+    /(\d+(?:\.\d+)?)\s*(?:x\s*)?(pcs?|pieces?|nos?|slices?|plates?|thala|eggs?|dims?|rutis?|rotis?|chapatis?|parathas?|porotas?|luchis?|kochuris?|singaras?|samosas?|piyajus?|begunis?|bananas?|kolas?|breads?|katoris?|bowls?|cups?|glasses?|chingris?|prawns?|shrimps?)\b/,
+  );
 
   if (kgMatch) {
     grams = parseFloat(kgMatch[1]) * 1000;
@@ -139,28 +1305,36 @@ function parseIngredientSnippet(text: string): { name: string; grams: number; ba
     grams = parseFloat(tspMatch[1]) * 5;
   } else if (cupMatch) {
     grams = parseFloat(cupMatch[1]) * 150;
+  } else if (plateMatch) {
+    grams = parseFloat(plateMatch[1]) * 250;
   } else if (scoopMatch) {
     grams = parseFloat(scoopMatch[1]) * 30;
   } else if (pieceMatch) {
     const count = parseFloat(pieceMatch[1]);
-    if (lower.includes("egg")) grams = count * 50;
-    else if (lower.includes("roti") || lower.includes("chapati")) grams = count * 35;
-    else if (lower.includes("bread")) grams = count * 30;
-    else if (lower.includes("banana")) grams = count * 118;
-    else grams = count * 75;
+    const unit = pieceMatch[2].toLowerCase().replace(/s$/, "");
+    if (
+      unit === "katori" ||
+      unit === "bati" ||
+      unit === "bowl" ||
+      unit === "cup"
+    )
+      grams = count * 150;
+    else if (unit === "plate" || unit === "thala") grams = count * 250;
+    else if (unit.startsWith("glass")) grams = count * 240;
+    else grams = gramsForCount(count, text);
   }
 
-  // Find matching key in NUTRITION_BASE (longest match first)
+  // Word-boundary + alias aware key matching (longest key first) to avoid
+  // substring false positives such as "boiled" matching "oil".
   let matchedKey: string | null = null;
-  const sortedKeys = Object.keys(NUTRITION_BASE).sort((a, b) => b.length - a.length);
-  for (const key of sortedKeys) {
-    if (lower.includes(key)) {
+  for (const { key, re } of KEY_PATTERNS) {
+    if (re.test(matchText)) {
       matchedKey = key;
       break;
     }
   }
 
-  return { name: text, grams: Math.max(1, grams), baseKey: matchedKey };
+  return { name: text, grams: Math.max(1, grams ?? 100), baseKey: matchedKey };
 }
 
 /**
@@ -172,21 +1346,28 @@ function extractExplicitEatenGrams(text: string): number | null {
 
   // Pattern 1: e.g. "eaten portion 50g", "eaten poriton 50g", "portion eaten: 50g", "eaten 50g", "ate 50g", "portion 50g", "had 50g", "eating 50g"
   const m1 = lower.match(
-    /(?:eaten|eat|ate|eating|had|having|portion|poriton|serving|serving\s*size)\s*(?:portion|poriton|size|amount|weight)?\s*(?:is|was|of|:)?\s*(\d+(?:\.\d+)?)\s*(?:g|gm|grams?)\b/
+    /(?:eaten|eat|ate|eating|had|having|portion|poriton|serving|serving\s*size)\s*(?:portion|poriton|size|amount|weight)?\s*(?:is|was|of|:)?\s*(\d+(?:\.\d+)?)\s*(?:g|gm|grams?)\b/,
   );
   if (m1) return parseFloat(m1[1]);
 
   // Pattern 2: e.g. "50g portion", "50g poriton", "50g eaten", "50g serving", "50g of it"
-  const m2 = lower.match(/(\d+(?:\.\d+)?)\s*(?:g|gm|grams?)\s*(?:portion|poriton|eaten|serving|of\s*it)/);
+  const m2 = lower.match(
+    /(\d+(?:\.\d+)?)\s*(?:g|gm|grams?)\s*(?:portion|poriton|eaten|serving|of\s*it)/,
+  );
   if (m2) return parseFloat(m2[1]);
 
   // Pattern 3: e.g. "ate 50g" or "eaten 50g"
-  const m3 = lower.match(/(?:ate|eaten|eat)\s*(\d+(?:\.\d+)?)\s*(?:g|gm|grams?)\b/);
+  const m3 = lower.match(
+    /(?:ate|eaten|eat)\s*(\d+(?:\.\d+)?)\s*(?:g|gm|grams?)\b/,
+  );
   if (m3) return parseFloat(m3[1]);
 
   // Pattern 4: If text has only one single gram quantity and does NOT contain batch words, e.g. "50g chicken curry"
   const allGrams = [...lower.matchAll(/(\d+(?:\.\d+)?)\s*(?:g|gm|grams?)\b/g)];
-  if (allGrams.length === 1 && !/(?:batch|cooked|total|made|prepared)/.test(lower)) {
+  if (
+    allGrams.length === 1 &&
+    !/(?:batch|cooked|total|made|prepared)/.test(lower)
+  ) {
     return parseFloat(allGrams[0][1]);
   }
 
@@ -201,11 +1382,13 @@ function extractExplicitBatchGrams(text: string): number | null {
   const lower = text.toLowerCase();
 
   const m1 = lower.match(
-    /(?:cooked|made|total|batch|prepared|whole)\s*(?:total|batch|cooked|weight)?\s*(?:is|was|of|:)?\s*(\d+(?:\.\d+)?)\s*(?:g|gm|grams?)\b/
+    /(?:cooked|made|total|batch|prepared|whole)\s*(?:total|batch|cooked|weight)?\s*(?:is|was|of|:)?\s*(\d+(?:\.\d+)?)\s*(?:g|gm|grams?)\b/,
   );
   if (m1) return parseFloat(m1[1]);
 
-  const m2 = lower.match(/(\d+(?:\.\d+)?)\s*(?:g|gm|grams?)\s*(?:total|batch|cooked|prepared|in\s*total)/);
+  const m2 = lower.match(
+    /(\d+(?:\.\d+)?)\s*(?:g|gm|grams?)\s*(?:total|batch|cooked|prepared|in\s*total)/,
+  );
   if (m2) return parseFloat(m2[1]);
 
   return null;
@@ -215,9 +1398,13 @@ function extractExplicitBatchGrams(text: string): number | null {
 function isPortionClause(text: string): boolean {
   const lower = text.toLowerCase().trim();
   return (
-    /(?:eaten|eat|ate|eating|had|portion|poriton|serving|serving\s*size|batch|total\s*batch|total\s*cooked)/.test(lower) &&
+    /(?:eaten|eat|ate|eating|had|portion|poriton|serving|serving\s*size|batch|total\s*batch|total\s*cooked)/.test(
+      lower,
+    ) &&
     /\d/.test(lower) &&
-    !/(?:chicken|beef|mutton|goat|fish|salmon|tuna|shrimp|prawn|egg|rice|dal|lentil|chickpea|potato|onion|tomato|spinach|broccoli|carrot|oil|butter|ghee|cheese|paneer|milk|yogurt|bread|roti|oats|whey|banana|peanut|tofu|pasta)/.test(lower)
+    !/(?:chicken|beef|mutton|goat|fish|salmon|tuna|shrimp|prawn|egg|rice|dal|lentil|chickpea|potato|onion|tomato|spinach|broccoli|carrot|oil|butter|ghee|cheese|paneer|milk|yogurt|bread|roti|oats|whey|banana|peanut|tofu|pasta)/.test(
+      lower,
+    )
   );
 }
 
@@ -227,14 +1414,28 @@ function extractDishName(text: string): string {
   // Remove common leading phrases or instructions, and strip portion clauses
   let clean = text
     .replace(/^e\.g\.?\s*/i, "")
-    .replace(/(?:i\s+)?(?:ate|eaten|had|eating)\s+\d+(?:\.\d+)?\s*(?:g|gm|grams?|servings?|portions?|bowls?|cups?)\b/gi, "")
-    .replace(/(?:eaten|portion|poriton)\s*(?:portion|poriton|size|amount|weight)?\s*(?:is|was|of|:)?\s*\d+(?:\.\d+)?\s*(?:g|gm|grams?)\b/gi, "")
-    .replace(/(?:cooked|made|total|batch)\s*(?:total|batch|cooked)?\s*(?:is|was|of|:)?\s*\d+(?:\.\d+)?\s*(?:g|gm|grams?|servings?|portions?)\b/gi, "")
-    .replace(/\b(?:eaten|poriton|portion)\s+\d+(?:\.\d+)?\s*(?:g|gm|grams?)\b/gi, "")
+    .replace(
+      /(?:i\s+)?(?:ate|eaten|had|eating)\s+\d+(?:\.\d+)?\s*(?:g|gm|grams?|servings?|portions?|bowls?|cups?)\b/gi,
+      "",
+    )
+    .replace(
+      /(?:eaten|portion|poriton)\s*(?:portion|poriton|size|amount|weight)?\s*(?:is|was|of|:)?\s*\d+(?:\.\d+)?\s*(?:g|gm|grams?)\b/gi,
+      "",
+    )
+    .replace(
+      /(?:cooked|made|total|batch)\s*(?:total|batch|cooked)?\s*(?:is|was|of|:)?\s*\d+(?:\.\d+)?\s*(?:g|gm|grams?|servings?|portions?)\b/gi,
+      "",
+    )
+    .replace(
+      /\b(?:eaten|poriton|portion)\s+\d+(?:\.\d+)?\s*(?:g|gm|grams?)\b/gi,
+      "",
+    )
     .trim();
 
   clean = clean.replace(/^(?:i\s+)?(?:ate|eaten|had|eating)\s+/i, "").trim();
-  clean = clean.replace(/^(?:of|some|about|approx|approximately|a|an)\s+/i, "").trim();
+  clean = clean
+    .replace(/^(?:of|some|about|approx|approximately|a|an)\s+/i, "")
+    .trim();
   clean = clean.replace(/\s*\b\d+(?:\.\d+)?\s*(?:g|gm|grams?|kg)$/i, "").trim();
 
   // Pick the first clause before commas, semicolons or 'with'
@@ -284,7 +1485,7 @@ export interface CommunityTrainedFood {
  * train and calibrate the AI in-context over time.
  */
 export async function getCommunityTrainedFoods(
-  description: string
+  description: string,
 ): Promise<CommunityTrainedFood[]> {
   try {
     await connectToDatabase();
@@ -315,7 +1516,7 @@ export async function getCommunityTrainedFoods(
             "dish",
             "bowl",
             "plate",
-          ].includes(w)
+          ].includes(w),
       );
 
     // 2. Fetch the most recent custom foods added to the database ("trained in by time")
@@ -375,14 +1576,17 @@ export async function getCommunityTrainedFoods(
 
     return Array.from(map.values());
   } catch (err) {
-    console.warn("Could not query community custom foods for AI training:", err);
+    console.warn(
+      "Could not query community custom foods for AI training:",
+      err,
+    );
     return [];
   }
 }
 
 /** Format community custom foods as dynamic few-shot training context for the LLM */
 function formatCommunityTrainingPrompt(
-  communityFoods: CommunityTrainedFood[]
+  communityFoods: CommunityTrainedFood[],
 ): string {
   if (!communityFoods || communityFoods.length === 0) return "";
 
@@ -390,7 +1594,7 @@ function formatCommunityTrainingPrompt(
     .slice(0, 25)
     .map(
       (f) =>
-        `- "${f.name}" (${f.servingSize}): ${f.calories} kcal | P: ${f.protein}g | C: ${f.carbs}g | F: ${f.fat}g | Fiber: ${f.fiber}g [Category: ${f.category}]`
+        `- "${f.name}" (${f.servingSize}): ${f.calories} kcal | P: ${f.protein}g | C: ${f.carbs}g | F: ${f.fat}g | Fiber: ${f.fiber}g [Category: ${f.category}]`,
     );
 
   return `
@@ -403,7 +1607,7 @@ ${examples.join("\n")}
 /** Fallback deterministic nutrition calculator based on culinary rules and community trained foods */
 function fallbackCalculateNutrition(
   input: AIEstimateInput,
-  communityFoods?: CommunityTrainedFood[]
+  communityFoods?: CommunityTrainedFood[],
 ): AIEstimateResult {
   const fullText = [
     input.description || "",
@@ -583,12 +1787,12 @@ function fallbackCalculateNutrition(
   } else {
     // Check for fraction or portion counts
     const cookedAteMatch = fullText.match(
-      /(?:cooked|made|total)\s*(\d+)\s*(?:servings?|portions?).*?(?:ate|eat|had)\s*(\d+)/
+      /(?:cooked|made|total)\s*(\d+)\s*(?:servings?|portions?).*?(?:ate|eat|had)\s*(\d+)/,
     );
     const fractionMatch = fullText.match(/(\d+)\s*(?:\/|out of|of)\s*(\d+)/);
     const percentMatch = fullText.match(/(\d+)\s*%/);
     const gramPortionMatch = fullText.match(
-      /ate\s*(\d+)\s*g.*(?:of|total)\s*(\d+)\s*g/
+      /ate\s*(\d+)\s*g.*(?:of|total)\s*(\d+)\s*g/,
     );
 
     if (cookedAteMatch) {
@@ -678,13 +1882,13 @@ function fallbackCalculateNutrition(
 
       finalCal = Math.max(
         10,
-        Math.round((calPer100 + cookingExtraFat * 9) * factor)
+        Math.round((calPer100 + cookingExtraFat * 9) * factor),
       );
       finalP = Math.max(0, Math.round(pPer100 * factor * 10) / 10);
       finalC = Math.max(0, Math.round(cPer100 * factor * 10) / 10);
       finalF = Math.max(
         0,
-        Math.round((fPer100 + cookingExtraFat) * factor * 10) / 10
+        Math.round((fPer100 + cookingExtraFat) * factor * 10) / 10,
       );
       finalFib = Math.max(0, Math.round(fibPer100 * factor * 10) / 10);
       if (primaryCategory === "custom") {
@@ -695,7 +1899,10 @@ function fallbackCalculateNutrition(
       finalCal = Math.max(10, Math.round((160 + cookingExtraFat * 9) * factor));
       finalP = Math.max(0, Math.round(14 * factor * 10) / 10);
       finalC = Math.max(0, Math.round(12 * factor * 10) / 10);
-      finalF = Math.max(0, Math.round((6 + cookingExtraFat) * factor * 10) / 10);
+      finalF = Math.max(
+        0,
+        Math.round((6 + cookingExtraFat) * factor * 10) / 10,
+      );
       finalFib = Math.max(0, Math.round(1.5 * factor * 10) / 10);
     }
   } else {
@@ -736,7 +1943,7 @@ function fallbackCalculateNutrition(
 
 /** Call Gemini / LLM API if key is available, otherwise use culinary engine */
 export async function estimateFoodNutritionWithAI(
-  input: AIEstimateInput
+  input: AIEstimateInput,
 ): Promise<AIEstimateResult> {
   const apiKey =
     process.env.GEMINI_API_KEY ||
@@ -745,7 +1952,7 @@ export async function estimateFoodNutritionWithAI(
 
   // Retrieve community trained foods from database to continuously train/calibrate AI
   const communityFoods = await getCommunityTrainedFoods(
-    input.description || ""
+    input.description || "",
   );
 
   if (!apiKey) {
@@ -754,23 +1961,40 @@ export async function estimateFoodNutritionWithAI(
   }
 
   try {
-    const communityTrainingBlock = formatCommunityTrainingPrompt(communityFoods);
+    const communityTrainingBlock =
+      formatCommunityTrainingPrompt(communityFoods);
 
-    const systemPrompt = `You are an expert culinary nutritionist & macro calculation AI for a fitness application.
-Your goal is to parse a home-cooked dish recipe or food description from a single free-form user description, and calculate precise nutritional values to fill required fields for the exact portion eaten.
+    const systemPrompt = `You are an expert Bangladeshi & South Asian culinary nutritionist and macro-calculation AI for a fitness app.
+A user describes a home-cooked dish or recipe (usually Bangladeshi/Bengali) and you must return precise nutrition for the EXACT portion they ate.
 
-User Food Description:
-"${input.description || ""}"
-${input.ingredients ? `- Additional ingredients note: "${input.ingredients}"` : ""}
-${input.cookingMethod ? `- Cooking method: "${input.cookingMethod}"` : ""}
-${input.cookedPortionTotal ? `- Batch cooked: "${input.cookedPortionTotal}"` : ""}
-${input.portionEaten ? `- Portion eaten: "${input.portionEaten}"` : ""}
+USER INPUT (from a guided portion form):
+- Dish / food: "${input.description || ""}"
+- Ingredients & quantities: "${input.ingredients || "not provided"}"
+- Cooking method: "${input.cookingMethod || "not provided"}"
+- Total cooked / batch: "${input.cookedPortionTotal || "not provided"}"
+- Portion eaten: "${input.portionEaten || "not provided"}"
 ${communityTrainingBlock}
 CRITICAL COMMUNITY DATABASE TRAINING DIRECTIVE:
 - The database entries above are real custom foods created and verified by users over time ("trained in by time").
 - Use these evolving community custom food entries as ground-truth few-shot examples to continuously refine and calibrate your estimates:
   * If the user's dish or ingredients resemble any community entry, adopt its realistic calorie density and macro balance.
   * Continuously calibrate regional cooking oil, spice blooming, and realistic home portion weights from this community knowledge base.
+
+BANGLADESHI FOOD REFERENCE (typical per 100g, cooked) — calibrate against this table:
+- Fish (mach): Hilsa/Ilish ~310 kcal (fat 24g) | Rui/Katla ~128 kcal (protein 19-20g, fat 3.5-5g) | Tilapia/Mrigal ~128 kcal | Pangash ~170 kcal (fat 12g) | Koi/Shing/Magur/Taki ~105-125 kcal | Shutki (dried fish) ~280 kcal (protein 45g) | Chingri (prawn) ~105 kcal.
+- Meat: Chicken (murgi) ~165 kcal (protein 31g) | Beef (goru) ~250 kcal (fat 15g) | Mutton/Khashi ~294 kcal (fat 21g) | Liver (kolija) ~135 kcal.
+- Rice dishes: Plain rice (bhat) ~130 kcal | Kacchi Biryani ~185 kcal | Tehari/Biryani ~175 kcal | Polao ~180 kcal | Khichuri ~130 kcal | Morog Polao ~180 kcal.
+- Curries: Kala Bhuna ~250 kcal (fat 18.5g) | Bhuna ~215 kcal (fat 15g) | Rezala ~150 kcal | Korma ~195 kcal | Jhol ~115 kcal | Chicken Roast ~215 kcal | Beef Chap ~260 kcal.
+- Vegetables: Vaji/Bhaji ~140 kcal | Bhorta ~125 kcal | Alu Bhorta ~130 kcal | Dalna ~130 kcal | Shak (greens) ~60 kcal | Shukto ~95 kcal | Labra ~90 kcal.
+- Dal: Masoor/Mug dal ~105-116 kcal (protein 7.5-9g, fiber 6-8g).
+- Breads: Ruti/Roti ~264 kcal (1 ruti ≈ 35g ≈ 90 kcal) | Paratha/Porota ~330 kcal (1 ≈ 60g) | Luchi ~400 kcal (1 ≈ 30g) | Kochuri ~360 kcal | Chira ~350 kcal | Muri ~325 kcal.
+- Snacks: Singara ~250 kcal (1 ≈ 40g) | Samosa ~260 kcal | Piyaju ~300 kcal | Beguni ~250 kcal | Chanachur ~480 kcal | Jhalmuri ~230 kcal.
+- Sweets: Jilapi ~360 kcal | Roshogolla ~320 kcal | Mishti Doi ~200 kcal | Chomchom ~330 kcal | Halwa ~380 kcal | Firni/Payesh ~170-180 kcal.
+- Drinks: Cha (milk tea) ~45 kcal/100ml | Borhani ~60 kcal/100ml | Lassi ~90 kcal/100ml | Faluda ~160 kcal/100ml.
+
+BANGLADESHI HOUSEHOLD PORTION SIZE GUIDE (use when the user gives piece/count units):
+- 1 katori / bati ≈ 150g | 1 plate (thala) of rice ≈ 250g | 1 glass ≈ 240ml | 1 bhorta bowl ≈ 120g
+- 1 ruti ≈ 35g | 1 paratha/porota ≈ 60g | 1 luchi ≈ 30g | 1 egg (dim) ≈ 50g | 1 singara/samosa ≈ 40g | 1 medium banana ≈ 118g.
 
 CRITICAL BANGLADESHI & SOUTH ASIAN CULINARY CONTEXT:
 - Traditional Bangladeshi, Bengali, and South Asian dishes (Chicken Curry, Beef Bhuna, Kala Bhuna, Dim Bhuna, Macher Jhol, Kacchi Biryani, Tehari, Khichuri, Alu/Potol Vaji, Begun Bhorta, Paratha) are NATURALLY OILY AND SPICED.
@@ -783,16 +2007,22 @@ CRITICAL BANGLADESHI & SOUTH ASIAN CULINARY CONTEXT:
   * Bhorta: finished with pungent raw mustard oil (approx 4-7g fat per serving).
 - For 50g of cooked Bangladeshi meat curry/bhuna, expected calories are ~95-120 kcal, protein ~10-13g, fat ~5-7g.
 
+ANTI-HALLUCINATION RULES:
+- ONLY use ingredients the user actually mentioned (plus standard cooking oil/spices implied by the cooking method). NEVER invent major ingredients.
+- If an ingredient is not in the reference table above, use realistic USDA-style per-100g values and state the assumption.
+- Do NOT simply return per-100g reference values as the answer — always scale to the real portion eaten.
+
 CRITICAL ACCURACY & SERVING SIZE RULES:
 1. "servingSize" FIELD:
    - MUST EXACTLY match the portion eaten!
-   - If the user specifies an eaten weight in grams (e.g., "eaten portion 50g", "eaten poriton 50g", "ate 50g", "portion 50g", "50g"), the "servingSize" MUST BE CLEANLY FORMATTED AS THAT WEIGHT: e.g. "50g" (NOT "1 portion", NOT "approx 200g", NOT "1 serving").
-   - If the user cooked a batch and ate a portion (e.g., "cooked 500g chicken curry, ate 50g"), "servingSize" MUST be "50g".
-   - If piece-based (e.g. "2 eggs and 1 toast"), "servingSize" should be "2 eggs + 1 toast".
+   - If the user specifies an eaten weight in grams (e.g. "150g", "portion 150g", "ate 150g"), "servingSize" MUST BE CLEANLY FORMATTED AS THAT WEIGHT: e.g. "150g" (NOT "1 portion", NOT "approx 200g", NOT "1 serving").
+   - If the user cooked a batch and ate a portion (e.g. "cooked 500g chicken curry, ate 150g"), "servingSize" MUST be "150g".
+   - If piece-based (e.g. "2 eggs and 1 ruti"), "servingSize" should be "2 eggs + 1 ruti".
+   - If the portion eaten is NOT provided, assume ONE typical Bangladeshi home serving for that dish (e.g. 150g curry, 250g rice plate, 1 ruti) and explicitly say so in "explanation".
 
 2. CALORIE & MACRO CALCULATIONS:
    - "calories", "protein", "carbs", "fat", "fiber" MUST BE STRICTLY CALCULATED FOR THE EXACT "servingSize" (PORTION EATEN).
-   - If a batch was 500g total and the eaten portion was 50g, scale by 50/500 = 10%.
+   - If a batch was 500g total and the eaten portion was 150g, scale by 150/500 = 30%.
    - NEVER output batch totals if only a portion was eaten.
 
 3. "category":
@@ -802,15 +2032,15 @@ Output strictly valid JSON with this exact schema (no markdown wrap, just raw JS
 {
   "name": "Chicken Curry",
   "category": "curry_meat",
-  "servingSize": "50g",
-  "calories": 100,
-  "protein": 11.5,
-  "carbs": 2.5,
-  "fat": 5.0,
-  "fiber": 0.5,
-  "explanation": "Calculated from 500g batch chicken curry cooked with spiced oil gravy. Scaled to exact eaten portion of 50g (10% of batch).",
-  "cookingAdjustments": "Accounted for authentic Bangladeshi cooking oil & blooming spices across 50g portion.",
-  "portionEatenRatio": 0.1,
+  "servingSize": "150g",
+  "calories": 285,
+  "protein": 20.5,
+  "carbs": 6.5,
+  "fat": 19.5,
+  "fiber": 1.0,
+  "explanation": "Calculated from a 500g batch of Bangladeshi chicken curry cooked with spiced mustard-oil gravy. Scaled to exact eaten portion of 150g (30% of batch).",
+  "cookingAdjustments": "Accounted for authentic Bangladeshi cooking oil & blooming spices in the 150g portion.",
+  "portionEatenRatio": 0.3,
   "detectedIngredients": [
     { "name": "Chicken breast", "amount": "500g (batch)", "calories": 660, "protein": 124, "carbs": 0, "fat": 14.4, "fiber": 0 },
     { "name": "Cooking oil & spices", "amount": "2 tbsp oil (batch)", "calories": 240, "protein": 0, "carbs": 2, "fat": 27, "fiber": 0 }
@@ -829,7 +2059,7 @@ Output strictly valid JSON with this exact schema (no markdown wrap, just raw JS
             responseMimeType: "application/json",
           },
         }),
-      }
+      },
     );
 
     if (!res.ok) {
@@ -845,14 +2075,14 @@ Output strictly valid JSON with this exact schema (no markdown wrap, just raw JS
               responseMimeType: "application/json",
             },
           }),
-        }
+        },
       );
     }
 
     if (!res.ok) {
       console.warn(
         "Gemini API error, falling back to local nutrition engine:",
-        await res.text()
+        await res.text(),
       );
       return fallbackCalculateNutrition(input, communityFoods);
     }
@@ -865,11 +2095,18 @@ Output strictly valid JSON with this exact schema (no markdown wrap, just raw JS
 
     const parsed = JSON.parse(candidateText);
 
-    // Post-process to guarantee exact serving size and calorie alignment
-    const explicitGrams = extractExplicitEatenGrams(input.description || "");
-    const explicitBatchGrams = extractExplicitBatchGrams(
-      input.description || ""
-    );
+    // Post-process to guarantee exact serving size and calorie alignment.
+    // The portion details may live in the dedicated fields (portion eaten /
+    // total cooked), so search those first, then fall back to the description.
+    const eatenText = [input.portionEaten || "", input.description || ""]
+      .filter(Boolean)
+      .join(" ");
+    const batchText = [input.cookedPortionTotal || "", input.description || ""]
+      .filter(Boolean)
+      .join(" ");
+
+    const explicitGrams = extractExplicitEatenGrams(eatenText);
+    const explicitBatchGrams = extractExplicitBatchGrams(batchText);
 
     let finalServingSize = (parsed.servingSize || "1 portion").trim();
     let finalCal = Math.round(Number(parsed.calories) || 0);

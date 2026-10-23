@@ -60,6 +60,7 @@ import {
   estimateFoodNutritionWithAI,
   type DetectedIngredient,
   type AIEstimateResult,
+  type AIEstimateInput,
 } from "@/lib/actions/ai-food.actions";
 import {
   extractGramsFromServing,
@@ -95,6 +96,72 @@ const mealTypes: { type: MealType; label: string; icon: typeof Sun }[] = [
   { type: "lunch", label: "Lunch", icon: UtensilsCrossed },
   { type: "dinner", label: "Dinner", icon: Moon },
   { type: "snack", label: "Snacks", icon: Apple },
+];
+
+const emptyAIForm = (): AIEstimateInput => ({
+  description: "",
+  ingredients: "",
+  cookingMethod: "",
+  cookedPortionTotal: "",
+  portionEaten: "",
+});
+
+/** Bangladeshi-focused quick-start templates that populate the guided portion form. */
+const AI_PRESETS: { label: string; form: AIEstimateInput }[] = [
+  {
+    label: "🍗 Chicken Curry & Rice",
+    form: {
+      description:
+        "Homemade chicken curry (murgir jhol) with potato, eaten with rice",
+      ingredients:
+        "500g chicken, 2 potatoes (~150g), 1 onion, 2 tbsp mustard oil, spices",
+      cookingMethod: "Pressure-cooked jhol gravy",
+      cookedPortionTotal: "750g total after cooking",
+      portionEaten: "150g curry with 250g rice",
+    },
+  },
+  {
+    label: "🍚 Dal, Rice & Bhorta",
+    form: {
+      description: "Masoor dal with rice and alu bhorta",
+      ingredients:
+        "100g masoor dal, 250g cooked rice, 1 potato (~150g), 1 tsp mustard oil",
+      cookingMethod: "Boiled dal and mashed alu bhorta",
+      cookedPortionTotal: "",
+      portionEaten: "1 full plate (rice + dal + bhorta)",
+    },
+  },
+  {
+    label: "🐟 Ilish Bhapa & Rice",
+    form: {
+      description: "Steamed hilsa (ilish) with mustard, eaten with rice",
+      ingredients:
+        "2 pieces ilish (~250g), 2 tbsp mustard oil, 1 tsp mustard paste, green chili",
+      cookingMethod: "Bhapa (steamed)",
+      cookedPortionTotal: "400g",
+      portionEaten: "1 piece (125g) with 200g rice",
+    },
+  },
+  {
+    label: "🍳 Omelette & Paratha",
+    form: {
+      description: "Two-egg omelette with paratha",
+      ingredients: "2 eggs, 1 paratha, 1 tsp oil, onion, green chili",
+      cookingMethod: "Pan fried",
+      cookedPortionTotal: "",
+      portionEaten: "1 paratha + 2 eggs",
+    },
+  },
+  {
+    label: "🥩 Beef Bhuna",
+    form: {
+      description: "Beef bhuna (koshano)",
+      ingredients: "600g beef, 2 onions, 3 tbsp oil, spices",
+      cookingMethod: "Slow-cooked bhuna",
+      cookedPortionTotal: "450g total",
+      portionEaten: "150g",
+    },
+  },
 ];
 
 export default function DietPage() {
@@ -144,8 +211,8 @@ export default function DietPage() {
   const [customFat, setCustomFat] = useState<number>(5);
   const [customFiber, setCustomFiber] = useState<number>(2);
 
-  // AI custom food estimation state (single field)
-  const [aiPrompt, setAiPrompt] = useState("");
+  // AI custom food estimation state (guided portion form)
+  const [aiForm, setAiForm] = useState<AIEstimateInput>(emptyAIForm());
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState<AIEstimateResult | null>(null);
 
@@ -287,7 +354,7 @@ export default function DietPage() {
     setCustomCarbs(30);
     setCustomFat(5);
     setCustomFiber(2);
-    setAiPrompt("");
+    setAiForm(emptyAIForm());
     setAiResult(null);
     setCustomTab("ai");
   };
@@ -344,15 +411,19 @@ export default function DietPage() {
   };
 
   const handleRunAIEstimate = async () => {
-    if (!aiPrompt.trim()) {
-      toast.error("Please describe your food or ingredients first.");
+    if (!aiForm.description.trim()) {
+      toast.error("Please describe the food or recipe first.");
       return;
     }
 
     try {
       setAiLoading(true);
       const result = await estimateFoodNutritionWithAI({
-        description: aiPrompt.trim(),
+        description: aiForm.description.trim(),
+        ingredients: aiForm.ingredients?.trim() || undefined,
+        cookingMethod: aiForm.cookingMethod?.trim() || undefined,
+        cookedPortionTotal: aiForm.cookedPortionTotal?.trim() || undefined,
+        portionEaten: aiForm.portionEaten?.trim() || undefined,
       });
 
       setAiResult(result);
@@ -522,7 +593,7 @@ export default function DietPage() {
         open={userGuideOpen}
         onOpenChange={setUserGuideOpen}
         onSelectSamplePrompt={(prompt) => {
-          setAiPrompt(prompt);
+          setAiForm({ ...emptyAIForm(), description: prompt });
           setCustomTab("ai");
           setCustomFoodModalOpen(true);
         }}
@@ -1193,46 +1264,33 @@ export default function DietPage() {
             </button>
           </div>
 
-          {/* AI Recipe Mode - Single Field Input */}
+          {/* AI Guided Portion Form */}
           {customTab === "ai" && (
             <div className="space-y-3 text-xs w-full max-w-full overflow-hidden min-w-0">
-              {/* Quick Inspiration Presets */}
+              {/* Guidance */}
+              <p className="text-[11px] text-muted-foreground leading-relaxed flex items-start gap-1.5">
+                <Info className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                <span>
+                  Fill in what you know — the more detail, the more accurate the
+                  result. Tuned for Bangladeshi home cooking (katori/bati,
+                  thala, jhol, bhuna, bhorta).
+                </span>
+              </p>
+
+              {/* Quick Start Presets */}
               <div className="w-full max-w-full overflow-hidden">
                 <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 flex items-center gap-1">
                   <Sparkles className="w-3 h-3 text-primary shrink-0" />
-                  Quick Inspiration:
+                  Quick Start:
                 </p>
                 <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar text-[10px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden w-full">
-                  {[
-                    {
-                      label: "🍗 Chicken Curry (50g portion)",
-                      text: "500g chicken curry with potatoes and 2 tbsp oil. Eaten portion 50g.",
-                    },
-                    {
-                      label: "🍗 Chicken Curry (1 of 4 portions)",
-                      text: "500g chicken breast curry with 2 potatoes (150g), 1 onion, and 2 tbsp mustard oil. Cooked 4 servings in total, I ate 1 serving.",
-                    },
-                    {
-                      label: "🍳 2-Egg Omelette in Butter",
-                      text: "2 whole eggs omelette fried in 1 tbsp butter with chopped onions, green chilies, and 2 slices of whole wheat bread.",
-                    },
-                    {
-                      label: "🍚 Rice & Lentil Dal Bowl",
-                      text: "150g cooked basmati rice with 100g red lentil masoor dal cooked with 1 tsp ghee and cumin.",
-                    },
-                    {
-                      label: "🥩 Beef Bhuna (150g portion)",
-                      text: "600g lean beef cooked with 2 onions, 2 tbsp oil, and spices. Total cooked was ~500g, I ate 150g.",
-                    },
-                    {
-                      label: "🥤 Whey & Banana Shake",
-                      text: "1 scoop whey protein isolate with 1 medium banana, 250ml milk, and 1 tbsp peanut butter.",
-                    },
-                  ].map((preset, idx) => (
+                  {AI_PRESETS.map((preset, idx) => (
                     <button
                       key={idx}
                       type="button"
-                      onClick={() => setAiPrompt(preset.text)}
+                      onClick={() =>
+                        setAiForm({ ...emptyAIForm(), ...preset.form })
+                      }
                       className="px-2.5 py-1.5 rounded-xl bg-muted/60 hover:bg-primary/10 hover:text-primary border border-border/40 whitespace-nowrap transition-colors shrink-0 font-medium"
                     >
                       {preset.label}
@@ -1241,46 +1299,132 @@ export default function DietPage() {
                 </div>
               </div>
 
-              {/* Single Description Textarea */}
+              {/* 1. Dish / Recipe (required) */}
               <div className="space-y-1.5">
-                <Label className="font-semibold flex flex-wrap items-center justify-between gap-1 text-xs">
-                  <span className="flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-primary shrink-0" />
-                    Describe Food / Recipe:
+                <Label className="font-semibold flex items-center gap-1.5 text-xs">
+                  <span className="flex items-center justify-center w-4 h-4 rounded-full bg-primary/15 text-primary text-[10px] font-bold shrink-0">
+                    1
                   </span>
-                  <span className="text-[10px] text-muted-foreground font-normal">
-                    Ingredients, cooking method, & portion eaten in one field
-                  </span>
+                  Dish / Recipe
+                  <span className="text-primary">*</span>
                 </Label>
                 <textarea
-                  rows={3}
-                  value={aiPrompt}
-                  onChange={(e) => setAiPrompt(e.target.value)}
+                  rows={2}
+                  value={aiForm.description}
+                  onChange={(e) =>
+                    setAiForm((f) => ({ ...f, description: e.target.value }))
+                  }
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
                       e.preventDefault();
                       handleRunAIEstimate();
                     }
                   }}
-                  placeholder="e.g. 500g chicken breast curry with 2 potatoes and 2 tbsp oil. Cooked 4 servings in total, I ate 1 serving..."
+                  placeholder="e.g. Homemade chicken curry (murgir jhol) with potato, eaten with white rice"
                   className="w-full min-w-0 rounded-2xl p-3 bg-muted/40 border border-border/50 focus:border-primary focus:ring-1 focus:ring-primary text-xs outline-none transition-all resize-none box-border leading-relaxed"
                 />
-                <div className="flex items-center justify-between text-[10px] text-muted-foreground px-1">
-                  <span>
-                    Tip: Press{" "}
-                    <kbd className="px-1.5 py-0.5 rounded bg-muted text-[10px] font-mono border border-border/50">
-                      ⌘ Enter
-                    </kbd>{" "}
-                    to analyze
+              </div>
+
+              {/* 2. Ingredients & Quantities */}
+              <div className="space-y-1.5">
+                <Label className="font-semibold flex items-center gap-1.5 text-xs">
+                  <span className="flex items-center justify-center w-4 h-4 rounded-full bg-primary/15 text-primary text-[10px] font-bold shrink-0">
+                    2
                   </span>
-                  {aiPrompt.length > 0 && <span>{aiPrompt.length} chars</span>}
+                  Ingredients &amp; Quantities
+                  <span className="text-[10px] text-muted-foreground font-normal">
+                    (optional)
+                  </span>
+                </Label>
+                <textarea
+                  rows={2}
+                  value={aiForm.ingredients}
+                  onChange={(e) =>
+                    setAiForm((f) => ({ ...f, ingredients: e.target.value }))
+                  }
+                  placeholder="e.g. 500g chicken, 2 potatoes, 1 onion, 2 tbsp mustard oil"
+                  className="w-full min-w-0 rounded-2xl p-3 bg-muted/40 border border-border/50 focus:border-primary focus:ring-1 focus:ring-primary text-xs outline-none transition-all resize-none box-border leading-relaxed"
+                />
+              </div>
+
+              {/* 3. Cooking Method */}
+              <div className="space-y-1.5">
+                <Label className="font-semibold flex items-center gap-1.5 text-xs">
+                  <span className="flex items-center justify-center w-4 h-4 rounded-full bg-primary/15 text-primary text-[10px] font-bold shrink-0">
+                    3
+                  </span>
+                  Cooking Method
+                  <span className="text-[10px] text-muted-foreground font-normal">
+                    (optional)
+                  </span>
+                </Label>
+                <Input
+                  value={aiForm.cookingMethod}
+                  onChange={(e) =>
+                    setAiForm((f) => ({ ...f, cookingMethod: e.target.value }))
+                  }
+                  placeholder="e.g. Pressure-cooked jhol / bhuna / deep fried / boiled"
+                  className="rounded-2xl h-10 w-full"
+                />
+              </div>
+
+              {/* 4 & 5. Batch and Portion */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div className="space-y-1.5 min-w-0">
+                  <Label className="font-semibold flex items-center gap-1.5 text-xs">
+                    <span className="flex items-center justify-center w-4 h-4 rounded-full bg-primary/15 text-primary text-[10px] font-bold shrink-0">
+                      4
+                    </span>
+                    Total Cooked
+                    <span className="text-[10px] text-muted-foreground font-normal">
+                      (optional)
+                    </span>
+                  </Label>
+                  <Input
+                    value={aiForm.cookedPortionTotal}
+                    onChange={(e) =>
+                      setAiForm((f) => ({
+                        ...f,
+                        cookedPortionTotal: e.target.value,
+                      }))
+                    }
+                    placeholder="e.g. 750g total or 4 servings"
+                    className="rounded-2xl h-10 w-full"
+                  />
+                </div>
+                <div className="space-y-1.5 min-w-0">
+                  <Label className="font-semibold flex items-center gap-1.5 text-xs">
+                    <span className="flex items-center justify-center w-4 h-4 rounded-full bg-primary/15 text-primary text-[10px] font-bold shrink-0">
+                      5
+                    </span>
+                    Portion You Ate
+                    <span className="text-[10px] text-muted-foreground font-normal">
+                      (optional)
+                    </span>
+                  </Label>
+                  <Input
+                    value={aiForm.portionEaten}
+                    onChange={(e) =>
+                      setAiForm((f) => ({ ...f, portionEaten: e.target.value }))
+                    }
+                    placeholder="e.g. 150g / 1 katori / half / 1 of 4"
+                    className="rounded-2xl h-10 w-full"
+                  />
                 </div>
               </div>
+
+              <p className="text-[10px] text-muted-foreground px-1">
+                Tip: Press{" "}
+                <kbd className="px-1.5 py-0.5 rounded bg-muted text-[10px] font-mono border border-border/50">
+                  ⌘ Enter
+                </kbd>{" "}
+                to analyze
+              </p>
 
               {/* AI Calculate & Fill Button */}
               <Button
                 type="button"
-                disabled={aiLoading || !aiPrompt.trim()}
+                disabled={aiLoading || !aiForm.description.trim()}
                 onClick={handleRunAIEstimate}
                 className="w-full rounded-2xl py-3.5 sm:py-4 bg-gradient-to-r from-primary to-emerald-600 hover:from-primary/90 hover:to-emerald-700 text-white font-bold text-xs sm:text-sm gap-2 shadow-md hover:shadow-lg transition-all"
               >

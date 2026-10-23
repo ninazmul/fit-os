@@ -3,10 +3,14 @@
  * Update values here to reflect across the entire NutriBD application.
  */
 
+// Single source of truth for the app version — update here only.
+const VERSION_RAW = "3.3.0";
+const VERSION = `v${VERSION_RAW}`;
+
 export const APP_CONFIG = {
   name: "NutriBD",
-  version: "v3.2.2",
-  versionRaw: "3.2.2",
+  version: VERSION,
+  versionRaw: VERSION_RAW,
   tagline: "Smart AI Fitness & Nutrition Platform",
   subTagline: "AI-Powered Nutrition & Health Intelligence for Bangladesh",
   description:
@@ -28,7 +32,7 @@ export const APP_CONFIG = {
     appleTouchIcon: "/assets/icons/apple-touch-icon.png",
   },
   brandPills: {
-    badge: "v3.2.2",
+    badge: VERSION,
     bdBadge: "BD",
     customBadge: "Custom",
   },
