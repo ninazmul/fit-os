@@ -2,6 +2,7 @@ import DesktopSidebar from "@/components/navigation/DesktopSidebar";
 import BottomNav from "@/components/navigation/BottomNav";
 import TopNavbar from "@/components/navigation/TopNavbar";
 import AddToHomeScreen from "@/components/shared/AddToHomeScreen";
+import BodyInteractionGuard from "@/components/shared/BodyInteractionGuard";
 import { Toaster } from "react-hot-toast";
 import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
@@ -37,6 +38,7 @@ export default async function NutriBDLayout({
 
       <BottomNav />
       <AddToHomeScreen />
+      <BodyInteractionGuard />
     </div>
   );
 }

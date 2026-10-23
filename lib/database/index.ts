@@ -9,7 +9,6 @@ interface CachedConnection {
 
 // Extend NodeJS global to include mongoose cache
 declare global {
-  // eslint-disable-next-line no-var
   var mongoose: CachedConnection | undefined;
 }
 

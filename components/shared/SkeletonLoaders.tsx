@@ -4,27 +4,38 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function DashboardSkeleton() {
   return (
-    <div className="space-y-6">
-      {/* Header skeleton */}
-      <div className="flex items-center justify-between">
-        <div>
-          <Skeleton className="h-7 w-48 rounded-lg" />
-          <Skeleton className="h-4 w-32 rounded-lg mt-2" />
+    <div className="space-y-5">
+      {/* Page header */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-10 w-10 rounded-2xl" />
+          <div>
+            <Skeleton className="h-6 w-44 rounded-lg" />
+            <Skeleton className="mt-2 h-4 w-32 rounded-lg" />
+          </div>
         </div>
-        <Skeleton className="h-10 w-28 rounded-xl" />
+        <Skeleton className="h-11 w-full rounded-2xl" />
       </div>
 
-      {/* Overview Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[1, 2, 3, 4].map((i) => (
-          <Skeleton key={i} className="h-28 rounded-2xl" />
+      {/* Nutrition summary */}
+      <Skeleton className="h-52 w-full rounded-3xl" />
+
+      {/* Quick actions */}
+      <Skeleton className="h-12 w-full rounded-2xl" />
+      <div className="grid grid-cols-3 gap-2.5">
+        {[1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-11 rounded-2xl" />
         ))}
       </div>
 
-      {/* Main Charts / Widgets */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Skeleton className="h-72 rounded-2xl md:col-span-2" />
-        <Skeleton className="h-72 rounded-2xl" />
+      {/* Today's meals */}
+      <Skeleton className="h-64 w-full rounded-3xl" />
+
+      {/* Daily habits */}
+      <div className="grid grid-cols-3 gap-2.5">
+        {[1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-24 rounded-2xl" />
+        ))}
       </div>
     </div>
   );

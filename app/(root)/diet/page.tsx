@@ -31,7 +31,6 @@ import {
   Trash2,
   Pencil,
   Search,
-  Flame,
   Calendar,
   ChevronLeft,
   ChevronRight,
@@ -47,8 +46,6 @@ import {
   CheckCircle2,
   Calculator,
   Loader2,
-  HelpCircle,
-  Lightbulb,
   BookOpen,
 } from "lucide-react";
 import type {
@@ -78,6 +75,8 @@ import {
 import dynamic from "next/dynamic";
 import toast from "react-hot-toast";
 import { format, addDays, subDays } from "date-fns";
+import PageHeader from "@/components/shared/PageHeader";
+import NutritionSummary from "@/components/shared/NutritionSummary";
 
 const AdUnit = dynamic(() => import("@/components/shared/AdUnit"), {
   ssr: false,
@@ -530,51 +529,47 @@ export default function DietPage() {
       />
 
       {/* Date Navigation & Title */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight flex flex-wrap items-center gap-2">
-            <span>Diet &amp; Nutrition Tracker 🥗</span>
-            <button
-              type="button"
-              onClick={() => setUserGuideOpen(true)}
-              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-xs font-semibold border border-primary/20 shrink-0 shadow-2xs"
-              title="Open User Guide"
-            >
-              <BookOpen className="w-3 h-3" />
-              <span>Guide</span>
-            </button>
-          </h1>
-          <p className="text-xs text-muted-foreground">
-            Log meals, Bangladeshi dishes, saved templates &amp; barcodes
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Date Selector Pill */}
-          <div className="flex items-center gap-2 bg-card border border-border/60 p-1.5 rounded-2xl">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setSelectedDate((d) => subDays(d, 1))}
-              className="h-8 w-8 rounded-xl"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <div className="flex items-center gap-2 px-3 text-xs font-semibold">
-              <Calendar className="w-4 h-4 text-primary" />
-              <span>{format(selectedDate, "EEE, MMM d, yyyy")}</span>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setSelectedDate((d) => addDays(d, 1))}
-              className="h-8 w-8 rounded-xl"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </Button>
+      <PageHeader
+        icon={UtensilsCrossed}
+        title="Diet & Nutrition"
+        subtitle="Log meals, Bangladeshi dishes, saved templates & barcodes"
+        actions={
+          <button
+            type="button"
+            onClick={() => setUserGuideOpen(true)}
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-xs font-semibold border border-primary/20 shrink-0 shadow-2xs min-h-[2rem]"
+            title="Open User Guide"
+          >
+            <BookOpen className="w-3 h-3" />
+            <span>Guide</span>
+          </button>
+        }
+      >
+        <div className="flex w-full items-center justify-between gap-2 rounded-2xl border border-border/60 bg-card p-1.5">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Previous day"
+            onClick={() => setSelectedDate((d) => subDays(d, 1))}
+            className="h-9 w-9 rounded-xl"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <div className="flex items-center gap-2 px-3 text-xs font-semibold">
+            <Calendar className="w-4 h-4 text-primary" />
+            <span>{format(selectedDate, "EEE, MMM d, yyyy")}</span>
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Next day"
+            onClick={() => setSelectedDate((d) => addDays(d, 1))}
+            className="h-9 w-9 rounded-xl"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </Button>
         </div>
-      </div>
+      </PageHeader>
 
       {/* Saved Meals & Templates Carousel (⭐⭐⭐⭐⭐ Phase 1) */}
       {savedMeals.length > 0 && (
@@ -659,117 +654,46 @@ export default function DietPage() {
         </div>
       )}
 
-      {/* Daily Nutrition Summary Banner */}
-      <div className="glass-card p-6 rounded-3xl border border-border/50 space-y-4">
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-3">
-            <div className="p-3 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
-              <Flame className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground font-medium">
-                Total Consumed
-              </p>
-              <h2 className="text-2xl font-bold">
-                {Math.round(dailyCalories)}{" "}
-                <span className="text-sm font-normal text-muted-foreground">
-                  / {calGoal} kcal
-                </span>
-              </h2>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4 text-xs font-semibold ml-auto">
-            <div className="text-right">
-              <p className="text-muted-foreground">Remaining</p>
-              <p
-                className={`text-base font-bold ${calGoal - dailyCalories < 0 ? "text-red-500" : "text-emerald-600 dark:text-emerald-400"}`}
-              >
-                {Math.max(0, calGoal - dailyCalories)} kcal
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Macro Progress Bars */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-border/40 text-xs">
-          <div className="space-y-1">
-            <div className="flex justify-between">
-              <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                Protein
-              </span>
-              <span className="text-muted-foreground">
-                {Math.round(dailyProtein)}g / {proteinGoal}g
-              </span>
-            </div>
-            <div className="w-full bg-muted h-2 rounded-full overflow-hidden">
-              <div
-                className="bg-emerald-500 h-full rounded-full"
-                style={{
-                  width: `${Math.min(100, (dailyProtein / proteinGoal) * 100)}%`,
-                }}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <div className="flex justify-between">
-              <span className="font-semibold text-blue-600 dark:text-blue-400">
-                Carbs
-              </span>
-              <span className="text-muted-foreground">
-                {Math.round(dailyCarbs)}g / {carbGoal}g
-              </span>
-            </div>
-            <div className="w-full bg-muted h-2 rounded-full overflow-hidden">
-              <div
-                className="bg-blue-500 h-full rounded-full"
-                style={{
-                  width: `${Math.min(100, (dailyCarbs / carbGoal) * 100)}%`,
-                }}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <div className="flex justify-between">
-              <span className="font-semibold text-purple-600 dark:text-purple-400">
-                Fat
-              </span>
-              <span className="text-muted-foreground">
-                {Math.round(dailyFat)}g / {fatGoal}g
-              </span>
-            </div>
-            <div className="w-full bg-muted h-2 rounded-full overflow-hidden">
-              <div
-                className="bg-purple-500 h-full rounded-full"
-                style={{
-                  width: `${Math.min(100, (dailyFat / fatGoal) * 100)}%`,
-                }}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <div className="flex justify-between">
-              <span className="font-semibold text-amber-600 dark:text-amber-400">
-                Fiber
-              </span>
-              <span className="text-muted-foreground">
-                {Math.round(dailyFiber)}g / {fiberGoal}g
-              </span>
-            </div>
-            <div className="w-full bg-muted h-2 rounded-full overflow-hidden">
-              <div
-                className="bg-amber-500 h-full rounded-full"
-                style={{
-                  width: `${Math.min(100, (dailyFiber / fiberGoal) * 100)}%`,
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Daily Nutrition Summary */}
+      <NutritionSummary
+        calories={{
+          key: "calories",
+          label: "Calories",
+          consumed: Math.round(dailyCalories),
+          target: calGoal,
+          unit: "kcal",
+        }}
+        macros={[
+          {
+            key: "protein",
+            label: "Protein",
+            consumed: Math.round(dailyProtein),
+            target: proteinGoal,
+            unit: "g",
+          },
+          {
+            key: "carbs",
+            label: "Carbs",
+            consumed: Math.round(dailyCarbs),
+            target: carbGoal,
+            unit: "g",
+          },
+          {
+            key: "fat",
+            label: "Fat",
+            consumed: Math.round(dailyFat),
+            target: fatGoal,
+            unit: "g",
+          },
+          {
+            key: "fiber",
+            label: "Fiber",
+            consumed: Math.round(dailyFiber),
+            target: fiberGoal,
+            unit: "g",
+          },
+        ]}
+      />
 
       {/* Mid-page Ad */}
       <AdUnit size="auto" label="Sponsored" maxWidth="970px" />
@@ -877,6 +801,7 @@ export default function DietPage() {
                           onClick={() => handleRemoveItem(loggedMeal._id, idx)}
                           className="h-7 w-7 text-muted-foreground hover:text-red-500 rounded-lg"
                           title="Remove this item"
+                          aria-label={`Remove ${item.name}`}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </Button>
@@ -983,6 +908,7 @@ export default function DietPage() {
                           className="h-7 w-7 text-muted-foreground hover:text-primary rounded-lg"
                           onClick={(e) => handleEditCustomFood(e, food)}
                           title="Edit my custom food"
+                          aria-label={`Edit ${food.name}`}
                         >
                           <Pencil className="w-3.5 h-3.5" />
                         </Button>
@@ -996,6 +922,7 @@ export default function DietPage() {
                             handleDeleteCustomFood(e, food._id, food)
                           }
                           title="Delete my custom food"
+                          aria-label={`Delete ${food.name}`}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </Button>

@@ -15,19 +15,16 @@ import {
   Search,
   Camera,
   RotateCcw,
-  UtensilsCrossed,
   AlertCircle,
   X,
   Loader2,
   ScanLine,
   ChefHat,
   CheckCircle2,
-  Sparkles,
 } from "lucide-react";
-import type { MealType } from "@/types/fitness";
+import type { MealType, IFood } from "@/types/fitness";
 import { createCustomFood } from "@/lib/actions/food.actions";
 import type { FoodFormValues } from "@/validations/fitness";
-import { getLocalDateString } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { notifyDataUpdated } from "@/lib/events";
@@ -38,7 +35,7 @@ interface BarcodeScannerProps {
   dateStr?: string;
   defaultMealType?: MealType;
   onLogged?: () => void | Promise<void>;
-  onCustomFoodSaved?: (food: any) => void | Promise<void>;
+  onCustomFoodSaved?: (food: IFood) => void | Promise<void>;
 }
 
 interface ScannedProduct {
@@ -56,12 +53,8 @@ interface ScannedProduct {
 
 type FacingMode = "environment" | "user";
 
-type BarcodeDetectorConstructor = new (options?: {
-  formats?: string[];
-}) => {
-  detect: (
-    source: CanvasImageSource
-  ) => Promise<Array<{ rawValue?: string }>>;
+type BarcodeDetectorConstructor = new (options?: { formats?: string[] }) => {
+  detect: (source: CanvasImageSource) => Promise<Array<{ rawValue?: string }>>;
 };
 
 /*
@@ -98,17 +91,18 @@ const QUICK_TEST_BARCODES = [
   { label: "KitKat", code: "5000159461122" },
 ] as const;
 
-const FOOD_CATEGORIES: { value: FoodFormValues["category"]; label: string }[] = [
-  { value: "snacks_beverages", label: "Snacks & Beverages 🥤" },
-  { value: "dairy_eggs", label: "Dairy & Eggs 🥛" },
-  { value: "bread_bakery", label: "Bread & Bakery 🍞" },
-  { value: "rice_grains", label: "Rice & Grains 🍚" },
-  { value: "fruits_veg", label: "Fruits & Vegetables 🍎" },
-  { value: "curry_meat", label: "Curry & Meat 🍗" },
-  { value: "fish_seafood", label: "Fish & Seafood 🐟" },
-  { value: "sweets_desserts", label: "Sweets & Desserts 🍯" },
-  { value: "custom", label: "Other / Custom 🍽️" },
-];
+const FOOD_CATEGORIES: { value: FoodFormValues["category"]; label: string }[] =
+  [
+    { value: "snacks_beverages", label: "Snacks & Beverages 🥤" },
+    { value: "dairy_eggs", label: "Dairy & Eggs 🥛" },
+    { value: "bread_bakery", label: "Bread & Bakery 🍞" },
+    { value: "rice_grains", label: "Rice & Grains 🍚" },
+    { value: "fruits_veg", label: "Fruits & Vegetables 🍎" },
+    { value: "curry_meat", label: "Curry & Meat 🍗" },
+    { value: "fish_seafood", label: "Fish & Seafood 🐟" },
+    { value: "sweets_desserts", label: "Sweets & Desserts 🍯" },
+    { value: "custom", label: "Other / Custom 🍽️" },
+  ];
 
 function inferCategory(name: string): FoodFormValues["category"] {
   const lower = name.toLowerCase();
@@ -241,8 +235,6 @@ async function deviceHasCamera(): Promise<boolean | null> {
 export default function BarcodeScanner({
   open,
   onOpenChange,
-  dateStr,
-  defaultMealType = "snack",
   onLogged,
   onCustomFoodSaved,
 }: BarcodeScannerProps) {
@@ -271,7 +263,7 @@ export default function BarcodeScanner({
   const cameraStreamRef = useRef<MediaStream | null>(null);
 
   const detectorRef = useRef<InstanceType<BarcodeDetectorConstructor> | null>(
-    null
+    null,
   );
 
   const animationFrameRef = useRef<number | null>(null);
@@ -325,7 +317,7 @@ export default function BarcodeScanner({
         {
           cache: "no-store",
           signal: controller.signal,
-        }
+        },
       );
 
       const data = await res.json();
@@ -333,7 +325,7 @@ export default function BarcodeScanner({
       if (!res.ok || !data.product) {
         setErrorMsg(
           data.error ||
-          `No product found for barcode "${cleanCode}". Try searching manually.`
+            `No product found for barcode "${cleanCode}". Try searching manually.`,
         );
 
         return;
@@ -483,7 +475,7 @@ export default function BarcodeScanner({
       try {
         const supported = await BarcodeDetectorCtor.getSupportedFormats();
         const narrowed = BARCODE_FORMATS.filter((format) =>
-          supported.includes(format)
+          supported.includes(format),
         );
 
         if (narrowed.length > 0) {
@@ -509,7 +501,7 @@ export default function BarcodeScanner({
    */
 
   const scanFrame = useCallback(
-    async (timestamp: number) => {
+    async function scanFrame(timestamp: number) {
       const video = videoRef.current;
       const detector = detectorRef.current;
 
@@ -517,8 +509,7 @@ export default function BarcodeScanner({
         return;
       }
 
-      const dueForScan =
-        timestamp - lastScanAtRef.current >= SCAN_INTERVAL_MS;
+      const dueForScan = timestamp - lastScanAtRef.current >= SCAN_INTERVAL_MS;
 
       const videoReady =
         video.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA &&
@@ -562,7 +553,7 @@ export default function BarcodeScanner({
 
       animationFrameRef.current = requestAnimationFrame(scanFrame);
     },
-    [handleLookupBarcode, stopCamera]
+    [handleLookupBarcode, stopCamera],
   );
 
   /*
@@ -591,7 +582,7 @@ export default function BarcodeScanner({
 
         if (!navigator.mediaDevices) {
           setErrorMsg(
-            "Camera access is unavailable. Please use HTTPS or localhost."
+            "Camera access is unavailable. Please use HTTPS or localhost.",
           );
           return;
         }
@@ -603,7 +594,7 @@ export default function BarcodeScanner({
 
         if (!window.isSecureContext) {
           setErrorMsg(
-            "Camera access requires HTTPS. It works on localhost during development."
+            "Camera access requires HTTPS. It works on localhost during development.",
           );
           return;
         }
@@ -612,7 +603,7 @@ export default function BarcodeScanner({
 
         if (!detector) {
           setErrorMsg(
-            "Automatic barcode scanning is not supported in this browser. Please enter the barcode manually."
+            "Automatic barcode scanning is not supported in this browser. Please enter the barcode manually.",
           );
           return;
         }
@@ -629,7 +620,7 @@ export default function BarcodeScanner({
 
         if (hasCamera === false) {
           setErrorMsg(
-            "No camera was found on this device. Please enter the barcode manually."
+            "No camera was found on this device. Please enter the barcode manually.",
           );
           return;
         }
@@ -659,8 +650,7 @@ export default function BarcodeScanner({
         } catch (error) {
           console.error("getUserMedia error:", error);
 
-          const cameraError =
-            error instanceof DOMException ? error.name : "";
+          const cameraError = error instanceof DOMException ? error.name : "";
 
           const messages: Record<string, string> = {
             NotAllowedError:
@@ -677,7 +667,7 @@ export default function BarcodeScanner({
 
           setErrorMsg(
             messages[cameraError] ||
-            "Unable to access the camera. Please check your browser permissions and try again."
+              "Unable to access the camera. Please check your browser permissions and try again.",
           );
 
           return;
@@ -739,17 +729,21 @@ export default function BarcodeScanner({
             }
 
             setCameraReady(false);
-            setErrorMsg("Could not start the camera preview. Please try again.");
+            setErrorMsg(
+              "Could not start the camera preview. Please try again.",
+            );
           }
         });
       } catch (error) {
         console.error("Camera initialization error:", error);
 
         setCameraReady(false);
-        setErrorMsg("Unable to initialize the camera. Please check your browser permissions.");
+        setErrorMsg(
+          "Unable to initialize the camera. Please check your browser permissions.",
+        );
       }
     },
-    [createDetector, facingMode, releaseCameraResources, scanFrame]
+    [createDetector, facingMode, releaseCameraResources, scanFrame],
   );
 
   /*
@@ -914,7 +908,8 @@ export default function BarcodeScanner({
                 </div>
 
                 <p className="text-center text-[11px] text-muted-foreground">
-                  Align the barcode inside the frame. It will scan automatically.
+                  Align the barcode inside the frame. It will scan
+                  automatically.
                 </p>
               </div>
             )}
@@ -1066,7 +1061,7 @@ export default function BarcodeScanner({
                     value={editCategory}
                     onChange={(e) =>
                       setEditCategory(
-                        e.target.value as FoodFormValues["category"]
+                        e.target.value as FoodFormValues["category"],
                       )
                     }
                     className="w-full h-10 rounded-xl px-3 bg-background border border-input text-xs font-medium focus:ring-1 focus:ring-primary focus:outline-none transition-colors"

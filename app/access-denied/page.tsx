@@ -22,10 +22,7 @@ export default function AccessDeniedPage() {
         </p>
         {user ? (
           <div className="flex flex-col gap-3">
-            <Button
-              asChild
-              className="w-full bg-[#3e0078] hover:bg-[#3e0078]/90"
-            >
+            <Button asChild className="w-full">
               <Link href="/">Go Home</Link>
             </Button>
             <SignOutButton redirectUrl="/sign-in">
@@ -35,7 +32,7 @@ export default function AccessDeniedPage() {
             </SignOutButton>
           </div>
         ) : (
-          <Button asChild className="w-full bg-[#3e0078] hover:bg-[#3e0078]/90">
+          <Button asChild className="w-full">
             <Link href="/sign-in">Sign In</Link>
           </Button>
         )}

@@ -2,9 +2,16 @@
 
 import Link from "next/link";
 import { useTheme } from "next-themes";
+import PageHeader from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Settings,
   Moon,
@@ -55,10 +62,11 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6 max-w-3xl">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">App Settings ⚙️</h1>
-        <p className="text-xs text-muted-foreground">Customize preferences, theme, units, and export your data</p>
-      </div>
+      <PageHeader
+        icon={Settings}
+        title="App Settings"
+        subtitle="Customize preferences, theme, units, and export your data"
+      />
 
       {/* Theme Preferences */}
       <div className="glass-card p-6 rounded-3xl border border-border/50 space-y-4">
@@ -123,8 +131,12 @@ export default function SettingsPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="metric">Metric (Kilograms, Centimeters, Milliliters)</SelectItem>
-              <SelectItem value="imperial">Imperial (Pounds, Inches, Fluid Ounces)</SelectItem>
+              <SelectItem value="metric">
+                Metric (Kilograms, Centimeters, Milliliters)
+              </SelectItem>
+              <SelectItem value="imperial">
+                Imperial (Pounds, Inches, Fluid Ounces)
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -140,9 +152,14 @@ export default function SettingsPage() {
         <div className="flex items-center justify-between p-4 rounded-2xl bg-muted/40 text-xs">
           <div>
             <p className="font-bold text-sm">Download My Data (JSON / CSV)</p>
-            <p className="text-muted-foreground text-[11px]">Export complete workout, nutrition, and weight history</p>
+            <p className="text-muted-foreground text-[11px]">
+              Export complete workout, nutrition, and weight history
+            </p>
           </div>
-          <Button onClick={handleExportData} className="rounded-xl text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold">
+          <Button
+            onClick={handleExportData}
+            className="rounded-xl text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold"
+          >
             Export Data
           </Button>
         </div>
@@ -168,7 +185,9 @@ export default function SettingsPage() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-base font-bold tracking-tight">{APP_NAME}</span>
+                <span className="text-base font-bold tracking-tight">
+                  {APP_NAME}
+                </span>
                 <span className="rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
                   {APP_VERSION}
                 </span>
@@ -179,7 +198,10 @@ export default function SettingsPage() {
 
           <div className="flex flex-wrap items-center gap-2">
             <Link href="/about">
-              <Button size="sm" className="rounded-xl text-xs font-bold gap-1.5 bg-pink-600 hover:bg-pink-700 text-white shadow-sm">
+              <Button
+                size="sm"
+                className="rounded-xl text-xs font-bold gap-1.5 bg-pink-600 hover:bg-pink-700 text-white shadow-sm"
+              >
                 <Heart className="w-3.5 h-3.5 fill-current" />
                 About Us & Donate
               </Button>
