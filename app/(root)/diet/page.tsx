@@ -14,7 +14,7 @@ import {
   updateCustomFood,
   deleteCustomFood,
 } from "@/lib/actions/food.actions";
-import { getUserProfile } from "@/lib/actions/profile.actions";
+import { getProfileNutritionTargets } from "@/lib/actions/profile.actions";
 import {
   Dialog,
   DialogContent,
@@ -104,6 +104,8 @@ export default function DietPage() {
   const [meals, setMeals] = useState<any[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [profile, setProfile] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [macros, setMacros] = useState<any>(null);
   const [savedMeals, setSavedMeals] = useState<ISavedMeal[]>([]);
   const [, setLoading] = useState(true);
 
@@ -125,7 +127,9 @@ export default function DietPage() {
   const [foodCatalog, setFoodCatalog] = useState<IFood[]>([]);
   const [selectedFood, setSelectedFood] = useState<IFood | null>(null);
   const [quantity, setQuantity] = useState<number>(1);
-  const [quantityMode, setQuantityMode] = useState<"multiplier" | "grams">("multiplier");
+  const [quantityMode, setQuantityMode] = useState<"multiplier" | "grams">(
+    "multiplier",
+  );
   const [eatenGrams, setEatenGrams] = useState<number>(100);
 
   // Custom food modal state
@@ -154,13 +158,14 @@ export default function DietPage() {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const [mealsData, userProfile, templates] = await Promise.all([
+      const [mealsData, nutritionTargets, templates] = await Promise.all([
         getMealLogsForDate(dateStr),
-        getUserProfile(),
+        getProfileNutritionTargets(),
         getSavedMeals(),
       ]);
       setMeals(mealsData);
-      setProfile(userProfile);
+      setProfile(nutritionTargets?.profile ?? null);
+      setMacros(nutritionTargets?.macros ?? null);
       setSavedMeals(templates);
     } catch (err) {
       console.error("Error fetching diet data:", err);
@@ -205,23 +210,23 @@ export default function DietPage() {
   const currentPortionBreakdown = selectedFood
     ? quantityMode === "grams"
       ? calculateNutritionByGrams({
-        baseServingSize: selectedFood.servingSize,
-        baseCalories: selectedFood.calories,
-        baseProtein: selectedFood.protein,
-        baseCarbs: selectedFood.carbs,
-        baseFat: selectedFood.fat,
-        baseFiber: selectedFood.fiber || 0,
-        eatenGrams: eatenGrams,
-      })
+          baseServingSize: selectedFood.servingSize,
+          baseCalories: selectedFood.calories,
+          baseProtein: selectedFood.protein,
+          baseCarbs: selectedFood.carbs,
+          baseFat: selectedFood.fat,
+          baseFiber: selectedFood.fiber || 0,
+          eatenGrams: eatenGrams,
+        })
       : calculateNutritionByMultiplier({
-        baseServingSize: selectedFood.servingSize,
-        baseCalories: selectedFood.calories,
-        baseProtein: selectedFood.protein,
-        baseCarbs: selectedFood.carbs,
-        baseFat: selectedFood.fat,
-        baseFiber: selectedFood.fiber || 0,
-        quantity: quantity,
-      })
+          baseServingSize: selectedFood.servingSize,
+          baseCalories: selectedFood.calories,
+          baseProtein: selectedFood.protein,
+          baseCarbs: selectedFood.carbs,
+          baseFat: selectedFood.fat,
+          baseFiber: selectedFood.fiber || 0,
+          quantity: quantity,
+        })
     : null;
 
   const handleAddFoodToMeal = async () => {
@@ -485,11 +490,15 @@ export default function DietPage() {
   const dailyFat = meals.reduce((s, m) => s + m.totalFat, 0);
   const dailyFiber = meals.reduce((s, m) => s + m.totalFiber, 0);
 
-  const calGoal = profile?.dailyCaloriesGoal || 2000;
-  const proteinGoal = profile?.dailyProteinGoal || 150;
-  const carbGoal = profile?.dailyCarbGoal || 200;
-  const fatGoal = profile?.dailyFatGoal || 60;
-  const fiberGoal = profile?.dailyFiberGoal || 30;
+  // Targets derived from the same live BMR/TDEE calculation shown on /profile,
+  // so the diet page always reflects the current profile values.
+  const calGoal =
+    macros?.dailyCaloriesGoal || profile?.dailyCaloriesGoal || 2000;
+  const proteinGoal =
+    macros?.dailyProteinGoal || profile?.dailyProteinGoal || 150;
+  const carbGoal = macros?.dailyCarbGoal || profile?.dailyCarbGoal || 200;
+  const fatGoal = macros?.dailyFatGoal || profile?.dailyFatGoal || 60;
+  const fiberGoal = macros?.dailyFiberGoal || profile?.dailyFiberGoal || 30;
 
   return (
     <div className="space-y-6">
@@ -894,7 +903,8 @@ export default function DietPage() {
               <span>Add Food to {activeMealType.toUpperCase()}</span>
             </DialogTitle>
             <DialogDescription className="text-xs">
-              Search Bangladeshi &amp; global dishes, shared community foods, or create custom food.
+              Search Bangladeshi &amp; global dishes, shared community foods, or
+              create custom food.
             </DialogDescription>
           </DialogHeader>
 
@@ -925,10 +935,11 @@ export default function DietPage() {
                 <div
                   key={food._id}
                   onClick={() => handleSelectFood(food)}
-                  className={`flex items-center justify-between p-2.5 sm:p-3 rounded-2xl border transition-all cursor-pointer text-xs ${selectedFood?._id === food._id
+                  className={`flex items-center justify-between p-2.5 sm:p-3 rounded-2xl border transition-all cursor-pointer text-xs ${
+                    selectedFood?._id === food._id
                       ? "border-primary bg-primary/10 font-medium"
                       : "border-border/40 hover:bg-accent/50"
-                    }`}
+                  }`}
                 >
                   <div className="flex-1 min-w-0 pr-2">
                     <p className="font-semibold text-xs sm:text-sm flex items-center gap-1.5 truncate">
@@ -981,7 +992,8 @@ export default function DietPage() {
                           variant="ghost"
                           className="h-7 w-7 text-muted-foreground hover:text-red-500 rounded-lg"
                           onClick={(e) =>
-                            food._id && handleDeleteCustomFood(e, food._id, food)
+                            food._id &&
+                            handleDeleteCustomFood(e, food._id, food)
                           }
                           title="Delete my custom food"
                         >
@@ -1007,20 +1019,22 @@ export default function DietPage() {
                     <button
                       type="button"
                       onClick={() => setQuantityMode("multiplier")}
-                      className={`px-2.5 py-1 rounded-lg transition-all ${quantityMode === "multiplier"
+                      className={`px-2.5 py-1 rounded-lg transition-all ${
+                        quantityMode === "multiplier"
                           ? "bg-background text-primary shadow-xs font-bold"
                           : "text-muted-foreground hover:text-foreground"
-                        }`}
+                      }`}
                     >
                       🔢 Multiplier
                     </button>
                     <button
                       type="button"
                       onClick={() => setQuantityMode("grams")}
-                      className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 ${quantityMode === "grams"
+                      className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 ${
+                        quantityMode === "grams"
                           ? "bg-background text-primary shadow-xs font-bold"
                           : "text-muted-foreground hover:text-foreground"
-                        }`}
+                      }`}
                     >
                       <Scale className="w-3 h-3" />
                       ⚖️ Grams
@@ -1033,7 +1047,10 @@ export default function DietPage() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-xs text-muted-foreground truncate">
-                        Base: <strong className="text-foreground">{selectedFood.servingSize}</strong>
+                        Base:{" "}
+                        <strong className="text-foreground">
+                          {selectedFood.servingSize}
+                        </strong>
                       </span>
                       <div className="flex items-center gap-2 shrink-0">
                         <Label className="text-xs">Qty:</Label>
@@ -1042,7 +1059,9 @@ export default function DietPage() {
                           step="0.1"
                           min="0.1"
                           value={quantity}
-                          onChange={(e) => setQuantity(Math.max(0.1, Number(e.target.value)))}
+                          onChange={(e) =>
+                            setQuantity(Math.max(0.1, Number(e.target.value)))
+                          }
                           className="w-20 rounded-xl text-center font-bold text-sm"
                         />
                       </div>
@@ -1053,10 +1072,11 @@ export default function DietPage() {
                           key={qty}
                           type="button"
                           onClick={() => setQuantity(qty)}
-                          className={`px-2 py-1 rounded-lg border text-[11px] font-medium transition-all ${quantity === qty
+                          className={`px-2 py-1 rounded-lg border text-[11px] font-medium transition-all ${
+                            quantity === qty
                               ? "border-primary bg-primary/10 text-primary font-bold"
                               : "border-border/40 text-muted-foreground hover:bg-accent"
-                            }`}
+                          }`}
                         >
                           {qty}x
                         </button>
@@ -1068,7 +1088,11 @@ export default function DietPage() {
                   <div className="space-y-2 p-2.5 rounded-2xl bg-muted/40 border border-border/40">
                     <div className="flex flex-wrap items-center justify-between gap-1 text-xs">
                       <span className="text-muted-foreground text-[11px]">
-                        Base: <strong className="text-foreground">{selectedFood.servingSize}</strong> ({selectedFood.calories} kcal)
+                        Base:{" "}
+                        <strong className="text-foreground">
+                          {selectedFood.servingSize}
+                        </strong>{" "}
+                        ({selectedFood.calories} kcal)
                       </span>
                       <span className="text-primary font-bold text-[11px]">
                         {currentPortionBreakdown.calculatedQuantity}x serving
@@ -1086,7 +1110,9 @@ export default function DietPage() {
                           min="1"
                           placeholder="e.g. 200"
                           value={eatenGrams}
-                          onChange={(e) => setEatenGrams(Math.max(0, Number(e.target.value)))}
+                          onChange={(e) =>
+                            setEatenGrams(Math.max(0, Number(e.target.value)))
+                          }
                           className="rounded-xl font-bold text-sm pr-8 w-full"
                         />
                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-semibold">
@@ -1101,18 +1127,32 @@ export default function DietPage() {
                         { g: 100, label: "100g" },
                         { g: 150, label: "150g" },
                         { g: 200, label: "200g" },
-                        { g: Math.round(currentPortionBreakdown.baseGrams * 0.25), label: "25%" },
-                        { g: Math.round(currentPortionBreakdown.baseGrams * 0.5), label: "50%" },
-                        { g: currentPortionBreakdown.baseGrams, label: `Full (${currentPortionBreakdown.baseGrams}g)` },
+                        {
+                          g: Math.round(
+                            currentPortionBreakdown.baseGrams * 0.25,
+                          ),
+                          label: "25%",
+                        },
+                        {
+                          g: Math.round(
+                            currentPortionBreakdown.baseGrams * 0.5,
+                          ),
+                          label: "50%",
+                        },
+                        {
+                          g: currentPortionBreakdown.baseGrams,
+                          label: `Full (${currentPortionBreakdown.baseGrams}g)`,
+                        },
                       ].map((preset, idx) => (
                         <button
                           key={idx}
                           type="button"
                           onClick={() => setEatenGrams(preset.g)}
-                          className={`px-2 py-0.5 rounded-lg border text-[10px] font-medium transition-all ${eatenGrams === preset.g
+                          className={`px-2 py-0.5 rounded-lg border text-[10px] font-medium transition-all ${
+                            eatenGrams === preset.g
                               ? "border-primary bg-primary text-white font-bold"
                               : "border-border/50 bg-background text-muted-foreground hover:border-primary/40"
-                            }`}
+                          }`}
                         >
                           {preset.label}
                         </button>
@@ -1128,13 +1168,33 @@ export default function DietPage() {
                       {currentPortionBreakdown.calories} kcal
                     </p>
                     <p className="text-[11px] text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
-                      <span>P: <span className="font-semibold text-emerald-600 dark:text-emerald-400">{currentPortionBreakdown.protein}g</span></span>
+                      <span>
+                        P:{" "}
+                        <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                          {currentPortionBreakdown.protein}g
+                        </span>
+                      </span>
                       <span>&middot;</span>
-                      <span>C: <span className="font-semibold text-blue-600 dark:text-blue-400">{currentPortionBreakdown.carbs}g</span></span>
+                      <span>
+                        C:{" "}
+                        <span className="font-semibold text-blue-600 dark:text-blue-400">
+                          {currentPortionBreakdown.carbs}g
+                        </span>
+                      </span>
                       <span>&middot;</span>
-                      <span>F: <span className="font-semibold text-purple-600 dark:text-purple-400">{currentPortionBreakdown.fat}g</span></span>
+                      <span>
+                        F:{" "}
+                        <span className="font-semibold text-purple-600 dark:text-purple-400">
+                          {currentPortionBreakdown.fat}g
+                        </span>
+                      </span>
                       <span>&middot;</span>
-                      <span>Fib: <span className="font-semibold text-amber-600 dark:text-amber-400">{currentPortionBreakdown.fiber}g</span></span>
+                      <span>
+                        Fib:{" "}
+                        <span className="font-semibold text-amber-600 dark:text-amber-400">
+                          {currentPortionBreakdown.fiber}g
+                        </span>
+                      </span>
                     </p>
                   </div>
                   <Button
@@ -1150,398 +1210,462 @@ export default function DietPage() {
         </DialogContent>
       </Dialog>
 
-    {/* Custom Food Creation / Edit Modal with AI Recipe Estimator */ }
-    < Dialog
-  open = { customFoodModalOpen }
-  onOpenChange = {(open) => {
-    setCustomFoodModalOpen(open);
-    if (!open) resetCustomFoodForm();
-  }
-}
+      {/* Custom Food Creation / Edit Modal with AI Recipe Estimator */}
+      <Dialog
+        open={customFoodModalOpen}
+        onOpenChange={(open) => {
+          setCustomFoodModalOpen(open);
+          if (!open) resetCustomFoodForm();
+        }}
       >
-  <DialogContent className="w-[calc(100vw-1rem)] sm:w-full sm:max-w-xl rounded-3xl p-4 sm:p-6 gap-3.5 sm:gap-4 max-h-[88dvh] sm:max-h-[85vh] overflow-y-auto overflow-x-hidden no-scrollbar overscroll-contain box-border min-w-0">
-    <DialogHeader className="space-y-1 pr-7 sm:pr-8">
-      <DialogTitle className="text-base sm:text-lg font-bold flex items-center gap-2">
-        <ChefHat className="w-5 h-5 text-primary shrink-0" />
-        <span className="truncate">{editingFoodId ? "Edit Custom Food ✏️" : "Custom Food & AI Recipe 🍳"}</span>
-      </DialogTitle>
-      <DialogDescription className="text-xs text-muted-foreground">
-        Describe your food in one field — AI will calculate macros and fill all required fields automatically.
-      </DialogDescription>
-    </DialogHeader>
-
-    {/* Mode Switcher: AI Auto-Fill vs Manual Entry */}
-    <div className="grid grid-cols-2 gap-1.5 p-1 bg-muted/70 rounded-2xl text-xs font-semibold">
-      <button
-        type="button"
-        onClick={() => setCustomTab("ai")}
-        className={`flex items-center justify-center gap-1.5 py-2 sm:py-2.5 px-1.5 sm:px-2 rounded-xl text-center transition-all min-w-0 ${customTab === "ai"
-          ? "bg-primary text-white shadow-sm font-bold"
-          : "text-muted-foreground hover:text-foreground"
-          }`}
-      >
-        <Sparkles className="w-3.5 h-3.5 shrink-0" />
-        <span className="truncate text-[11px] sm:text-xs">AI Auto-Fill</span>
-      </button>
-      <button
-        type="button"
-        onClick={() => setCustomTab("manual")}
-        className={`flex items-center justify-center gap-1.5 py-2 sm:py-2.5 px-1.5 sm:px-2 rounded-xl text-center transition-all min-w-0 ${customTab === "manual"
-          ? "bg-background text-primary shadow-sm font-bold"
-          : "text-muted-foreground hover:text-foreground"
-          }`}
-      >
-        <Pencil className="w-3.5 h-3.5 shrink-0" />
-        <span className="truncate text-[11px] sm:text-xs">Manual Entry</span>
-      </button>
-    </div>
-
-    {/* AI Recipe Mode - Single Field Input */}
-    {customTab === "ai" && (
-      <div className="space-y-3 text-xs w-full max-w-full overflow-hidden min-w-0">
-        {/* Quick Inspiration Presets */}
-        <div className="w-full max-w-full overflow-hidden">
-          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 flex items-center gap-1">
-            <Sparkles className="w-3 h-3 text-primary shrink-0" />
-            Quick Inspiration:
-          </p>
-          <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar text-[10px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden w-full">
-            {[
-              {
-                label: "🍗 Chicken Curry (50g portion)",
-                text: "500g chicken curry with potatoes and 2 tbsp oil. Eaten portion 50g.",
-              },
-              {
-                label: "🍗 Chicken Curry (1 of 4 portions)",
-                text: "500g chicken breast curry with 2 potatoes (150g), 1 onion, and 2 tbsp mustard oil. Cooked 4 servings in total, I ate 1 serving.",
-              },
-              {
-                label: "🍳 2-Egg Omelette in Butter",
-                text: "2 whole eggs omelette fried in 1 tbsp butter with chopped onions, green chilies, and 2 slices of whole wheat bread.",
-              },
-              {
-                label: "🍚 Rice & Lentil Dal Bowl",
-                text: "150g cooked basmati rice with 100g red lentil masoor dal cooked with 1 tsp ghee and cumin.",
-              },
-              {
-                label: "🥩 Beef Bhuna (150g portion)",
-                text: "600g lean beef cooked with 2 onions, 2 tbsp oil, and spices. Total cooked was ~500g, I ate 150g.",
-              },
-              {
-                label: "🥤 Whey & Banana Shake",
-                text: "1 scoop whey protein isolate with 1 medium banana, 250ml milk, and 1 tbsp peanut butter.",
-              },
-            ].map((preset, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => setAiPrompt(preset.text)}
-                className="px-2.5 py-1.5 rounded-xl bg-muted/60 hover:bg-primary/10 hover:text-primary border border-border/40 whitespace-nowrap transition-colors shrink-0 font-medium"
-              >
-                {preset.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Single Description Textarea */}
-        <div className="space-y-1.5">
-          <Label className="font-semibold flex flex-wrap items-center justify-between gap-1 text-xs">
-            <span className="flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-primary shrink-0" />
-              Describe Food / Recipe:
-            </span>
-            <span className="text-[10px] text-muted-foreground font-normal">
-              Ingredients, cooking method, & portion eaten in one field
-            </span>
-          </Label>
-          <textarea
-            rows={3}
-            value={aiPrompt}
-            onChange={(e) => setAiPrompt(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                e.preventDefault();
-                handleRunAIEstimate();
-              }
-            }}
-            placeholder="e.g. 500g chicken breast curry with 2 potatoes and 2 tbsp oil. Cooked 4 servings in total, I ate 1 serving..."
-            className="w-full min-w-0 rounded-2xl p-3 bg-muted/40 border border-border/50 focus:border-primary focus:ring-1 focus:ring-primary text-xs outline-none transition-all resize-none box-border leading-relaxed"
-          />
-          <div className="flex items-center justify-between text-[10px] text-muted-foreground px-1">
-            <span>Tip: Press <kbd className="px-1.5 py-0.5 rounded bg-muted text-[10px] font-mono border border-border/50">⌘ Enter</kbd> to analyze</span>
-            {aiPrompt.length > 0 && <span>{aiPrompt.length} chars</span>}
-          </div>
-        </div>
-
-        {/* AI Calculate & Fill Button */}
-        <Button
-          type="button"
-          disabled={aiLoading || !aiPrompt.trim()}
-          onClick={handleRunAIEstimate}
-          className="w-full rounded-2xl py-3.5 sm:py-4 bg-gradient-to-r from-primary to-emerald-600 hover:from-primary/90 hover:to-emerald-700 text-white font-bold text-xs sm:text-sm gap-2 shadow-md hover:shadow-lg transition-all"
-        >
-          {aiLoading ? (
-            <>
-              <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
-              <span>AI is analyzing & filling fields...</span>
-            </>
-          ) : (
-            <>
-              <Sparkles className="w-4 h-4 shrink-0" />
-              <span>✨ Analyze with AI & Fill Fields</span>
-            </>
-          )}
-        </Button>
-
-        {/* AI Result Card */}
-        {aiResult && (
-          <div className="p-3.5 sm:p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 space-y-2.5 animate-in fade-in">
-            <div className="flex flex-wrap items-center justify-between gap-1.5">
-              <span className="text-xs font-bold text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                Required Fields Filled Below ✨
+        <DialogContent className="w-[calc(100vw-1rem)] sm:w-full sm:max-w-xl rounded-3xl p-4 sm:p-6 gap-3.5 sm:gap-4 max-h-[88dvh] sm:max-h-[85vh] overflow-y-auto overflow-x-hidden no-scrollbar overscroll-contain box-border min-w-0">
+          <DialogHeader className="space-y-1 pr-7 sm:pr-8">
+            <DialogTitle className="text-base sm:text-lg font-bold flex items-center gap-2">
+              <ChefHat className="w-5 h-5 text-primary shrink-0" />
+              <span className="truncate">
+                {editingFoodId
+                  ? "Edit Custom Food ✏️"
+                  : "Custom Food & AI Recipe 🍳"}
               </span>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-800 dark:text-emerald-200 shrink-0">
-                {Math.round((aiResult.portionEatenRatio || 1) * 100)}% portion
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Describe your food in one field — AI will calculate macros and
+              fill all required fields automatically.
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Mode Switcher: AI Auto-Fill vs Manual Entry */}
+          <div className="grid grid-cols-2 gap-1.5 p-1 bg-muted/70 rounded-2xl text-xs font-semibold">
+            <button
+              type="button"
+              onClick={() => setCustomTab("ai")}
+              className={`flex items-center justify-center gap-1.5 py-2 sm:py-2.5 px-1.5 sm:px-2 rounded-xl text-center transition-all min-w-0 ${
+                customTab === "ai"
+                  ? "bg-primary text-white shadow-sm font-bold"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate text-[11px] sm:text-xs">
+                AI Auto-Fill
               </span>
-            </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setCustomTab("manual")}
+              className={`flex items-center justify-center gap-1.5 py-2 sm:py-2.5 px-1.5 sm:px-2 rounded-xl text-center transition-all min-w-0 ${
+                customTab === "manual"
+                  ? "bg-background text-primary shadow-sm font-bold"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Pencil className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate text-[11px] sm:text-xs">
+                Manual Entry
+              </span>
+            </button>
+          </div>
 
-            <p className="text-[11px] text-muted-foreground leading-relaxed break-words">
-              {aiResult.explanation}
-            </p>
-
-            {aiResult.detectedIngredients && aiResult.detectedIngredients.length > 0 && (
-              <div className="pt-2 border-t border-emerald-500/20">
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
-                  Detected Ingredients & Raw Values:
+          {/* AI Recipe Mode - Single Field Input */}
+          {customTab === "ai" && (
+            <div className="space-y-3 text-xs w-full max-w-full overflow-hidden min-w-0">
+              {/* Quick Inspiration Presets */}
+              <div className="w-full max-w-full overflow-hidden">
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-primary shrink-0" />
+                  Quick Inspiration:
                 </p>
-                <div className="flex gap-1.5 flex-wrap">
-                  {aiResult.detectedIngredients.map((ing: DetectedIngredient, i: number) => (
-                    <span
-                      key={i}
-                      className="text-[10px] px-2 py-0.5 rounded-lg bg-background/80 border border-border/40 font-medium"
+                <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar text-[10px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden w-full">
+                  {[
+                    {
+                      label: "🍗 Chicken Curry (50g portion)",
+                      text: "500g chicken curry with potatoes and 2 tbsp oil. Eaten portion 50g.",
+                    },
+                    {
+                      label: "🍗 Chicken Curry (1 of 4 portions)",
+                      text: "500g chicken breast curry with 2 potatoes (150g), 1 onion, and 2 tbsp mustard oil. Cooked 4 servings in total, I ate 1 serving.",
+                    },
+                    {
+                      label: "🍳 2-Egg Omelette in Butter",
+                      text: "2 whole eggs omelette fried in 1 tbsp butter with chopped onions, green chilies, and 2 slices of whole wheat bread.",
+                    },
+                    {
+                      label: "🍚 Rice & Lentil Dal Bowl",
+                      text: "150g cooked basmati rice with 100g red lentil masoor dal cooked with 1 tsp ghee and cumin.",
+                    },
+                    {
+                      label: "🥩 Beef Bhuna (150g portion)",
+                      text: "600g lean beef cooked with 2 onions, 2 tbsp oil, and spices. Total cooked was ~500g, I ate 150g.",
+                    },
+                    {
+                      label: "🥤 Whey & Banana Shake",
+                      text: "1 scoop whey protein isolate with 1 medium banana, 250ml milk, and 1 tbsp peanut butter.",
+                    },
+                  ].map((preset, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setAiPrompt(preset.text)}
+                      className="px-2.5 py-1.5 rounded-xl bg-muted/60 hover:bg-primary/10 hover:text-primary border border-border/40 whitespace-nowrap transition-colors shrink-0 font-medium"
                     >
-                      {ing.name} ({ing.amount}) &middot; {ing.calories} kcal
-                    </span>
+                      {preset.label}
+                    </button>
                   ))}
                 </div>
               </div>
-            )}
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2 pt-2 text-center text-xs font-bold border-t border-emerald-500/20">
-              <div className="p-2 rounded-xl bg-background/70 border border-border/30 min-w-0">
-                <span className="text-[10px] text-muted-foreground block font-medium truncate">Calories</span>
-                <span className="text-primary text-xs sm:text-sm font-black truncate block">{aiResult.calories} kcal</span>
+              {/* Single Description Textarea */}
+              <div className="space-y-1.5">
+                <Label className="font-semibold flex flex-wrap items-center justify-between gap-1 text-xs">
+                  <span className="flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-primary shrink-0" />
+                    Describe Food / Recipe:
+                  </span>
+                  <span className="text-[10px] text-muted-foreground font-normal">
+                    Ingredients, cooking method, & portion eaten in one field
+                  </span>
+                </Label>
+                <textarea
+                  rows={3}
+                  value={aiPrompt}
+                  onChange={(e) => setAiPrompt(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                      e.preventDefault();
+                      handleRunAIEstimate();
+                    }
+                  }}
+                  placeholder="e.g. 500g chicken breast curry with 2 potatoes and 2 tbsp oil. Cooked 4 servings in total, I ate 1 serving..."
+                  className="w-full min-w-0 rounded-2xl p-3 bg-muted/40 border border-border/50 focus:border-primary focus:ring-1 focus:ring-primary text-xs outline-none transition-all resize-none box-border leading-relaxed"
+                />
+                <div className="flex items-center justify-between text-[10px] text-muted-foreground px-1">
+                  <span>
+                    Tip: Press{" "}
+                    <kbd className="px-1.5 py-0.5 rounded bg-muted text-[10px] font-mono border border-border/50">
+                      ⌘ Enter
+                    </kbd>{" "}
+                    to analyze
+                  </span>
+                  {aiPrompt.length > 0 && <span>{aiPrompt.length} chars</span>}
+                </div>
               </div>
-              <div className="p-2 rounded-xl bg-background/70 border border-border/30 min-w-0">
-                <span className="text-[10px] text-muted-foreground block font-medium truncate">Protein</span>
-                <span className="text-emerald-600 text-xs sm:text-sm font-black truncate block">{aiResult.protein}g</span>
+
+              {/* AI Calculate & Fill Button */}
+              <Button
+                type="button"
+                disabled={aiLoading || !aiPrompt.trim()}
+                onClick={handleRunAIEstimate}
+                className="w-full rounded-2xl py-3.5 sm:py-4 bg-gradient-to-r from-primary to-emerald-600 hover:from-primary/90 hover:to-emerald-700 text-white font-bold text-xs sm:text-sm gap-2 shadow-md hover:shadow-lg transition-all"
+              >
+                {aiLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
+                    <span>AI is analyzing & filling fields...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 shrink-0" />
+                    <span>✨ Analyze with AI & Fill Fields</span>
+                  </>
+                )}
+              </Button>
+
+              {/* AI Result Card */}
+              {aiResult && (
+                <div className="p-3.5 sm:p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 space-y-2.5 animate-in fade-in">
+                  <div className="flex flex-wrap items-center justify-between gap-1.5">
+                    <span className="text-xs font-bold text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      Required Fields Filled Below ✨
+                    </span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-800 dark:text-emerald-200 shrink-0">
+                      {Math.round((aiResult.portionEatenRatio || 1) * 100)}%
+                      portion
+                    </span>
+                  </div>
+
+                  <p className="text-[11px] text-muted-foreground leading-relaxed break-words">
+                    {aiResult.explanation}
+                  </p>
+
+                  {aiResult.detectedIngredients &&
+                    aiResult.detectedIngredients.length > 0 && (
+                      <div className="pt-2 border-t border-emerald-500/20">
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
+                          Detected Ingredients & Raw Values:
+                        </p>
+                        <div className="flex gap-1.5 flex-wrap">
+                          {aiResult.detectedIngredients.map(
+                            (ing: DetectedIngredient, i: number) => (
+                              <span
+                                key={i}
+                                className="text-[10px] px-2 py-0.5 rounded-lg bg-background/80 border border-border/40 font-medium"
+                              >
+                                {ing.name} ({ing.amount}) &middot;{" "}
+                                {ing.calories} kcal
+                              </span>
+                            ),
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2 pt-2 text-center text-xs font-bold border-t border-emerald-500/20">
+                    <div className="p-2 rounded-xl bg-background/70 border border-border/30 min-w-0">
+                      <span className="text-[10px] text-muted-foreground block font-medium truncate">
+                        Calories
+                      </span>
+                      <span className="text-primary text-xs sm:text-sm font-black truncate block">
+                        {aiResult.calories} kcal
+                      </span>
+                    </div>
+                    <div className="p-2 rounded-xl bg-background/70 border border-border/30 min-w-0">
+                      <span className="text-[10px] text-muted-foreground block font-medium truncate">
+                        Protein
+                      </span>
+                      <span className="text-emerald-600 text-xs sm:text-sm font-black truncate block">
+                        {aiResult.protein}g
+                      </span>
+                    </div>
+                    <div className="p-2 rounded-xl bg-background/70 border border-border/30 min-w-0">
+                      <span className="text-[10px] text-muted-foreground block font-medium truncate">
+                        Carbs
+                      </span>
+                      <span className="text-blue-600 text-xs sm:text-sm font-black truncate block">
+                        {aiResult.carbs}g
+                      </span>
+                    </div>
+                    <div className="p-2 rounded-xl bg-background/70 border border-border/30 min-w-0">
+                      <span className="text-[10px] text-muted-foreground block font-medium truncate">
+                        Fat
+                      </span>
+                      <span className="text-purple-600 text-xs sm:text-sm font-black truncate block">
+                        {aiResult.fat}g
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Form for saving / editing the custom food (populated by AI or manual) */}
+          <form
+            onSubmit={handleSaveCustomFood}
+            className="space-y-3 sm:space-y-3.5 text-xs pt-2 border-t border-border/40"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-1.5">
+              <Label className="font-bold text-xs">
+                {customTab === "ai"
+                  ? "Review & Finalize Food Entry:"
+                  : "Custom Food Details:"}
+              </Label>
+              {customCategory && (
+                <span className="text-[10px] uppercase font-bold text-primary px-2.5 py-0.5 rounded-full bg-primary/10 shrink-0">
+                  {customCategory.replace("_", " ")}
+                </span>
+              )}
+            </div>
+
+            <div className="space-y-1">
+              <Label className="font-semibold text-xs">Food Name</Label>
+              <Input
+                placeholder="e.g. Homemade Chicken Curry (150g)"
+                value={customName}
+                onChange={(e) => setCustomName(e.target.value)}
+                required
+                className="rounded-xl font-semibold h-10 w-full"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
+              <div className="space-y-1 min-w-0">
+                <Label className="font-semibold text-xs">
+                  Serving Size (Base)
+                </Label>
+                <Input
+                  placeholder="e.g. 100g or 1 portion (150g)"
+                  value={customServing}
+                  onChange={(e) => setCustomServing(e.target.value)}
+                  required
+                  className="rounded-xl h-10 w-full"
+                />
               </div>
-              <div className="p-2 rounded-xl bg-background/70 border border-border/30 min-w-0">
-                <span className="text-[10px] text-muted-foreground block font-medium truncate">Carbs</span>
-                <span className="text-blue-600 text-xs sm:text-sm font-black truncate block">{aiResult.carbs}g</span>
-              </div>
-              <div className="p-2 rounded-xl bg-background/70 border border-border/30 min-w-0">
-                <span className="text-[10px] text-muted-foreground block font-medium truncate">Fat</span>
-                <span className="text-purple-600 text-xs sm:text-sm font-black truncate block">{aiResult.fat}g</span>
+
+              <div className="space-y-1 min-w-0">
+                <Label className="font-semibold text-xs">Calories (kcal)</Label>
+                <Input
+                  type="number"
+                  value={customCalories}
+                  onChange={(e) => setCustomCalories(Number(e.target.value))}
+                  required
+                  className="rounded-xl font-bold text-primary h-10 w-full"
+                />
               </div>
             </div>
-          </div>
-        )}
-      </div>
-    )}
 
-    {/* Form for saving / editing the custom food (populated by AI or manual) */}
-    <form onSubmit={handleSaveCustomFood} className="space-y-3 sm:space-y-3.5 text-xs pt-2 border-t border-border/40">
-      <div className="flex flex-wrap items-center justify-between gap-1.5">
-        <Label className="font-bold text-xs">
-          {customTab === "ai" ? "Review & Finalize Food Entry:" : "Custom Food Details:"}
-        </Label>
-        {customCategory && (
-          <span className="text-[10px] uppercase font-bold text-primary px-2.5 py-0.5 rounded-full bg-primary/10 shrink-0">
-            {customCategory.replace("_", " ")}
-          </span>
-        )}
-      </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5 pt-1">
+              <div className="space-y-1 min-w-0">
+                <Label className="font-semibold text-[11px] text-emerald-700 dark:text-emerald-400 truncate block">
+                  Protein (g)
+                </Label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  value={customProtein}
+                  onChange={(e) => setCustomProtein(Number(e.target.value))}
+                  className="rounded-xl h-10 font-bold w-full"
+                />
+              </div>
+              <div className="space-y-1 min-w-0">
+                <Label className="font-semibold text-[11px] text-blue-700 dark:text-blue-400 truncate block">
+                  Carbs (g)
+                </Label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  value={customCarbs}
+                  onChange={(e) => setCustomCarbs(Number(e.target.value))}
+                  className="rounded-xl h-10 font-bold w-full"
+                />
+              </div>
+              <div className="space-y-1 min-w-0">
+                <Label className="font-semibold text-[11px] text-purple-700 dark:text-purple-400 truncate block">
+                  Fat (g)
+                </Label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  value={customFat}
+                  onChange={(e) => setCustomFat(Number(e.target.value))}
+                  className="rounded-xl h-10 font-bold w-full"
+                />
+              </div>
+              <div className="space-y-1 min-w-0">
+                <Label className="font-semibold text-[11px] text-amber-700 dark:text-amber-400 truncate block">
+                  Fiber (g)
+                </Label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  value={customFiber}
+                  onChange={(e) => setCustomFiber(Number(e.target.value))}
+                  className="rounded-xl h-10 font-bold w-full"
+                />
+              </div>
+            </div>
 
-      <div className="space-y-1">
-        <Label className="font-semibold text-xs">Food Name</Label>
-        <Input
-          placeholder="e.g. Homemade Chicken Curry (150g)"
-          value={customName}
-          onChange={(e) => setCustomName(e.target.value)}
-          required
-          className="rounded-xl font-semibold h-10 w-full"
-        />
-      </div>
+            {/* Portion Test Calculator inside Custom Food Creator */}
+            <div className="p-3 rounded-2xl bg-muted/40 border border-border/40 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2 text-[11px]">
+              <span className="text-muted-foreground flex items-center gap-1.5">
+                <Info className="w-3.5 h-3.5 text-primary shrink-0" />
+                <span>
+                  If eaten portion is <strong>20g</strong>:
+                </span>
+              </span>
+              <span className="font-bold text-primary text-xs sm:text-[11px] self-end sm:self-auto">
+                {Math.round(
+                  (customCalories * 20) /
+                    (extractGramsFromServing(customServing).grams || 100),
+                )}{" "}
+                kcal &middot;{" "}
+                {Math.round(
+                  ((customProtein * 20) /
+                    (extractGramsFromServing(customServing).grams || 100)) *
+                    10,
+                ) / 10}
+                g Protein
+              </span>
+            </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
-        <div className="space-y-1 min-w-0">
-          <Label className="font-semibold text-xs">Serving Size (Base)</Label>
-          <Input
-            placeholder="e.g. 100g or 1 portion (150g)"
-            value={customServing}
-            onChange={(e) => setCustomServing(e.target.value)}
-            required
-            className="rounded-xl h-10 w-full"
-          />
-        </div>
-
-        <div className="space-y-1 min-w-0">
-          <Label className="font-semibold text-xs">Calories (kcal)</Label>
-          <Input
-            type="number"
-            value={customCalories}
-            onChange={(e) => setCustomCalories(Number(e.target.value))}
-            required
-            className="rounded-xl font-bold text-primary h-10 w-full"
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5 pt-1">
-        <div className="space-y-1 min-w-0">
-          <Label className="font-semibold text-[11px] text-emerald-700 dark:text-emerald-400 truncate block">Protein (g)</Label>
-          <Input
-            type="number"
-            step="0.1"
-            value={customProtein}
-            onChange={(e) => setCustomProtein(Number(e.target.value))}
-            className="rounded-xl h-10 font-bold w-full"
-          />
-        </div>
-        <div className="space-y-1 min-w-0">
-          <Label className="font-semibold text-[11px] text-blue-700 dark:text-blue-400 truncate block">Carbs (g)</Label>
-          <Input
-            type="number"
-            step="0.1"
-            value={customCarbs}
-            onChange={(e) => setCustomCarbs(Number(e.target.value))}
-            className="rounded-xl h-10 font-bold w-full"
-          />
-        </div>
-        <div className="space-y-1 min-w-0">
-          <Label className="font-semibold text-[11px] text-purple-700 dark:text-purple-400 truncate block">Fat (g)</Label>
-          <Input
-            type="number"
-            step="0.1"
-            value={customFat}
-            onChange={(e) => setCustomFat(Number(e.target.value))}
-            className="rounded-xl h-10 font-bold w-full"
-          />
-        </div>
-        <div className="space-y-1 min-w-0">
-          <Label className="font-semibold text-[11px] text-amber-700 dark:text-amber-400 truncate block">Fiber (g)</Label>
-          <Input
-            type="number"
-            step="0.1"
-            value={customFiber}
-            onChange={(e) => setCustomFiber(Number(e.target.value))}
-            className="rounded-xl h-10 font-bold w-full"
-          />
-        </div>
-      </div>
-
-      {/* Portion Test Calculator inside Custom Food Creator */}
-      <div className="p-3 rounded-2xl bg-muted/40 border border-border/40 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2 text-[11px]">
-        <span className="text-muted-foreground flex items-center gap-1.5">
-          <Info className="w-3.5 h-3.5 text-primary shrink-0" />
-          <span>If eaten portion is <strong>20g</strong>:</span>
-        </span>
-        <span className="font-bold text-primary text-xs sm:text-[11px] self-end sm:self-auto">
-          {Math.round((customCalories * 20) / (extractGramsFromServing(customServing).grams || 100))} kcal &middot;{" "}
-          {Math.round(((customProtein * 20) / (extractGramsFromServing(customServing).grams || 100)) * 10) / 10}g Protein
-        </span>
-      </div>
-
-      <Button
-        type="submit"
-        className="w-full rounded-2xl py-3.5 sm:py-4 mt-2 sm:mt-3 bg-primary hover:bg-primary/90 text-white font-bold text-xs sm:text-sm shadow-md"
-      >
-        {editingFoodId ? "Update Custom Food" : "Save Custom Food 🍳"}
-      </Button>
-    </form>
-  </DialogContent>
-      </Dialog >
-
-  {/* Save Meal Template Dialog */ }
-  < Dialog
-open = { saveTemplateModalOpen }
-onOpenChange = { setSaveTemplateModalOpen }
-  >
-  <DialogContent className="w-[calc(100vw-1.5rem)] sm:w-full sm:max-w-md rounded-3xl p-4 sm:p-6 gap-3.5 sm:gap-4 max-h-[88dvh] sm:max-h-[85vh] overflow-y-auto overflow-x-hidden no-scrollbar overscroll-contain">
-    <DialogHeader className="pr-7 sm:pr-8">
-      <DialogTitle className="text-base sm:text-lg font-bold flex items-center gap-2">
-        <Bookmark className="w-5 h-5 text-primary shrink-0" />
-        <span>Save Meal as Template</span>
-      </DialogTitle>
-    </DialogHeader>
-
-    <form onSubmit={handleCreateTemplate} className="space-y-4 text-xs">
-      <div className="space-y-1">
-        <Label htmlFor="template-name">Template Name</Label>
-        <Input
-          id="template-name"
-          placeholder="e.g. Daily Gym Breakfast, Office Lunch"
-          value={templateName}
-          onChange={(e) => setTemplateName(e.target.value)}
-          required
-          className="rounded-xl text-sm font-semibold w-full"
-        />
-      </div>
-
-      <div className="space-y-1">
-        <Label>Category</Label>
-        <div className="grid grid-cols-2 gap-1.5 pt-1">
-          {[
-            { id: "breakfast", label: "Breakfast" },
-            { id: "lunch", label: "Lunch" },
-            { id: "dinner", label: "Dinner" },
-            { id: "iftar", label: "Iftar" },
-            { id: "gym_meal", label: "Gym Meal" },
-            { id: "office_lunch", label: "Office Lunch" },
-            { id: "cheat_meal", label: "Cheat Meal" },
-            { id: "custom", label: "Custom" },
-          ].map((cat) => (
-            <button
-              key={cat.id}
-              type="button"
-              onClick={() =>
-                setTemplateCategory(cat.id as SavedMealCategory)
-              }
-              className={`p-2 rounded-xl text-xs font-bold text-left transition-all border ${templateCategory === cat.id
-                ? "bg-primary/10 border-primary text-primary"
-                : "bg-muted/40 border-border/40 text-muted-foreground"
-                }`}
+            <Button
+              type="submit"
+              className="w-full rounded-2xl py-3.5 sm:py-4 mt-2 sm:mt-3 bg-primary hover:bg-primary/90 text-white font-bold text-xs sm:text-sm shadow-md"
             >
-              {cat.label}
-            </button>
-          ))}
-        </div>
-      </div>
+              {editingFoodId ? "Update Custom Food" : "Save Custom Food 🍳"}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
 
-      <div className="p-3 rounded-2xl bg-muted/40 border border-border/40 space-y-1">
-        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-          Items in Template ({itemsToSave.length})
-        </p>
-        <p className="text-xs font-medium text-foreground truncate">
-          {itemsToSave.map((i) => i.name).join(", ")}
-        </p>
-      </div>
-
-      <Button
-        type="submit"
-        className="w-full rounded-xl py-3.5 bg-primary hover:bg-primary/90 font-bold text-xs sm:text-sm"
+      {/* Save Meal Template Dialog */}
+      <Dialog
+        open={saveTemplateModalOpen}
+        onOpenChange={setSaveTemplateModalOpen}
       >
-        Save Template 🔖
-      </Button>
-    </form>
-  </DialogContent>
-      </Dialog >
+        <DialogContent className="w-[calc(100vw-1.5rem)] sm:w-full sm:max-w-md rounded-3xl p-4 sm:p-6 gap-3.5 sm:gap-4 max-h-[88dvh] sm:max-h-[85vh] overflow-y-auto overflow-x-hidden no-scrollbar overscroll-contain">
+          <DialogHeader className="pr-7 sm:pr-8">
+            <DialogTitle className="text-base sm:text-lg font-bold flex items-center gap-2">
+              <Bookmark className="w-5 h-5 text-primary shrink-0" />
+              <span>Save Meal as Template</span>
+            </DialogTitle>
+          </DialogHeader>
 
-  {/* Footer Ad Slot */}
-  <AdUnit size="auto" maxWidth="970px" />
+          <form onSubmit={handleCreateTemplate} className="space-y-4 text-xs">
+            <div className="space-y-1">
+              <Label htmlFor="template-name">Template Name</Label>
+              <Input
+                id="template-name"
+                placeholder="e.g. Daily Gym Breakfast, Office Lunch"
+                value={templateName}
+                onChange={(e) => setTemplateName(e.target.value)}
+                required
+                className="rounded-xl text-sm font-semibold w-full"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <Label>Category</Label>
+              <div className="grid grid-cols-2 gap-1.5 pt-1">
+                {[
+                  { id: "breakfast", label: "Breakfast" },
+                  { id: "lunch", label: "Lunch" },
+                  { id: "dinner", label: "Dinner" },
+                  { id: "iftar", label: "Iftar" },
+                  { id: "gym_meal", label: "Gym Meal" },
+                  { id: "office_lunch", label: "Office Lunch" },
+                  { id: "cheat_meal", label: "Cheat Meal" },
+                  { id: "custom", label: "Custom" },
+                ].map((cat) => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() =>
+                      setTemplateCategory(cat.id as SavedMealCategory)
+                    }
+                    className={`p-2 rounded-xl text-xs font-bold text-left transition-all border ${
+                      templateCategory === cat.id
+                        ? "bg-primary/10 border-primary text-primary"
+                        : "bg-muted/40 border-border/40 text-muted-foreground"
+                    }`}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-muted/40 border border-border/40 space-y-1">
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                Items in Template ({itemsToSave.length})
+              </p>
+              <p className="text-xs font-medium text-foreground truncate">
+                {itemsToSave.map((i) => i.name).join(", ")}
+              </p>
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full rounded-xl py-3.5 bg-primary hover:bg-primary/90 font-bold text-xs sm:text-sm"
+            >
+              Save Template 🔖
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Footer Ad Slot */}
+      <AdUnit size="auto" maxWidth="970px" />
     </div>
   );
 }

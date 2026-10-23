@@ -6,7 +6,13 @@ import BodyMeasurement from "@/lib/database/models/body-measurement.model";
 import { currentUser } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { profileSchema, type ProfileFormValues } from "@/validations/fitness";
-import type { PrimaryGoal, ActivityLevel, Gender, IUserProfile, IBodyMeasurement } from "@/types/fitness";
+import type {
+  PrimaryGoal,
+  ActivityLevel,
+  Gender,
+  IUserProfile,
+  IBodyMeasurement,
+} from "@/types/fitness";
 import {
   calcBMI,
   getBMICategory,
@@ -30,14 +36,7 @@ export async function calculateRecommendedMacros(data: {
   activityLevel: ActivityLevel;
   goal: PrimaryGoal;
 }) {
-  const {
-    gender,
-    age,
-    height,
-    currentWeight,
-    activityLevel,
-    goal,
-  } = data;
+  const { gender, age, height, currentWeight, activityLevel, goal } = data;
 
   // BMR Calculation using Mifflin-St Jeor Equation
   let bmr = 10 * currentWeight + 6.25 * height - 5 * age;
@@ -108,7 +107,9 @@ export async function getFullProfileHealthMetrics() {
   const user = await currentUser();
   if (!user) return null;
 
-  const profile = (await UserProfile.findOne({ clerkId: user.id }).lean()) as IUserProfile | null;
+  const profile = (await UserProfile.findOne({
+    clerkId: user.id,
+  }).lean()) as IUserProfile | null;
   if (!profile) return null;
 
   const latestMeasurements = (await BodyMeasurement.findOne({
@@ -215,6 +216,35 @@ export async function getUserProfile() {
 
   const profile = await UserProfile.findOne({ clerkId: user.id }).lean();
   return profile ? JSON.parse(JSON.stringify(profile)) : null;
+}
+
+/**
+ * Nutrition targets recomputed live from the profile biometrics (BMR -> TDEE),
+ * so other pages (e.g. /diet) stay in sync with the values shown on /profile.
+ */
+export async function getProfileNutritionTargets() {
+  await connectToDatabase();
+  const user = await currentUser();
+  if (!user) return null;
+
+  const profile = (await UserProfile.findOne({
+    clerkId: user.id,
+  }).lean()) as IUserProfile | null;
+  if (!profile) return null;
+
+  const macros = await calculateRecommendedMacros({
+    gender: profile.gender as Gender,
+    age: profile.age,
+    height: profile.height,
+    currentWeight: profile.currentWeight,
+    activityLevel: profile.activityLevel as ActivityLevel,
+    goal: profile.goal as PrimaryGoal,
+  });
+
+  return JSON.parse(JSON.stringify({ profile, macros })) as {
+    profile: IUserProfile;
+    macros: Awaited<ReturnType<typeof calculateRecommendedMacros>>;
+  };
 }
 
 export async function createOrUpdateProfile(formData: ProfileFormValues) {
