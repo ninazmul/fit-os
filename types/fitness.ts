@@ -30,6 +30,22 @@ export interface IUserProfile {
   dailyCarbGoal: number;
   dailyFiberGoal: number;
   useCustomMacros?: boolean;
+  aiCoachAssessment?: {
+    assessment: unknown;
+    inputs: {
+      weight: number;
+      date: string;
+      measurements?: {
+        waist?: number;
+        neck?: number;
+        hip?: number;
+        chest?: number;
+      };
+      goal: string;
+      activityLevel: string;
+    };
+    generatedAt: Date | string;
+  };
   unitSystem: UnitSystem;
   onboardingCompleted: boolean;
   createdAt?: Date;

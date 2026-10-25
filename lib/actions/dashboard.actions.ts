@@ -50,11 +50,18 @@ export async function getDashboardData(dateStr?: string) {
   let targetWater = profile.waterGoalMl;
 
   if (!isCustom) {
+    // Use latest weight log (same as diet page's getProfileNutritionTargets)
+    // so both pages always compute identical calorie targets.
+    const latestWeightDoc = await WeightLog.findOne({ clerkId: user.id })
+      .sort({ date: -1, createdAt: -1 })
+      .lean() as { weight: number } | null;
+    const currentWeight = latestWeightDoc?.weight || profile.currentWeight;
+
     const recommended = await calculateRecommendedMacros({
       gender: profile.gender as Gender,
       age: profile.age,
       height: profile.height,
-      currentWeight: profile.currentWeight,
+      currentWeight,
       targetWeight: profile.targetWeight,
       activityLevel: profile.activityLevel as ActivityLevel,
       goal: profile.goal as PrimaryGoal,

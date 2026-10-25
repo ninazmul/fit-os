@@ -48,7 +48,14 @@ interface GoalTargetsEditorModalProps {
   onSaved?: () => void | Promise<void>;
 }
 
-type ProteinTier = "balanced" | "fitness" | "athlete" | "custom";
+type ProteinTier = "balanced" | "fat_loss" | "muscle" | "custom";
+
+function suggestActivityLevel(days: number): ActivityLevel {
+  if (days <= 0) return "sedentary";
+  if (days <= 2) return "light";
+  if (days <= 5) return "moderate";
+  return "active";
+}
 
 export default function GoalTargetsEditorModal({
   open,
@@ -66,8 +73,8 @@ export default function GoalTargetsEditorModal({
   const [workoutDaysPerWeek, setWorkoutDaysPerWeek] = useState<number>(4);
 
   // Protein preference tier
-  const [proteinTier, setProteinTier] = useState<ProteinTier>("fitness");
-  const [proteinRatio, setProteinRatio] = useState<number>(1.6);
+  const [proteinTier, setProteinTier] = useState<ProteinTier>("fat_loss");
+  const [proteinRatio, setProteinRatio] = useState<number>(1.4);
 
   // Calorie pace adjustment preset (e.g. -450, 0, +300)
   const [calorieAdjustment, setCalorieAdjustment] = useState<number>(-450);
@@ -77,7 +84,7 @@ export default function GoalTargetsEditorModal({
 
   // Active editable targets
   const [calories, setCalories] = useState<number>(2000);
-  const [protein, setProtein] = useState<number>(120);
+  const [protein, setProtein] = useState<number>(113);
   const [carbs, setCarbs] = useState<number>(200);
   const [fat, setFat] = useState<number>(60);
   const [fiber, setFiber] = useState<number>(30);
@@ -106,7 +113,7 @@ export default function GoalTargetsEditorModal({
     const initProt =
       hasCustom && profile.dailyProteinGoal
         ? profile.dailyProteinGoal
-        : recommendedMacros?.dailyProteinGoal || 120;
+        : recommendedMacros?.dailyProteinGoal || 113;
     const initCarb =
       hasCustom && profile.dailyCarbGoal
         ? profile.dailyCarbGoal
@@ -134,15 +141,15 @@ export default function GoalTargetsEditorModal({
     // Derive approximate protein tier
     const curW = profile.currentWeight || 70;
     const ratio = initProt / curW;
-    if (Math.abs(ratio - 1.2) < 0.15) {
+    if (Math.abs(ratio - 1.2) < 0.1) {
       setProteinTier("balanced");
       setProteinRatio(1.2);
-    } else if (Math.abs(ratio - 1.6) < 0.15) {
-      setProteinTier("fitness");
-      setProteinRatio(1.6);
-    } else if (Math.abs(ratio - 2.0) < 0.15) {
-      setProteinTier("athlete");
-      setProteinRatio(2.0);
+    } else if (Math.abs(ratio - 1.4) < 0.1) {
+      setProteinTier("fat_loss");
+      setProteinRatio(1.4);
+    } else if (Math.abs(ratio - 1.8) < 0.15) {
+      setProteinTier("muscle");
+      setProteinRatio(1.8);
     } else {
       setProteinTier("custom");
       setProteinRatio(Math.round(ratio * 10) / 10);
@@ -161,17 +168,17 @@ export default function GoalTargetsEditorModal({
   const handleSelectGoal = (newGoal: PrimaryGoal) => {
     setGoal(newGoal);
     let defaultAdj = 0;
-    let defaultTier: ProteinTier = "fitness";
-    let defaultRatio = 1.6;
+    let defaultTier: ProteinTier = "fat_loss";
+    let defaultRatio = 1.4;
 
     if (newGoal === "lose_weight") {
       defaultAdj = -450;
-      defaultTier = "fitness";
-      defaultRatio = 1.6;
+      defaultTier = "fat_loss";
+      defaultRatio = 1.4;
     } else if (newGoal === "gain_muscle") {
       defaultAdj = 350;
-      defaultTier = "athlete";
-      defaultRatio = 2.0;
+      defaultTier = "muscle";
+      defaultRatio = 1.8;
     } else {
       defaultAdj = 0;
       defaultTier = "balanced";
@@ -190,13 +197,21 @@ export default function GoalTargetsEditorModal({
     });
   };
 
+  // Handle workout days change with auto-suggested activity
+  const handleWorkoutDaysChange = (days: number) => {
+    const val = Math.max(0, Math.min(7, days));
+    setWorkoutDaysPerWeek(val);
+    const suggested = suggestActivityLevel(val);
+    setActivityLevel(suggested);
+  };
+
   // Handle protein tier click
   const handleSelectProteinTier = (tier: ProteinTier) => {
     setProteinTier(tier);
-    let ratio = 1.6;
+    let ratio = 1.4;
     if (tier === "balanced") ratio = 1.2;
-    else if (tier === "fitness") ratio = 1.6;
-    else if (tier === "athlete") ratio = 2.0;
+    else if (tier === "fat_loss") ratio = 1.4;
+    else if (tier === "muscle") ratio = 1.8;
     else return; // custom leaves current grams editable
 
     setProteinRatio(ratio);
@@ -454,15 +469,16 @@ export default function GoalTargetsEditorModal({
             </div>
 
             <div className="space-y-1">
-              <Label className="text-[11px] font-semibold text-muted-foreground">
-                Workouts / Week
+              <Label className="text-[11px] font-semibold text-muted-foreground flex items-center justify-between">
+                <span>Workouts / Week</span>
+                <span className="text-[9px] text-primary">Auto-suggests activity</span>
               </Label>
               <Input
                 type="number"
                 min="0"
                 max="7"
                 value={workoutDaysPerWeek}
-                onChange={(e) => setWorkoutDaysPerWeek(Number(e.target.value))}
+                onChange={(e) => handleWorkoutDaysChange(Number(e.target.value))}
                 className="rounded-xl"
               />
               <p className="text-[10px] text-muted-foreground">
@@ -471,7 +487,7 @@ export default function GoalTargetsEditorModal({
             </div>
           </div>
 
-          {/* 3. Protein Level Preference — NO FORCED 2.0x! */}
+          {/* 3. Protein Level Preference — Tailored to BD Food & Weight */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label className="text-xs font-bold text-foreground">
@@ -498,34 +514,34 @@ export default function GoalTargetsEditorModal({
                 <p className="text-[10px] opacity-80">1.2 g/kg</p>
               </button>
 
-              {/* Fitness: 1.6 */}
+              {/* Fat Loss: 1.4 */}
               <button
                 type="button"
-                onClick={() => handleSelectProteinTier("fitness")}
+                onClick={() => handleSelectProteinTier("fat_loss")}
                 className={cn(
                   "p-2.5 rounded-xl border text-left transition-all text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-                  proteinTier === "fitness"
+                  proteinTier === "fat_loss"
                     ? "border-primary bg-primary/10 text-primary font-bold shadow-2xs"
                     : "border-border/60 hover:bg-muted/40 text-muted-foreground",
                 )}
               >
-                <p className="text-[11px] font-bold">🏃 Fitness & Cut</p>
-                <p className="text-[10px] opacity-80">1.6 g/kg (Optimal)</p>
+                <p className="text-[11px] font-bold">🔥 Fat Loss</p>
+                <p className="text-[10px] opacity-80">1.4 g/kg (Target)</p>
               </button>
 
-              {/* Athlete: 2.0 */}
+              {/* Muscle: 1.8 */}
               <button
                 type="button"
-                onClick={() => handleSelectProteinTier("athlete")}
+                onClick={() => handleSelectProteinTier("muscle")}
                 className={cn(
                   "p-2.5 rounded-xl border text-left transition-all text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-                  proteinTier === "athlete"
+                  proteinTier === "muscle"
                     ? "border-purple-500 bg-purple-500/10 text-purple-700 dark:text-purple-300 font-bold shadow-2xs"
                     : "border-border/60 hover:bg-muted/40 text-muted-foreground",
                 )}
               >
-                <p className="text-[11px] font-bold">💪 Athlete</p>
-                <p className="text-[10px] opacity-80">2.0 g/kg (Hypertrophy)</p>
+                <p className="text-[11px] font-bold">💪 Muscle Gain</p>
+                <p className="text-[10px] opacity-80">1.8 g/kg (Hypertrophy)</p>
               </button>
 
               {/* Custom */}

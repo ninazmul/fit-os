@@ -104,16 +104,46 @@ function TrendingBadge({ change }: { change: number | null | undefined }) {
   );
 }
 
-function MeasurementChangeBadge({
-  prev,
-  curr,
+function MeasurementChangeGroup({
+  sincePrevious,
+  sinceFirst,
 }: {
-  prev?: number;
-  curr?: number;
+  sincePrevious?: number;
+  sinceFirst?: number;
 }) {
-  if (prev === undefined || curr === undefined) return null;
-  const change = Math.round((curr - prev) * 10) / 10;
-  return <TrendingBadge change={change === 0 ? null : change} />;
+  if (sincePrevious === undefined && sinceFirst === undefined) return null;
+  return (
+    <div className="flex flex-col items-end gap-0.5">
+      {sincePrevious !== undefined && (
+        <span
+          className={cn(
+            "inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.2 rounded",
+            sincePrevious < 0
+              ? "text-emerald-700 bg-emerald-500/10 dark:text-emerald-300"
+              : sincePrevious > 0
+                ? "text-blue-700 bg-blue-500/10 dark:text-blue-300"
+                : "text-muted-foreground bg-muted/60",
+          )}
+        >
+          <span className="opacity-70">vs prev:</span> {sincePrevious > 0 ? `+${sincePrevious}` : sincePrevious}
+        </span>
+      )}
+      {sinceFirst !== undefined && (
+        <span
+          className={cn(
+            "inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.2 rounded",
+            sinceFirst < 0
+              ? "text-emerald-700 bg-emerald-500/15 dark:text-emerald-300 font-black"
+              : sinceFirst > 0
+                ? "text-purple-700 bg-purple-500/15 dark:text-purple-300 font-black"
+                : "text-muted-foreground bg-muted/60",
+          )}
+        >
+          <span className="opacity-70">vs start:</span> {sinceFirst > 0 ? `+${sinceFirst}` : sinceFirst}
+        </span>
+      )}
+    </div>
+  );
 }
 
 export default function ProfilePage() {
@@ -209,41 +239,17 @@ export default function ProfilePage() {
     }
   }
 
-  let weightDiffLabel: string | null = null;
-  let weightDiffValue: string | number = "--";
-  let weightProgressPct: number | null = null;
-  const curW = profile?.currentWeight as number | undefined;
-  const tgtW = profile?.targetWeight as number | undefined;
-  if (curW !== undefined && tgtW !== undefined && curW > 0 && tgtW > 0) {
-    if (curW > tgtW) {
-      weightDiffLabel = t("profile.weightProgress.toLose");
-      const diff = Math.round((curW - tgtW) * 10) / 10;
-      weightDiffValue = `${diff} kg`;
-      const toLose = curW - tgtW;
-      const initialGuess = toLose > 0 ? curW + toLose * 0.25 : curW;
-      const totalJourney = initialGuess - tgtW;
-      const already = initialGuess - curW;
-      weightProgressPct =
-        totalJourney > 0
-          ? Math.min(
-              100,
-              Math.max(0, Math.round((already / totalJourney) * 100)),
-            )
-          : 100;
-    } else if (curW < tgtW) {
-      weightDiffLabel = t("profile.weightProgress.toGain");
-      const diff = Math.round((tgtW - curW) * 10) / 10;
-      weightDiffValue = `${diff} kg`;
-      weightProgressPct = Math.min(
-        100,
-        Math.max(0, Math.round((curW / tgtW) * 100)),
-      );
-    } else {
-      weightDiffLabel = t("profile.weightProgress.atTarget");
-      weightDiffValue = t("profile.weightProgress.atTargetValue");
-      weightProgressPct = 100;
-    }
-  }
+  // Weight Progress single source of truth (Requirement 4)
+  const weightProgress = metrics?.weightProgress;
+  const progressPct =
+    weightProgress?.progressPct ??
+    (profile?.currentWeight && profile?.targetWeight && profile.currentWeight === profile.targetWeight ? 100 : 0);
+  const remainingKg =
+    weightProgress?.remainingKg ??
+    (profile?.currentWeight && profile?.targetWeight ? Math.abs(Math.round((profile.currentWeight - profile.targetWeight) * 10) / 10) : 0);
+  const startWeight = weightProgress?.startWeightKg ?? profile?.currentWeight ?? 70;
+  const currentWeight = weightProgress?.currentWeightKg ?? profile?.currentWeight ?? 70;
+  const targetWeight = weightProgress?.targetWeightKg ?? profile?.targetWeight ?? 70;
 
   const isBn = locale === "bn";
   const tabsList = [
@@ -510,27 +516,33 @@ export default function ProfilePage() {
           </Button>
         </div>
 
-        {/* Weight Journey Progress Bar */}
-        {weightDiffLabel && weightProgressPct !== null && (
-          <div className="p-3 sm:p-3.5 rounded-2xl bg-gradient-to-r from-primary/10 via-emerald-500/5 to-transparent border border-primary/20 space-y-1.5">
-            <div className="flex items-center justify-between text-xs font-semibold">
-              <span className="flex items-center gap-1.5 text-foreground">
+        {/* Weight Journey Progress Bar (Requirement 4) */}
+        {profile?.targetWeight && (
+          <div className="p-3 sm:p-3.5 rounded-2xl bg-gradient-to-r from-primary/10 via-emerald-500/5 to-transparent border border-primary/20 space-y-2">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+              <span className="flex items-center gap-1.5 font-bold text-foreground">
                 <Scale className="w-3.5 h-3.5 text-primary" />
                 {t("profile.weightProgress.title")}
               </span>
-              <span className="text-emerald-700 dark:text-emerald-400 font-bold">
-                {weightDiffLabel}: {weightDiffValue} ({weightProgressPct}%)
-              </span>
+              <div className="flex items-center gap-2.5">
+                <span className="text-muted-foreground font-semibold">
+                  Remaining: <strong className="text-foreground font-black">{remainingKg} kg</strong>
+                </span>
+                <span className="text-emerald-700 dark:text-emerald-400 font-extrabold bg-emerald-500/10 dark:bg-emerald-500/20 px-2 py-0.5 rounded-full">
+                  Progress: {progressPct}%
+                </span>
+              </div>
             </div>
-            <div className="w-full bg-muted/60 h-2 rounded-full overflow-hidden">
+            <div className="w-full bg-muted/60 h-2.5 rounded-full overflow-hidden">
               <div
                 className="bg-gradient-to-r from-primary to-emerald-500 h-full rounded-full transition-all duration-700"
-                style={{ width: `${weightProgressPct}%` }}
+                style={{ width: `${progressPct}%` }}
               />
             </div>
             <div className="flex justify-between text-[10px] text-muted-foreground font-medium pt-0.5">
-              <span>{t("profile.weightProgress.now")}: {profile?.currentWeight} kg</span>
-              <span>{t("profile.weightProgress.goal")}: {profile?.targetWeight} kg</span>
+              <span>Start: {startWeight} kg</span>
+              <span>Current: {currentWeight} kg</span>
+              <span>Target: {targetWeight} kg</span>
             </div>
           </div>
         )}
@@ -688,6 +700,7 @@ export default function ProfilePage() {
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
+              {/* Body Fat % with Range (Requirement 8) */}
               <div className="p-3 rounded-2xl bg-muted/40 border border-border/30 space-y-1">
                 <p className="text-[11px] font-medium text-muted-foreground">
                   {t("profile.bodyComp.bodyFat")}
@@ -697,6 +710,11 @@ export default function ProfilePage() {
                     ? `${metrics.bodyFatPct}%`
                     : "--"}
                 </p>
+                {metrics?.bodyFatRange && (
+                  <p className="text-[10px] text-muted-foreground font-semibold">
+                    Range: {metrics.bodyFatRange.min}% – {metrics.bodyFatRange.max}%
+                  </p>
+                )}
                 {metrics?.bodyFatCategory && (
                   <p
                     className={cn(
@@ -707,8 +725,12 @@ export default function ProfilePage() {
                     {metrics.bodyFatCategory.label}
                   </p>
                 )}
+                <p className="text-[9px] text-muted-foreground/80 leading-tight">
+                  Navy est. (±3–4% typical variance)
+                </p>
               </div>
 
+              {/* Lean Mass with Change Since Start (Requirement 8) */}
               <div className="p-3 rounded-2xl bg-muted/40 border border-border/30 space-y-1">
                 <p className="text-[11px] font-medium text-muted-foreground">
                   {t("profile.bodyComp.leanMass")}
@@ -718,11 +740,27 @@ export default function ProfilePage() {
                     ? `${metrics.leanMass} kg`
                     : "--"}
                 </p>
-                <p className="text-[10px] text-muted-foreground">
-                  {t("profile.bodyComp.leanMassHint")}
-                </p>
+                {data?.bodyCompChangeSinceFirst?.leanMassChange !== null &&
+                data?.bodyCompChangeSinceFirst?.leanMassChange !== undefined ? (
+                  <p
+                    className={cn(
+                      "text-[10px] font-bold",
+                      data.bodyCompChangeSinceFirst.leanMassChange >= 0
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : "text-amber-600 dark:text-amber-400",
+                    )}
+                  >
+                    {data.bodyCompChangeSinceFirst.leanMassChange > 0 ? "+" : ""}
+                    {data.bodyCompChangeSinceFirst.leanMassChange} kg since start
+                  </p>
+                ) : (
+                  <p className="text-[10px] text-muted-foreground">
+                    {t("profile.bodyComp.leanMassHint")}
+                  </p>
+                )}
               </div>
 
+              {/* Fat Mass with Change Since Start (Requirement 8) */}
               <div className="p-3 rounded-2xl bg-muted/40 border border-border/30 space-y-1">
                 <p className="text-[11px] font-medium text-muted-foreground">
                   {t("profile.bodyComp.fatMass")}
@@ -732,9 +770,24 @@ export default function ProfilePage() {
                     ? `${metrics.fatMass} kg`
                     : "--"}
                 </p>
-                <p className="text-[10px] text-muted-foreground">
-                  {t("profile.bodyComp.fatMassHint")}
-                </p>
+                {data?.bodyCompChangeSinceFirst?.fatMassChange !== null &&
+                data?.bodyCompChangeSinceFirst?.fatMassChange !== undefined ? (
+                  <p
+                    className={cn(
+                      "text-[10px] font-bold",
+                      data.bodyCompChangeSinceFirst.fatMassChange <= 0
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : "text-red-600 dark:text-red-400",
+                    )}
+                  >
+                    {data.bodyCompChangeSinceFirst.fatMassChange > 0 ? "+" : ""}
+                    {data.bodyCompChangeSinceFirst.fatMassChange} kg since start
+                  </p>
+                ) : (
+                  <p className="text-[10px] text-muted-foreground">
+                    {t("profile.bodyComp.fatMassHint")}
+                  </p>
+                )}
               </div>
 
               <div className="p-3 rounded-2xl bg-muted/40 border border-border/30 space-y-1">
@@ -786,6 +839,76 @@ export default function ProfilePage() {
               </div>
             )}
           </div>
+
+          {/* Workout Logging Prompt (Requirement 9) */}
+          {data?.workoutStatus?.needsWorkoutLog && (
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 shrink-0">
+                  <Dumbbell className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-amber-900 dark:text-amber-200">
+                    {data.workoutStatus.scheduledDays} Workouts Planned This Week
+                  </p>
+                  <p className="text-[11px] text-amber-700/80 dark:text-amber-300/80">
+                    You haven't logged any sessions yet this week. Remember to log your workouts to maintain your consistency streak!
+                  </p>
+                </div>
+              </div>
+              <Button
+                asChild
+                size="sm"
+                className="rounded-xl font-bold bg-amber-600 hover:bg-amber-700 text-white text-xs shrink-0 self-start sm:self-auto"
+              >
+                <a href="/workout">Log Workout</a>
+              </Button>
+            </div>
+          )}
+
+          {/* Suggested Adjustment Card (Requirement 6) */}
+          {data?.suggestedAdjustment?.flag && (
+            <div
+              className={cn(
+                "p-4 rounded-2xl border space-y-2.5",
+                data.suggestedAdjustment.flag === "under_logging_or_low_tdee"
+                  ? "bg-amber-500/10 border-amber-500/30 text-amber-950 dark:text-amber-100"
+                  : data.suggestedAdjustment.flag === "rapid_loss"
+                    ? "bg-blue-500/10 border-blue-500/30 text-blue-950 dark:text-blue-100"
+                    : "bg-emerald-500/10 border-emerald-500/30 text-emerald-950 dark:text-emerald-100",
+              )}
+            >
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs sm:text-sm font-bold flex items-center gap-2">
+                  <Sliders className="w-4 h-4 text-primary" />
+                  Suggested Target Adjustment (14-Day Realism Check)
+                </h4>
+                <Badge
+                  variant="outline"
+                  className="text-[10px] font-bold rounded-full bg-background/50 border-current"
+                >
+                  {data.suggestedAdjustment.flag === "under_logging_or_low_tdee"
+                    ? "Plateau / Real TDEE Check"
+                    : data.suggestedAdjustment.flag === "rapid_loss"
+                      ? "Pace Too Fast"
+                      : "Pace On Track"}
+                </Badge>
+              </div>
+
+              <p className="text-xs leading-relaxed">
+                {data.suggestedAdjustment.message}
+              </p>
+
+              <div className="p-2.5 rounded-xl bg-background/60 border border-border/40 text-[11px] space-y-1">
+                <p className="font-bold text-foreground">
+                  💡 Action: {data.suggestedAdjustment.suggestedAction}
+                </p>
+                <p className="text-[10px] text-muted-foreground">
+                  Multipliers (e.g. ×1.55 moderate) and BMR are formula estimates. Metabolism dynamically adapts; compare real weekly weight change to tune targets.
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Fitness & Target Details */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
@@ -1067,40 +1190,86 @@ export default function ProfilePage() {
                 </Button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3">
-                {MEASUREMENT_CONFIG.map(({ key, label, icon }) => {
-                  const val = latest?.[key];
-                  const prevVal = previous?.[key] as number | undefined;
-                  return (
-                    <div
-                      key={key}
-                      className="group p-3 sm:p-3.5 rounded-2xl bg-muted/40 border border-border/30 hover:bg-muted/60 transition-colors relative overflow-hidden"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1.5">
-                            <span className="text-sm">{icon}</span>
-                            {t(label)}
-                          </p>
-                          <div className="flex items-baseline gap-1 mt-1.5">
-                            <span className="text-lg sm:text-xl font-black tracking-tight">
-                              {val !== undefined && val !== null ? val : "--"}
-                            </span>
-                            {val !== undefined && val !== null && (
-                              <span className="text-[11px] font-semibold text-muted-foreground">
-                                cm
-                              </span>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3">
+                  {MEASUREMENT_CONFIG.map(({ key, label, icon }) => {
+                    const val = latest?.[key];
+                    const changes = data?.measurementChanges?.[key];
+                    const isShoulder = key === "shoulder";
+                    return (
+                      <div
+                        key={key}
+                        className="group p-3 sm:p-3.5 rounded-2xl bg-muted/40 border border-border/30 hover:bg-muted/60 transition-colors relative overflow-hidden"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1.5">
+                              <span className="text-sm">{icon}</span>
+                              {t(label)}
+                            </p>
+                            {isShoulder && (
+                              <p className="text-[9px] text-muted-foreground/75 mt-0.5">
+                                Circumference (widest point)
+                              </p>
                             )}
+                            <div className="flex items-baseline gap-1 mt-1.5">
+                              <span className="text-lg sm:text-xl font-black tracking-tight">
+                                {val !== undefined && val !== null ? val : "--"}
+                              </span>
+                              {val !== undefined && val !== null && (
+                                <span className="text-[11px] font-semibold text-muted-foreground">
+                                  cm
+                                </span>
+                              )}
+                            </div>
                           </div>
+                          <MeasurementChangeGroup
+                            sincePrevious={changes?.sincePrevious}
+                            sinceFirst={changes?.sinceFirst}
+                          />
                         </div>
-                        <MeasurementChangeBadge
-                          prev={prevVal}
-                          curr={val as number | undefined}
-                        />
                       </div>
+                    );
+                  })}
+                </div>
+
+                {/* Standardized Measuring Protocol Guide (Requirement 7) */}
+                <div className="p-4 rounded-2xl bg-muted/30 border border-border/40 space-y-2.5">
+                  <div className="flex items-center gap-2">
+                    <Ruler className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <h4 className="text-xs font-bold text-foreground">
+                      {isBn
+                        ? "সঠিকভাবে পরিমাপ করার নির্দেশিকা"
+                        : "Standardized Body Measurement Protocol"}
+                    </h4>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-[11px] text-muted-foreground">
+                    <div className="p-2.5 rounded-xl bg-background/50 border border-border/30">
+                      <p className="font-bold text-foreground">📍 Waist at Navel</p>
+                      <p className="text-[10px] mt-0.5 leading-normal">
+                        Place tape horizontally across your navel/belly button, not high at ribcage.
+                      </p>
                     </div>
-                  );
-                })}
+                    <div className="p-2.5 rounded-xl bg-background/50 border border-border/30">
+                      <p className="font-bold text-foreground">🌅 Morning Fasted</p>
+                      <p className="text-[10px] mt-0.5 leading-normal">
+                        Measure right after waking and bathroom, before food or water intake.
+                      </p>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-background/50 border border-border/30">
+                      <p className="font-bold text-foreground">🧘 Relaxed Abdomen</p>
+                      <p className="text-[10px] mt-0.5 leading-normal">
+                        Breathe normally. Do not suck in your stomach or flex while measuring.
+                      </p>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-background/50 border border-border/30">
+                      <p className="font-bold text-foreground">📏 Same Tape Tension</p>
+                      <p className="text-[10px] mt-0.5 leading-normal">
+                        Tape should be snug against skin without compressing or pinching soft tissue.
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -1114,7 +1283,7 @@ export default function ProfilePage() {
         <div className="space-y-4 sm:space-y-6">
           <div className="glass-card rounded-2xl sm:rounded-3xl border border-primary/20 overflow-hidden">
             <div className="bg-gradient-to-r from-primary/10 via-transparent to-purple-500/10 px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-3 border-b border-border/40">
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Brain className="w-5 h-5 text-primary" />
                 <div>
                   <h3 className="font-black text-sm">{t("profile.ai.title")}</h3>
@@ -1122,6 +1291,14 @@ export default function ProfilePage() {
                     {t("profile.ai.subtitle")}
                   </p>
                 </div>
+                {aiAssessment?.displayBadge && (
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-bold border-primary/30"
+                  >
+                    {aiAssessment.displayBadge}
+                  </Badge>
+                )}
                 {aiAssessment?.isAIGenerated && (
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/20 text-primary font-bold flex items-center gap-1">
                     <Sparkles className="w-2.5 h-2.5" /> Gemini
@@ -1143,6 +1320,26 @@ export default function ProfilePage() {
                   : t("profile.ai.refresh")}
               </Button>
             </div>
+
+            {/* Staleness Warning Banner (Requirement 2) */}
+            {aiAssessment?.isStale && (
+              <div className="mx-4 sm:mx-6 mt-4 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
+                <div className="flex items-center gap-2">
+                  <RefreshCw className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                  <span className="text-amber-900 dark:text-amber-200">
+                    Your current weight or body measurements have updated since this assessment was generated ({aiAssessment.displayBadge || "previous metrics"}). Refresh to sync.
+                  </span>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={refreshAIAssessment}
+                  disabled={aiAssessmentLoading}
+                  className="rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white shrink-0 h-7 self-start sm:self-auto"
+                >
+                  Recalibrate
+                </Button>
+              </div>
+            )}
 
             {aiAssessment ? (
               <div className="p-4 sm:p-6 space-y-5">
@@ -1256,7 +1453,7 @@ export default function ProfilePage() {
                     <div className="space-y-1.5 text-[11px]">
                       <div className="p-2 rounded-xl bg-amber-500/5 border border-amber-500/20">
                         <span className="font-bold text-amber-600 dark:text-amber-400">
-                          {t("profile.ai.preWorkout")}{" "}
+                          {t("profile.ai.preWorkout")} (Optional):{" "}
                         </span>
                         <span className="text-muted-foreground">
                           {aiAssessment.macroStrategy.timing.preworkout}
@@ -1264,7 +1461,7 @@ export default function ProfilePage() {
                       </div>
                       <div className="p-2 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
                         <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                          {t("profile.ai.postWorkout")}{" "}
+                          {t("profile.ai.postWorkout")} (Optional):{" "}
                         </span>
                         <span className="text-muted-foreground">
                           {aiAssessment.macroStrategy.timing.postworkout}
@@ -1272,7 +1469,7 @@ export default function ProfilePage() {
                       </div>
                       <div className="p-2 rounded-xl bg-blue-500/5 border border-blue-500/20">
                         <span className="font-bold text-blue-600 dark:text-blue-400">
-                          {t("profile.ai.lastMeal")}{" "}
+                          {t("profile.ai.lastMeal")}:{" "}
                         </span>
                         <span className="text-muted-foreground">
                           {aiAssessment.macroStrategy.timing.lastMeal}
@@ -1351,7 +1548,7 @@ export default function ProfilePage() {
                       }`}
                     >
                       <p className="text-[10px] text-muted-foreground">
-                        {t("profile.ai.cardioRisk")}
+                        {t("profile.ai.cardioRisk")} (Screening Estimate)
                       </p>
                       <p
                         className={`text-sm font-black ${
@@ -1366,6 +1563,9 @@ export default function ProfilePage() {
                       >
                         {aiAssessment.longevityRoadmap.cardiovascularRiskLevel}{" "}
                         {t("profile.ai.risk")}
+                      </p>
+                      <p className="text-[9px] text-muted-foreground/75 leading-tight">
+                        Waist-to-hip / waist-to-height screening estimate, not a clinical diagnosis. Spot reduction is a myth; prioritize caloric deficit, aerobic activity & resistance training.
                       </p>
                     </div>
                     <div className="space-y-1">
@@ -1388,6 +1588,53 @@ export default function ProfilePage() {
                     </div>
                     <div className="p-2.5 rounded-xl bg-red-500/5 border border-red-500/20 text-[11px] text-red-700 dark:text-red-300 leading-relaxed">
                       ❤️ {aiAssessment.longevityRoadmap.wellnessGoal}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Localized BD High-Protein Food Sources (Requirement 10) */}
+                <div className="p-4 rounded-2xl bg-muted/40 border border-border/30 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold flex items-center gap-1.5 text-foreground">
+                      <Utensils className="w-3.5 h-3.5 text-primary" />
+                      {isBn
+                        ? "সহজলভ্য উচ্চ-প্রোটিন দেশীয় খাদ্য উৎস"
+                        : "Bangladeshi High-Protein Food Staples (Hit 100g+ Protein Locally)"}
+                    </h4>
+                    <span className="text-[10px] text-primary font-semibold">
+                      Target: {macros?.dailyProteinGoal || 113}g/day
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 text-[11px]">
+                    <div className="p-2.5 rounded-xl bg-background/70 border border-border/40 space-y-0.5">
+                      <p className="font-bold text-foreground">🥚 Eggs (ডিম)</p>
+                      <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">~6g protein / egg</p>
+                      <p className="text-[9px] text-muted-foreground">2-3 eggs = 12-18g</p>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-background/70 border border-border/40 space-y-0.5">
+                      <p className="font-bold text-foreground">🍲 Dal (মসুর ডাল)</p>
+                      <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">~9g protein / cup</p>
+                      <p className="text-[9px] text-muted-foreground">Thick dal preference</p>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-background/70 border border-border/40 space-y-0.5">
+                      <p className="font-bold text-foreground">🌱 Soya Chunks</p>
+                      <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">~52g protein / 100g</p>
+                      <p className="text-[9px] text-muted-foreground">Budget superfood</p>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-background/70 border border-border/40 space-y-0.5">
+                      <p className="font-bold text-foreground">🥗 Chola (ছোলা)</p>
+                      <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">~15g protein / cup</p>
+                      <p className="text-[9px] text-muted-foreground">Boiled snack / curry</p>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-background/70 border border-border/40 space-y-0.5">
+                      <p className="font-bold text-foreground">🐟 Fish (মাছ)</p>
+                      <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">~18-22g / 100g</p>
+                      <p className="text-[9px] text-muted-foreground">Rui, Katla, Tilapia</p>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-background/70 border border-border/40 space-y-0.5">
+                      <p className="font-bold text-foreground">🍗 Chicken (মুরগি)</p>
+                      <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">~25-30g / 100g</p>
+                      <p className="text-[9px] text-muted-foreground">Skinless breast/curry</p>
                     </div>
                   </div>
                 </div>

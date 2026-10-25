@@ -28,6 +28,17 @@ const UserProfileSchema = new Schema(
     dailyFiberGoal: { type: Number, default: 30 },
     unitSystem: { type: String, enum: ["metric", "imperial"], default: "metric" },
     useCustomMacros: { type: Boolean, default: false },
+    aiCoachAssessment: {
+      assessment: { type: Schema.Types.Mixed },
+      inputs: {
+        weight: { type: Number },
+        date: { type: String },
+        measurements: { type: Schema.Types.Mixed },
+        goal: { type: String },
+        activityLevel: { type: String },
+      },
+      generatedAt: { type: Date },
+    },
     onboardingCompleted: { type: Boolean, default: false },
   },
   { timestamps: true }

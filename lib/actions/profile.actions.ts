@@ -13,19 +13,19 @@ import type {
   IUserProfile,
   IBodyMeasurement,
 } from "@/types/fitness";
+import WeightLog from "@/lib/database/models/weight-log.model";
+import WorkoutLog from "@/lib/database/models/workout-log.model";
+import WorkoutPlan from "@/lib/database/models/workout-plan.model";
+import MealLog from "@/lib/database/models/meal-log.model";
 import {
-  calcBMI,
-  getBMICategory,
-  calcIdealWeightRange,
+  calculateUnifiedHealthMetrics,
+  evaluateCalorieAdjustment,
   calcBodyFatPercentage,
-  getBodyFatCategory,
-  calcLeanBodyMass,
   calcFatMass,
-  calcWaistToHipRatio,
-  getWHRRiskCategory,
-  calcWaistToHeightRatio,
-  getWHtRCategory,
+  calcLeanBodyMass,
+  autoSuggestActivityLevel,
 } from "@/lib/health-calculations";
+import { getLocalDateString } from "@/lib/utils";
 
 export interface MacroCalculationOptions {
   gender: Gender;
@@ -35,126 +35,32 @@ export interface MacroCalculationOptions {
   targetWeight?: number;
   activityLevel: ActivityLevel;
   goal: PrimaryGoal;
-  proteinRatio?: number; // Optional user-chosen g/kg (e.g. 1.2, 1.4, 1.6, 2.0)
-  calorieAdjustment?: number; // Optional custom deficit / surplus in kcal
+  proteinRatio?: number;
+  calorieAdjustment?: number;
 }
 
 export async function calculateRecommendedMacros(data: MacroCalculationOptions) {
-  const {
-    gender,
-    age,
-    height,
-    currentWeight,
-    activityLevel,
-    goal,
-    proteinRatio,
-    calorieAdjustment,
-  } = data;
-
-  // BMR Calculation using Mifflin-St Jeor Equation
-  let bmr = 10 * currentWeight + 6.25 * height - 5 * age;
-  if (gender === "male") {
-    bmr += 5;
-  } else if (gender === "female") {
-    bmr -= 161;
-  } else {
-    bmr -= 78; // average offset for 'other'
-  }
-
-  // TDEE Multipliers based on Activity Level
-  const activityMultipliers: Record<ActivityLevel, number> = {
-    sedentary: 1.2,
-    light: 1.375,
-    moderate: 1.55,
-    active: 1.725,
-    very_active: 1.9,
-  };
-
-  const tdee = Math.round(bmr * (activityMultipliers[activityLevel] || 1.55));
-
-  // Daily Calorie Goal Adjustment based on Goal
-  let dailyCaloriesGoal = tdee;
-  const customAdj =
-    typeof calorieAdjustment === "number" && !isNaN(calorieAdjustment)
-      ? calorieAdjustment
-      : null;
-
-  if (goal === "lose_weight") {
-    // Sustainable deficit (~0.4-0.5kg/week fat loss)
-    const deficit = customAdj ?? 450;
-    const minCalories = gender === "female" ? 1200 : 1400;
-    dailyCaloriesGoal = Math.max(minCalories, Math.round(tdee - deficit));
-  } else if (goal === "gain_muscle") {
-    // Clean hypertrophy surplus
-    const surplus = customAdj ?? 300;
-    dailyCaloriesGoal = Math.round(tdee + surplus);
-  } else {
-    // Maintain weight
-    const adj = customAdj ?? 0;
-    dailyCaloriesGoal = Math.round(tdee + adj);
-  }
-
-  // Smart Goal-Based Protein Recommendation (User customizable, NOT forced 2.0x!)
-  // If user passed a specific proteinRatio (e.g. 1.2, 1.4, 1.6, 2.0 g/kg), respect it.
-  // Otherwise, derive scientifically from goal:
-  // - Maintain: 1.2 g/kg (sedentary/light) or 1.4 g/kg (moderate/active)
-  // - Lose weight: 1.6 g/kg (preserves muscle in deficit without overload)
-  // - Gain muscle: 1.8 g/kg (moderate) or 2.0 g/kg (heavy lifting)
-  let effectiveProteinRatio = 1.6;
-  if (typeof proteinRatio === "number" && proteinRatio > 0) {
-    effectiveProteinRatio = proteinRatio;
-  } else if (goal === "maintain") {
-    effectiveProteinRatio =
-      activityLevel === "active" || activityLevel === "very_active" ? 1.4 : 1.2;
-  } else if (goal === "lose_weight") {
-    effectiveProteinRatio = 1.6;
-  } else if (goal === "gain_muscle") {
-    effectiveProteinRatio =
-      activityLevel === "active" || activityLevel === "very_active" ? 2.0 : 1.8;
-  }
-
-  const dailyProteinGoal = Math.max(
-    45,
-    Math.round(currentWeight * effectiveProteinRatio),
-  );
-
-  // Fat: 25% of daily calories (1g fat = 9 kcal), min 40g for hormonal health
-  const dailyFatGoal = Math.max(40, Math.round((dailyCaloriesGoal * 0.25) / 9));
-
-  // Carbs: Remaining calories (1g carb = 4 kcal)
-  const proteinCalories = dailyProteinGoal * 4;
-  const fatCalories = dailyFatGoal * 9;
-  const remainingCalories = Math.max(
-    0,
-    dailyCaloriesGoal - (proteinCalories + fatCalories),
-  );
-  const dailyCarbGoal = Math.round(remainingCalories / 4);
-
-  // Fiber: 14g per 1000 kcal recommendation
-  const dailyFiberGoal = Math.max(
-    25,
-    Math.round((dailyCaloriesGoal / 1000) * 14),
-  );
-
-  // Water: ~35ml per kg bodyweight + activity adjustment
-  const activityWaterBonus =
-    activityLevel === "active"
-      ? 400
-      : activityLevel === "very_active"
-        ? 700
-        : 0;
-  const waterGoalMl = Math.round(currentWeight * 35 + activityWaterBonus);
+  const unified = calculateUnifiedHealthMetrics({
+    gender: data.gender,
+    age: data.age,
+    heightCm: data.height,
+    currentWeightKg: data.currentWeight,
+    targetWeightKg: data.targetWeight,
+    activityLevel: data.activityLevel,
+    goal: data.goal,
+    proteinRatioOverride: data.proteinRatio,
+  });
 
   return {
-    dailyCaloriesGoal,
-    dailyProteinGoal,
-    dailyFatGoal,
-    dailyCarbGoal,
-    dailyFiberGoal,
-    waterGoalMl,
-    bmr: Math.round(bmr),
-    tdee,
-    proteinRatioUsed: effectiveProteinRatio,
+    dailyCaloriesGoal: unified.targets.dailyCaloriesGoal,
+    dailyProteinGoal: unified.targets.dailyProteinGoal,
+    dailyFatGoal: unified.targets.dailyFatGoal,
+    dailyCarbGoal: unified.targets.dailyCarbGoal,
+    dailyFiberGoal: unified.targets.dailyFiberGoal,
+    waterGoalMl: unified.targets.waterGoalMl,
+    bmr: unified.bmr,
+    tdee: unified.tdee,
+    proteinRatioUsed: unified.targets.proteinRatioUsed,
   };
 }
 
@@ -168,118 +74,213 @@ export async function getFullProfileHealthMetrics() {
   }).lean()) as IUserProfile | null;
   if (!profile) return null;
 
-  const latestMeasurements = (await BodyMeasurement.findOne({
-    clerkId: user.id,
-  })
-    .sort({ date: -1, updatedAt: -1 })
-    .lean()) as IBodyMeasurement | null;
+  const now = new Date();
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - now.getDay());
+  const startOfWeekStr = getLocalDateString(startOfWeek);
 
-  const weight = profile.currentWeight || 0;
-  const height = profile.height || 0;
+  const fourteenDaysAgo = new Date(now);
+  fourteenDaysAgo.setDate(now.getDate() - 28);
+  const fourteenDaysAgoStr = getLocalDateString(fourteenDaysAgo);
 
-  const bmi = calcBMI(weight, height);
-  const bmiCategory = getBMICategory(bmi);
-  const idealRange = calcIdealWeightRange(height, profile.gender as Gender);
+  const [
+    latestMeasurement,
+    firstMeasurement,
+    previousMeasurements,
+    latestWeightDoc,
+    firstWeightDoc,
+    weightHistory14,
+    recentMeals14,
+    workoutsThisWeekCount,
+    workoutPlanDoc,
+  ] = await Promise.all([
+    BodyMeasurement.findOne({ clerkId: user.id })
+      .sort({ date: -1, createdAt: -1 })
+      .lean() as Promise<IBodyMeasurement | null>,
+    BodyMeasurement.findOne({ clerkId: user.id })
+      .sort({ date: 1, createdAt: 1 })
+      .lean() as Promise<IBodyMeasurement | null>,
+    BodyMeasurement.find({ clerkId: user.id })
+      .sort({ date: -1, createdAt: -1 })
+      .skip(1)
+      .limit(1)
+      .lean() as unknown as Promise<IBodyMeasurement[]>,
+    WeightLog.findOne({ clerkId: user.id })
+      .sort({ date: -1, createdAt: -1 })
+      .lean() as unknown as Promise<{ weight: number; date: string } | null>,
+    WeightLog.findOne({ clerkId: user.id })
+      .sort({ date: 1, createdAt: 1 })
+      .lean() as unknown as Promise<{ weight: number; date: string } | null>,
+    WeightLog.find({ clerkId: user.id, date: { $gte: fourteenDaysAgoStr } })
+      .sort({ date: 1 })
+      .lean() as unknown as Promise<Array<{ weight: number; date: string }>>,
+    MealLog.find({ clerkId: user.id, date: { $gte: fourteenDaysAgoStr } })
+      .lean() as unknown as Promise<Array<{ totalCalories: number; date: string }>>,
+    WorkoutLog.countDocuments({
+      clerkId: user.id,
+      date: { $gte: startOfWeekStr },
+    }),
+    WorkoutPlan.findOne({ clerkId: user.id }).lean(),
+  ]);
 
-  const bodyFatPct = calcBodyFatPercentage({
-    gender: profile.gender as Gender,
-    heightCm: height,
-    waistCm: latestMeasurements?.waist,
-    neckCm: latestMeasurements?.neck,
-    hipCm: latestMeasurements?.hip,
-  });
+  const previousMeasurement = previousMeasurements?.[0] || null;
 
-  const bodyFatCategory =
-    bodyFatPct !== null
-      ? getBodyFatCategory(bodyFatPct, profile.gender as Gender)
-      : null;
+  const currentWeight =
+    latestWeightDoc?.weight || profile.currentWeight || 70;
+  const startWeight =
+    firstWeightDoc?.weight || profile.currentWeight || currentWeight;
 
-  const leanMass = calcLeanBodyMass(weight, bodyFatPct);
-  const fatMass = calcFatMass(weight, bodyFatPct);
-
-  const whr = calcWaistToHipRatio(
-    latestMeasurements?.waist,
-    latestMeasurements?.hip,
-  );
-  const whrRisk =
-    whr !== null ? getWHRRiskCategory(whr, profile.gender as Gender) : null;
-
-  const whtr = calcWaistToHeightRatio(latestMeasurements?.waist, height);
-  const whtrCategory = whtr !== null ? getWHtRCategory(whtr) : null;
-
-  const recommended = await calculateRecommendedMacros({
-    gender: profile.gender as Gender,
+  // Single Source of Truth Unified Computation
+  const unified = calculateUnifiedHealthMetrics({
+    gender: profile.gender,
     age: profile.age,
-    height,
-    currentWeight: weight,
-    targetWeight: profile.targetWeight,
-    activityLevel: profile.activityLevel as ActivityLevel,
-    goal: profile.goal as PrimaryGoal,
+    heightCm: profile.height,
+    currentWeightKg: currentWeight,
+    startWeightKg: startWeight,
+    targetWeightKg: profile.targetWeight,
+    activityLevel: profile.activityLevel,
+    goal: profile.goal,
+    workoutDaysPerWeek: profile.workoutDaysPerWeek,
+    waistCm: latestMeasurement?.waist,
+    neckCm: latestMeasurement?.neck,
+    hipCm: latestMeasurement?.hip,
+    useCustomMacros: profile.useCustomMacros,
+    customCalories: profile.dailyCaloriesGoal,
+    customProtein: profile.dailyProteinGoal,
+    customFat: profile.dailyFatGoal,
+    customCarb: profile.dailyCarbGoal,
+    customFiber: profile.dailyFiberGoal,
+    customWaterMl: profile.waterGoalMl,
   });
 
-  const isCustom = profile.useCustomMacros === true;
+  // Calculate body composition delta since first measurement
+  let bodyCompChangeSinceFirst: {
+    initialFatMass: number | null;
+    initialLeanMass: number | null;
+    fatMassChange: number | null;
+    leanMassChange: number | null;
+  } | null = null;
 
-  const activeMacros = {
-    dailyCaloriesGoal:
-      isCustom && profile.dailyCaloriesGoal
-        ? profile.dailyCaloriesGoal
-        : recommended.dailyCaloriesGoal,
-    dailyProteinGoal:
-      isCustom && profile.dailyProteinGoal
-        ? profile.dailyProteinGoal
-        : recommended.dailyProteinGoal,
-    dailyFatGoal:
-      isCustom && profile.dailyFatGoal
-        ? profile.dailyFatGoal
-        : recommended.dailyFatGoal,
-    dailyCarbGoal:
-      isCustom && profile.dailyCarbGoal
-        ? profile.dailyCarbGoal
-        : recommended.dailyCarbGoal,
-    dailyFiberGoal:
-      isCustom && profile.dailyFiberGoal
-        ? profile.dailyFiberGoal
-        : recommended.dailyFiberGoal,
-    waterGoalMl:
-      isCustom && profile.waterGoalMl
-        ? profile.waterGoalMl
-        : recommended.waterGoalMl,
-    bmr: recommended.bmr,
-    tdee: recommended.tdee,
-    isCustom,
-  };
+  if (firstMeasurement && firstWeightDoc) {
+    const initialBf = calcBodyFatPercentage({
+      gender: profile.gender as Gender,
+      heightCm: profile.height,
+      waistCm: firstMeasurement.waist,
+      neckCm: firstMeasurement.neck,
+      hipCm: firstMeasurement.hip,
+    });
+    if (initialBf !== null) {
+      const initialFat = calcFatMass(firstWeightDoc.weight, initialBf);
+      const initialLean = calcLeanBodyMass(firstWeightDoc.weight, initialBf);
+      if (
+        initialFat !== null &&
+        initialLean !== null &&
+        unified.fatMass !== null &&
+        unified.leanMass !== null
+      ) {
+        bodyCompChangeSinceFirst = {
+          initialFatMass: initialFat,
+          initialLeanMass: initialLean,
+          fatMassChange: Math.round((unified.fatMass - initialFat) * 10) / 10,
+          leanMassChange: Math.round((unified.leanMass - initialLean) * 10) / 10,
+        };
+      }
+    }
+  }
 
-  // If targets are automatic (not custom) and stored DB numbers are stale, auto-sync DB immediately
+  // Calculate measurement change since first and previous for every circumference
+  const measurementKeys = [
+    "waist",
+    "neck",
+    "hip",
+    "chest",
+    "shoulder",
+    "arm",
+    "forearm",
+    "thigh",
+    "calf",
+  ] as const;
+
+  const measurementChanges: Record<
+    string,
+    {
+      current?: number;
+      sincePrevious?: number;
+      sinceFirst?: number;
+    }
+  > = {};
+
+  measurementKeys.forEach((key) => {
+    const curr = latestMeasurement?.[key];
+    const prev = previousMeasurement?.[key];
+    const first = firstMeasurement?.[key];
+
+    measurementChanges[key] = {
+      current: typeof curr === "number" ? curr : undefined,
+      sincePrevious:
+        typeof curr === "number" && typeof prev === "number"
+          ? Math.round((curr - prev) * 10) / 10
+          : undefined,
+      sinceFirst:
+        typeof curr === "number" && typeof first === "number"
+          ? Math.round((curr - first) * 10) / 10
+          : undefined,
+    };
+  });
+
+  // Suggested Calorie Adjustment (Requirement 6)
+  const mappedIntakes = recentMeals14.map((m) => ({
+    calories: Number(m.totalCalories) || 0,
+    date: m.date,
+  }));
+  const suggestedAdjustment = evaluateCalorieAdjustment({
+    weightEntries: weightHistory14,
+    recentIntakes: mappedIntakes,
+    targetCalories: unified.targets.dailyCaloriesGoal,
+    goal: profile.goal,
+  });
+
+  // Workout Logging Prompt & Auto-suggested activity level (Requirement 9)
+  const hasScheduledWorkouts = (profile.workoutDaysPerWeek || 0) > 0;
+  const needsWorkoutLog =
+    hasScheduledWorkouts &&
+    !!workoutPlanDoc &&
+    workoutsThisWeekCount === 0;
+  const suggestedActivityLevel = autoSuggestActivityLevel(
+    profile.workoutDaysPerWeek || 0,
+  );
+
+  // Auto-sync stale DB numbers if using automatic macros
   if (
-    !isCustom &&
-    (profile.dailyCaloriesGoal !== recommended.dailyCaloriesGoal ||
-      profile.dailyProteinGoal !== recommended.dailyProteinGoal)
+    !profile.useCustomMacros &&
+    (profile.dailyCaloriesGoal !== unified.targets.dailyCaloriesGoal ||
+      profile.dailyProteinGoal !== unified.targets.dailyProteinGoal)
   ) {
     await UserProfile.updateOne(
       { clerkId: user.id },
       {
         $set: {
-          dailyCaloriesGoal: recommended.dailyCaloriesGoal,
-          dailyProteinGoal: recommended.dailyProteinGoal,
-          dailyFatGoal: recommended.dailyFatGoal,
-          dailyCarbGoal: recommended.dailyCarbGoal,
-          dailyFiberGoal: recommended.dailyFiberGoal,
-          waterGoalMl: recommended.waterGoalMl,
+          dailyCaloriesGoal: unified.targets.dailyCaloriesGoal,
+          dailyProteinGoal: unified.targets.dailyProteinGoal,
+          dailyFatGoal: unified.targets.dailyFatGoal,
+          dailyCarbGoal: unified.targets.dailyCarbGoal,
+          dailyFiberGoal: unified.targets.dailyFiberGoal,
+          waterGoalMl: unified.targets.waterGoalMl,
           useCustomMacros: false,
         },
       },
     );
   }
 
-  const activityLabels: Record<ActivityLevel, string> = {
+  const activityLabels: Record<string, string> = {
     sedentary: "Sedentary (Little/No Exercise)",
-    light: "Light (1-3 days/week)",
+    light: "Light (1-2 days/week)",
     moderate: "Moderate (3-5 days/week)",
     active: "Active (6-7 days/week)",
     very_active: "Very Active (Athlete/Physical Job)",
   };
 
-  const goalLabels: Record<PrimaryGoal, string> = {
+  const goalLabels: Record<string, string> = {
     lose_weight: "Lose Weight 🔥",
     gain_muscle: "Gain Muscle 💪",
     maintain: "Maintain Weight ⚖️",
@@ -287,29 +288,52 @@ export async function getFullProfileHealthMetrics() {
 
   return {
     profile: JSON.parse(JSON.stringify(profile)),
-    latestMeasurements: latestMeasurements
-      ? JSON.parse(JSON.stringify(latestMeasurements))
+    latestMeasurements: latestMeasurement
+      ? JSON.parse(JSON.stringify(latestMeasurement))
       : null,
+    firstMeasurement: firstMeasurement
+      ? JSON.parse(JSON.stringify(firstMeasurement))
+      : null,
+    previousMeasurement: previousMeasurement
+      ? JSON.parse(JSON.stringify(previousMeasurement))
+      : null,
+    measurementChanges,
+    bodyCompChangeSinceFirst,
     metrics: {
-      bmi,
-      bmiCategory,
-      idealWeightRange: idealRange,
-      bodyFatPct,
-      bodyFatCategory,
-      leanMass,
-      fatMass,
-      whr,
-      whrRisk,
-      whtr,
-      whtrCategory,
-      bmr: recommended.bmr,
-      tdee: recommended.tdee,
+      currentWeight: unified.currentWeight,
+      startWeight: unified.startWeight,
+      targetWeight: unified.targetWeight,
+      bmi: unified.bmi,
+      bmiCategory: unified.bmiCategory,
+      idealWeightRange: unified.idealWeightRange,
+      bodyFatPct: unified.bodyFatPct,
+      bodyFatRange: unified.bodyFatRange,
+      bodyFatCategory: unified.bodyFatCategory,
+      leanMass: unified.leanMass,
+      fatMass: unified.fatMass,
+      whr: unified.whr,
+      whrRisk: unified.whrRisk,
+      whtr: unified.whtr,
+      whtrCategory: unified.whtrCategory,
+      bmr: unified.bmr,
+      tdee: unified.tdee,
+      activityMultiplierUsed: unified.activityMultiplierUsed,
+      weightProgress: unified.weightProgress,
     },
-    macros: activeMacros,
-    recommendedMacros: recommended,
+    macros: unified.targets,
+    recommendedMacros: unified.targets,
+    suggestedAdjustment,
+    workoutStatus: {
+      workoutsThisWeekCount,
+      needsWorkoutLog,
+      hasScheduledWorkouts,
+      suggestedActivityLevel,
+    },
     labels: {
-      activity: activityLabels[profile.activityLevel as ActivityLevel],
-      goal: goalLabels[profile.goal as PrimaryGoal],
+      activity:
+        activityLabels[profile.activityLevel] ||
+        unified.activityLabel,
+      goal: goalLabels[profile.goal] || "Fitness Goal",
     },
   };
 }
@@ -333,16 +357,19 @@ export async function getProfileNutritionTargets() {
   const user = await currentUser();
   if (!user) return null;
 
-  const profile = (await UserProfile.findOne({
-    clerkId: user.id,
-  }).lean()) as IUserProfile | null;
+  const [profile, latestWeightDoc] = await Promise.all([
+    UserProfile.findOne({ clerkId: user.id }).lean() as Promise<IUserProfile | null>,
+    WeightLog.findOne({ clerkId: user.id }).sort({ date: -1, createdAt: -1 }).lean() as Promise<{ weight: number } | null>,
+  ]);
   if (!profile) return null;
+
+  const currentWeight = latestWeightDoc?.weight || profile.currentWeight;
 
   const recommended = await calculateRecommendedMacros({
     gender: profile.gender as Gender,
     age: profile.age,
     height: profile.height,
-    currentWeight: profile.currentWeight,
+    currentWeight,
     targetWeight: profile.targetWeight,
     activityLevel: profile.activityLevel as ActivityLevel,
     goal: profile.goal as PrimaryGoal,
