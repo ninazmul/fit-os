@@ -439,19 +439,9 @@ export default function LandingShell({
         </div>
       </section>
 
-      {/* Ad Unit Slot */}
-      <div className="py-4">
-        <AdUnit size="auto" maxWidth="970px" />
-      </div>
-
       {/* Interactive Calculators Section */}
       <div id="calc" className="py-6">
         <FitnessCalculator />
-      </div>
-
-      {/* Ad Unit Slot */}
-      <div className="py-4">
-        <AdUnit size="auto" label="Sponsored" maxWidth="970px" />
       </div>
 
       {/* FAQ Section */}
@@ -492,6 +482,11 @@ export default function LandingShell({
           </div>
         </div>
       </section>
+
+      {/* Bottom Ad Unit */}
+      <div className="border-t border-border/60 py-6">
+        <AdUnit size="auto" maxWidth="970px" />
+      </div>
 
       {/* Production Footer */}
       <footer className="border-t border-border/60 py-10">

@@ -124,9 +124,6 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Ad between sections */}
-      <AdUnit size="auto" label={t("settings.ad.sponsored")} maxWidth="728px" />
-
       {/* Unit Preferences */}
       <div className="glass-card p-6 rounded-3xl border border-border/50 space-y-4">
         <h2 className="text-base font-bold flex items-center gap-2">

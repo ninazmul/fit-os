@@ -600,9 +600,6 @@ export default function ProgressPage() {
         />
       </div>
 
-      {/* Mid-page Ad */}
-      <AdUnit size="auto" label={t("progress.ad.sponsored")} maxWidth="970px" />
-
       {/* Tabs */}
       <Tabs defaultValue="weight" className="space-y-4">
         <TabsList className="glass-card border border-border/50 p-1 rounded-2xl">

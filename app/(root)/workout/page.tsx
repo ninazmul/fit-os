@@ -887,9 +887,6 @@ export default function WorkoutPage() {
         </div>
       </div>
 
-      {/* Mid-page Ad */}
-      <AdUnit size="auto" label={t("workout.ad.sponsored")} maxWidth="970px" />
-
       {/* PR Cards Carousel / Grid */}
       {Object.keys(prs).length > 0 && (
         <div className="glass-card p-5 rounded-3xl border border-border/50 space-y-3">

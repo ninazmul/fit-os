@@ -313,8 +313,6 @@ export default function AnalyticsPage() {
         }
       />
 
-      <AdUnit size="auto" label={t("analytics.sponsored")} maxWidth="970px" />
-
       {/* Health Score Banner */}
       {loading ? (
         <div className="glass-card rounded-3xl border border-border/50 p-6 animate-pulse h-48" />

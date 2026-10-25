@@ -782,9 +782,6 @@ export default function DietPage() {
         ]}
       />
 
-      {/* Mid-page Ad */}
-      <AdUnit size="auto" label={t("diet.ad.sponsored")} maxWidth="970px" />
-
       {/* Meal Types Sections */}
       <div className="space-y-4">
         {/* Barcode Scanner Button */}
