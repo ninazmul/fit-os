@@ -1,6 +1,6 @@
 # NutriBD (FitOS) – Comprehensive Application Documentation
 
-**Version:** 3.4.0  
+**Version:** 3.5.0  
 **Architecture:** Next.js 16 (App Router + Turbopack), React 19, TypeScript, Mongoose 8, Clerk Authentication, Google Gemini AI  
 **Author:** N. I. Nazmul (RIZMEC)  
 **Repository:** [github.com/ninazmul/nutribd](https://github.com/ninazmul/fit-os.git)
