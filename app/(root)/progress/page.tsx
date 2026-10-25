@@ -21,6 +21,7 @@ import StatCard from "@/components/shared/StatCard";
 import BodyMeasurementModal from "@/components/shared/BodyMeasurementModal";
 import PageHeader from "@/components/shared/PageHeader";
 import { useI18n } from "@/components/shared/I18nProvider";
+import { useDynamicTranslation } from "@/lib/i18n/use-dynamic-translation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
@@ -104,6 +105,9 @@ export default function ProgressPage() {
   const [aiProgressData, setAiProgressData] =
     useState<AIProgressAuditData | null>(null);
   const [aiProgressLoading, setAiProgressLoading] = useState(false);
+
+  // AI-generated audit text is translated on the fly into the active locale.
+  const localizedAI = useDynamicTranslation(aiProgressData);
 
   // Weight dialog
   const [weightModalOpen, setWeightModalOpen] = useState(false);
@@ -293,7 +297,9 @@ export default function ProgressPage() {
                 }`}
               >
                 {t("progress.trajectory.plateauRisk", {
-                  risk: aiProgressData.trajectory.plateauRisk,
+                  risk:
+                    localizedAI?.trajectory.plateauRisk ??
+                    aiProgressData.trajectory.plateauRisk,
                 })}
               </span>
             </div>
@@ -319,11 +325,14 @@ export default function ProgressPage() {
                 </p>
               )}
               <p className="text-[11px] text-muted-foreground leading-relaxed">
-                {aiProgressData.trajectory.assessment}
+                {localizedAI?.trajectory.assessment ??
+                  aiProgressData.trajectory.assessment}
               </p>
             </div>
             <div className="bg-muted/40 rounded-xl p-2.5 text-[11px] text-muted-foreground border border-border/30">
-              💡 {aiProgressData.trajectory.advice}
+              💡{" "}
+              {localizedAI?.trajectory.advice ??
+                aiProgressData.trajectory.advice}
             </div>
             {aiProgressData.isAIGenerated && (
               <span className="text-[10px] flex items-center gap-1 text-primary/70">
@@ -351,7 +360,8 @@ export default function ProgressPage() {
                       : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
                 }`}
               >
-                {aiProgressData.recomposition.status}
+                {localizedAI?.recomposition.status ??
+                  aiProgressData.recomposition.status}
               </span>
             </div>
             <div className="grid grid-cols-3 gap-2 text-xs">
@@ -388,7 +398,8 @@ export default function ProgressPage() {
               </div>
             </div>
             <p className="text-[11px] text-muted-foreground leading-relaxed">
-              {aiProgressData.recomposition.summary}
+              {localizedAI?.recomposition.summary ??
+                aiProgressData.recomposition.summary}
             </p>
             <div className="space-y-1">
               <div className="flex items-center justify-between text-[10px]">
@@ -466,7 +477,8 @@ export default function ProgressPage() {
                         : "text-red-600 dark:text-red-400"
                   }`}
                 >
-                  {aiProgressData.recoveryIndex.readiness}
+                  {localizedAI?.recoveryIndex.readiness ??
+                    aiProgressData.recoveryIndex.readiness}
                 </p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">
                   {t("progress.recovery.scoreLabel")}
@@ -474,10 +486,13 @@ export default function ProgressPage() {
               </div>
             </div>
             <p className="text-[11px] text-muted-foreground leading-relaxed">
-              {aiProgressData.recoveryIndex.sleepToWorkoutCorrelation}
+              {localizedAI?.recoveryIndex.sleepToWorkoutCorrelation ??
+                aiProgressData.recoveryIndex.sleepToWorkoutCorrelation}
             </p>
             <div className="bg-blue-500/5 border border-blue-500/20 rounded-xl p-2.5 text-[11px] text-blue-700 dark:text-blue-300">
-              💤 {aiProgressData.recoveryIndex.actionTip}
+              💤{" "}
+              {localizedAI?.recoveryIndex.actionTip ??
+                aiProgressData.recoveryIndex.actionTip}
             </div>
           </div>
         </div>
@@ -491,21 +506,14 @@ export default function ProgressPage() {
             {t("progress.milestones.title")}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {aiProgressData.milestones.map(
-              (
-                m: {
-                  title: string;
-                  current: string;
-                  target: string;
-                  progressPct: number;
-                  projectedDate: string;
-                },
-                i: number,
-              ) => (
+            {aiProgressData.milestones.map((m, i) => {
+              const loc =
+                (localizedAI?.milestones ?? aiProgressData.milestones)[i] ?? m;
+              return (
                 <div key={i} className="space-y-2">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-semibold text-[11px] truncate">
-                      {m.title}
+                      {loc.title}
                     </span>
                     <span className="font-black text-primary text-[11px] ml-2 flex-shrink-0">
                       {m.progressPct}%
@@ -530,8 +538,8 @@ export default function ProgressPage() {
                     {t("progress.milestones.est", { value: m.projectedDate })}
                   </p>
                 </div>
-              ),
-            )}
+              );
+            })}
           </div>
         </div>
       )}

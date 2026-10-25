@@ -188,6 +188,17 @@ export default function AnalyticsPage() {
   );
   const localizedLegacyInsights = useDynamicTranslation(insights);
 
+  // AI-suggested quick pills are also AI-generated — flatten them for
+  // translation while keeping the original prompt on click.
+  const chatPills = chatMessages.flatMap((msg) => msg.pills ?? []);
+  const localizedChatPills = useDynamicTranslation(chatPills);
+  const pillStartIndex: number[] = [];
+  let pillCursor = 0;
+  chatMessages.forEach((msg) => {
+    pillStartIndex.push(pillCursor);
+    pillCursor += msg.pills?.length ?? 0;
+  });
+
   useEffect(() => {
     const fetch = async () => {
       try {
@@ -436,7 +447,7 @@ export default function AnalyticsPage() {
                           onClick={() => sendMessage(pill)}
                           className="px-2.5 py-1 rounded-full bg-primary/15 text-primary text-[10px] font-semibold border border-primary/30 hover:bg-primary/25 transition-colors"
                         >
-                          {pill}
+                          {localizedChatPills[pillStartIndex[idx] + pi] ?? pill}
                         </button>
                       ))}
                     </div>
