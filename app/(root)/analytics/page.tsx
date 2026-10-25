@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { generateInsights } from "@/lib/actions/insights.actions";
 import { getUserProfile } from "@/lib/actions/profile.actions";
 import {
   generateDeepAIAnalytics,
-  askAICoach,
   type AIAnalyticsData,
 } from "@/lib/actions/ai-analytics.actions";
 import { Button } from "@/components/ui/button";
@@ -20,8 +19,6 @@ import {
   Lightbulb,
   ArrowRight,
   Brain,
-  MessageSquare,
-  Send,
   RefreshCw,
   Trophy,
   TrendingUp,
@@ -54,15 +51,6 @@ const CATEGORY_FILTERS = [
   "habits",
 ] as const;
 type CategoryFilter = (typeof CATEGORY_FILTERS)[number];
-
-const PROMPT_PILL_KEYS = [
-  "analytics.pill.weightPlateau",
-  "analytics.pill.highProteinMeals",
-  "analytics.pill.sleepQuality",
-  "analytics.pill.workoutSplit",
-  "analytics.pill.fatLossPlateau",
-  "analytics.pill.prePostWorkout",
-];
 
 const categoryIcons: Record<string, React.ElementType> = {
   nutrition: Utensils,
@@ -150,15 +138,8 @@ function ScoreRing({
   );
 }
 
-interface ChatMessage {
-  role: "user" | "ai";
-  content: string;
-  pills?: string[];
-}
-
 export default function AnalyticsPage() {
   const { t } = useI18n();
-  const promptPills = PROMPT_PILL_KEYS.map((key) => t(key));
 
   const [insights, setInsights] = useState<AIInsight[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -168,36 +149,9 @@ export default function AnalyticsPage() {
   const [aiLoading, setAiLoading] = useState(false);
   const [activeFilter, setActiveFilter] = useState<CategoryFilter>("all");
 
-  // Chat state
-  const [chatOpen, setChatOpen] = useState(false);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-    {
-      role: "ai",
-      content: t("analytics.coachWelcome"),
-      pills: promptPills.slice(0, 3),
-    },
-  ]);
-  const [chatInput, setChatInput] = useState("");
-  const [chatLoading, setChatLoading] = useState(false);
-  const chatEndRef = useRef<HTMLDivElement>(null);
-
-  // AI-generated report + coach answers are translated on the fly.
+  // AI-generated report is translated on the fly.
   const localizedAI = useDynamicTranslation(aiData);
-  const localizedChatContents = useDynamicTranslation(
-    chatMessages.map((msg) => (msg.role === "ai" ? msg.content : "")),
-  );
   const localizedLegacyInsights = useDynamicTranslation(insights);
-
-  // AI-suggested quick pills are also AI-generated — flatten them for
-  // translation while keeping the original prompt on click.
-  const chatPills = chatMessages.flatMap((msg) => msg.pills ?? []);
-  const localizedChatPills = useDynamicTranslation(chatPills);
-  const pillStartIndex: number[] = [];
-  let pillCursor = 0;
-  chatMessages.forEach((msg) => {
-    pillStartIndex.push(pillCursor);
-    pillCursor += msg.pills?.length ?? 0;
-  });
 
   useEffect(() => {
     const fetch = async () => {
@@ -220,10 +174,6 @@ export default function AnalyticsPage() {
     fetch();
   }, []);
 
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chatMessages]);
-
   const refreshAI = async () => {
     try {
       setAiLoading(true);
@@ -238,31 +188,6 @@ export default function AnalyticsPage() {
       toast.error(t("analytics.refreshFailed"));
     } finally {
       setAiLoading(false);
-    }
-  };
-
-  const sendMessage = async (q?: string) => {
-    const query = q || chatInput.trim();
-    if (!query) return;
-    setChatInput("");
-    setChatMessages((prev) => [...prev, { role: "user", content: query }]);
-    setChatLoading(true);
-    try {
-      const { answer, suggestedPills } = await askAICoach(query);
-      setChatMessages((prev) => [
-        ...prev,
-        { role: "ai", content: answer, pills: suggestedPills },
-      ]);
-    } catch {
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          role: "ai",
-          content: t("analytics.coachError"),
-        },
-      ]);
-    } finally {
-      setChatLoading(false);
     }
   };
 
@@ -288,28 +213,17 @@ export default function AnalyticsPage() {
         title={t("analytics.title")}
         subtitle={t("analytics.subtitle")}
         actions={
-          <>
-            <Button
-              onClick={() => setChatOpen((v) => !v)}
-              size="sm"
-              variant="outline"
-              className="rounded-xl gap-1.5 text-xs font-bold border-primary/40 text-primary hover:bg-primary/10"
-            >
-              <MessageSquare className="w-3.5 h-3.5" />
-              {t("analytics.askAiCoach")}
-            </Button>
-            <Button
-              onClick={refreshAI}
-              size="sm"
-              disabled={aiLoading}
-              className="rounded-xl gap-1.5 text-xs font-bold"
-            >
-              <RefreshCw
-                className={`w-3.5 h-3.5 ${aiLoading ? "animate-spin" : ""}`}
-              />
-              {aiLoading ? t("analytics.analysing") : t("analytics.refresh")}
-            </Button>
-          </>
+          <Button
+            onClick={refreshAI}
+            size="sm"
+            disabled={aiLoading}
+            className="rounded-xl gap-1.5 text-xs font-bold"
+          >
+            <RefreshCw
+              className={`w-3.5 h-3.5 ${aiLoading ? "animate-spin" : ""}`}
+            />
+            {aiLoading ? t("analytics.analysing") : t("analytics.refresh")}
+          </Button>
         }
       />
 
@@ -407,107 +321,6 @@ export default function AnalyticsPage() {
           </div>
         </div>
       ) : null}
-
-      {/* Ask AI Coach Chat Panel */}
-      {chatOpen && (
-        <div className="glass-card rounded-3xl border border-primary/20 overflow-hidden">
-          <div className="bg-gradient-to-r from-primary/10 to-purple-500/10 px-5 py-3 border-b border-border/40 flex items-center gap-2">
-            <Brain className="w-4 h-4 text-primary" />
-            <span className="font-bold text-sm">
-              {t("analytics.coachTitle")}
-            </span>
-            <span className="text-[10px] text-muted-foreground ml-auto">
-              {t("analytics.coachContext")}
-            </span>
-          </div>
-
-          <div className="h-72 overflow-y-auto p-4 space-y-3 scroll-smooth">
-            {chatMessages.map((msg, idx) => (
-              <div
-                key={idx}
-                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-              >
-                <div
-                  className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed ${
-                    msg.role === "user"
-                      ? "bg-primary text-primary-foreground rounded-br-sm"
-                      : "bg-muted/60 border border-border/40 rounded-bl-sm"
-                  }`}
-                >
-                  <p className="whitespace-pre-line">
-                    {localizedChatContents[idx] || msg.content}
-                  </p>
-                  {msg.pills && msg.pills.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mt-2.5">
-                      {msg.pills.map((pill, pi) => (
-                        <button
-                          key={pi}
-                          onClick={() => sendMessage(pill)}
-                          className="px-2.5 py-1 rounded-full bg-primary/15 text-primary text-[10px] font-semibold border border-primary/30 hover:bg-primary/25 transition-colors"
-                        >
-                          {localizedChatPills[pillStartIndex[idx] + pi] ?? pill}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-            {chatLoading && (
-              <div className="flex justify-start">
-                <div className="bg-muted/60 border border-border/40 rounded-2xl rounded-bl-sm px-4 py-2.5 flex gap-1 items-center">
-                  <span
-                    className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-bounce"
-                    style={{ animationDelay: "0ms" }}
-                  />
-                  <span
-                    className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-bounce"
-                    style={{ animationDelay: "150ms" }}
-                  />
-                  <span
-                    className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-bounce"
-                    style={{ animationDelay: "300ms" }}
-                  />
-                </div>
-              </div>
-            )}
-            <div ref={chatEndRef} />
-          </div>
-
-          <div className="px-4 py-3 border-t border-border/40 space-y-2">
-            {/* Quick Pills */}
-            <div className="flex flex-wrap gap-1.5">
-              {promptPills.slice(0, 3).map((pill, i) => (
-                <button
-                  key={i}
-                  onClick={() => sendMessage(pill)}
-                  className="px-2.5 py-1 rounded-full bg-muted/60 text-muted-foreground text-[10px] font-medium border border-border/40 hover:border-primary/40 hover:text-primary transition-colors"
-                >
-                  {pill}
-                </button>
-              ))}
-            </div>
-            <div className="flex gap-2">
-              <input
-                className="flex-1 text-xs bg-muted/40 border border-border/40 rounded-xl px-3 py-2 outline-none focus:border-primary/50 transition-colors placeholder:text-muted-foreground"
-                placeholder={t("analytics.coachPlaceholder")}
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                disabled={chatLoading}
-              />
-              <Button
-                size="sm"
-                onClick={() => sendMessage()}
-                disabled={chatLoading || !chatInput.trim()}
-                className="rounded-xl bg-primary hover:bg-primary/90 px-3"
-              >
-                <Send className="w-3.5 h-3.5" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Strengths & Growth Areas */}
       {aiData &&
