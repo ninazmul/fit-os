@@ -9,20 +9,44 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/components/shared/I18nProvider";
+import { cn } from "@/lib/utils";
 import {
-  BookOpen,
-  Sparkles,
-  Users,
-  BrainCircuit,
-  Scale,
+  Activity,
+  Apple,
   Bookmark,
-  ShieldCheck,
-  Flame,
-  UtensilsCrossed,
+  BookOpen,
+  BrainCircuit,
+  Calendar,
   CheckCircle2,
-  HelpCircle,
+  ClipboardList,
   Copy,
   Check,
+  Droplet,
+  Dumbbell,
+  Flame,
+  HelpCircle,
+  Info,
+  Languages,
+  LayoutDashboard,
+  LayoutGrid,
+  ListOrdered,
+  Moon,
+  PlusCircle,
+  Ruler,
+  Scale,
+  ScanBarcode,
+  Search,
+  Settings2,
+  ShieldCheck,
+  Sparkles,
+  Target,
+  TrendingUp,
+  Trophy,
+  Users,
+  UtensilsCrossed,
+  Zap,
+  type LucideIcon,
 } from "lucide-react";
 
 interface DietUserGuideModalProps {
@@ -31,28 +55,501 @@ interface DietUserGuideModalProps {
   onSelectSamplePrompt?: (prompt: string) => void;
 }
 
-type GuideTab = "overview" | "ai" | "community" | "training" | "portions" | "templates";
+type GuideTabId =
+  | "overview"
+  | "dashboard"
+  | "diet"
+  | "ai"
+  | "community"
+  | "training"
+  | "progress"
+  | "settings";
 
+type GuideTone = "primary" | "emerald" | "blue" | "amber" | "purple" | "sky";
+
+const TONE_STYLES: Record<GuideTone, { box: string; title: string }> = {
+  primary: { box: "bg-primary/10 border-primary/20", title: "text-primary" },
+  emerald: {
+    box: "bg-emerald-500/10 border-emerald-500/20",
+    title: "text-emerald-600 dark:text-emerald-400",
+  },
+  blue: {
+    box: "bg-blue-500/10 border-blue-500/20",
+    title: "text-blue-600 dark:text-blue-400",
+  },
+  amber: {
+    box: "bg-amber-500/10 border-amber-500/20",
+    title: "text-amber-600 dark:text-amber-400",
+  },
+  purple: {
+    box: "bg-purple-500/10 border-purple-500/20",
+    title: "text-purple-600 dark:text-purple-400",
+  },
+  sky: {
+    box: "bg-sky-500/10 border-sky-500/20",
+    title: "text-sky-600 dark:text-sky-400",
+  },
+};
+
+interface GuideItem {
+  icon: LucideIcon;
+  titleKey: string;
+  bodyKey: string;
+}
+
+interface GuideStep {
+  titleKey: string;
+  bodyKey: string;
+}
+
+interface GuideBadge {
+  labelKey: string;
+  pillClass: string;
+  titleKey: string;
+  bodyKey: string;
+}
+
+interface GuideTab {
+  id: GuideTabId;
+  icon: LucideIcon;
+  tone: GuideTone;
+  labelKey: string;
+  shortKey: string;
+  introTitleKey: string;
+  introBodyKey: string;
+  stepsHeadingKey?: string;
+  steps?: GuideStep[];
+  itemsHeadingKey?: string;
+  items?: GuideItem[];
+  badgesHeadingKey?: string;
+  badges?: GuideBadge[];
+  note?: { icon: LucideIcon; titleKey: string; bodyKey: string };
+  showSamples?: boolean;
+}
+
+/** Sample dish descriptions that can be pushed straight into the AI estimator. */
 const SAMPLE_PROMPTS = [
   {
-    title: "Bangladeshi Chicken Curry (Eaten 50g)",
-    prompt: "500g chicken curry cooked with 2 tbsp mustard oil, onions, garlic and spices. Eaten portion 50g",
-    category: "curry_meat",
+    titleKey: "guide.sample.1.title",
+    prompt:
+      "500g chicken curry cooked with 2 tbsp mustard oil, onions, garlic and spices. Eaten portion 150g with 250g rice",
   },
   {
-    title: "Beef Kala Bhuna (Rich & Spiced)",
-    prompt: "Beef kala bhuna braised with fried onions, dark roasted spices and ghee. Ate 120g",
-    category: "curry_meat",
+    titleKey: "guide.sample.2.title",
+    prompt:
+      "Beef kala bhuna braised with fried onions, dark roasted spices and ghee. Ate 120g",
   },
   {
-    title: "Breakfast Eggs & Roti",
-    prompt: "2 eggs fried in 1 tsp oil with 2 handmade atta roti",
-    category: "dairy_eggs",
+    titleKey: "guide.sample.3.title",
+    prompt:
+      "2 eggs fried in 1 tsp oil with 1 handmade atta paratha",
   },
   {
-    title: "Gym High-Protein Rice Bowl",
-    prompt: "200g cooked basmati rice with 150g grilled chicken breast and 50g steamed broccoli",
-    category: "rice_grains",
+    titleKey: "guide.sample.4.title",
+    prompt:
+      "200g cooked basmati rice with 150g grilled chicken breast and 50g steamed broccoli",
+  },
+];
+
+const GUIDE_TABS: GuideTab[] = [
+  {
+    id: "overview",
+    icon: UtensilsCrossed,
+    tone: "primary",
+    labelKey: "guide.tab.overview",
+    shortKey: "guide.tab.overview.short",
+    introTitleKey: "guide.overview.introTitle",
+    introBodyKey: "guide.overview.introBody",
+    itemsHeadingKey: "guide.overview.cardsHeading",
+    items: [
+      {
+        icon: Target,
+        titleKey: "guide.overview.c1.title",
+        bodyKey: "guide.overview.c1.body",
+      },
+      {
+        icon: Zap,
+        titleKey: "guide.overview.c2.title",
+        bodyKey: "guide.overview.c2.body",
+      },
+      {
+        icon: UtensilsCrossed,
+        titleKey: "guide.overview.c3.title",
+        bodyKey: "guide.overview.c3.body",
+      },
+      {
+        icon: Languages,
+        titleKey: "guide.overview.c4.title",
+        bodyKey: "guide.overview.c4.body",
+      },
+    ],
+    stepsHeadingKey: "guide.overview.stepsHeading",
+    steps: [
+      {
+        titleKey: "guide.overview.s1.title",
+        bodyKey: "guide.overview.s1.body",
+      },
+      {
+        titleKey: "guide.overview.s2.title",
+        bodyKey: "guide.overview.s2.body",
+      },
+      {
+        titleKey: "guide.overview.s3.title",
+        bodyKey: "guide.overview.s3.body",
+      },
+      {
+        titleKey: "guide.overview.s4.title",
+        bodyKey: "guide.overview.s4.body",
+      },
+    ],
+  },
+  {
+    id: "dashboard",
+    icon: LayoutDashboard,
+    tone: "emerald",
+    labelKey: "guide.tab.dashboard",
+    shortKey: "guide.tab.dashboard.short",
+    introTitleKey: "guide.dashboard.introTitle",
+    introBodyKey: "guide.dashboard.introBody",
+    itemsHeadingKey: "guide.dashboard.itemsHeading",
+    items: [
+      {
+        icon: Calendar,
+        titleKey: "guide.dashboard.i1.title",
+        bodyKey: "guide.dashboard.i1.body",
+      },
+      {
+        icon: Flame,
+        titleKey: "guide.dashboard.i2.title",
+        bodyKey: "guide.dashboard.i2.body",
+      },
+      {
+        icon: Zap,
+        titleKey: "guide.dashboard.i3.title",
+        bodyKey: "guide.dashboard.i3.body",
+      },
+      {
+        icon: Droplet,
+        titleKey: "guide.dashboard.i4.title",
+        bodyKey: "guide.dashboard.i4.body",
+      },
+      {
+        icon: Moon,
+        titleKey: "guide.dashboard.i5.title",
+        bodyKey: "guide.dashboard.i5.body",
+      },
+      {
+        icon: Scale,
+        titleKey: "guide.dashboard.i6.title",
+        bodyKey: "guide.dashboard.i6.body",
+      },
+      {
+        icon: UtensilsCrossed,
+        titleKey: "guide.dashboard.i7.title",
+        bodyKey: "guide.dashboard.i7.body",
+      },
+      {
+        icon: Activity,
+        titleKey: "guide.dashboard.i8.title",
+        bodyKey: "guide.dashboard.i8.body",
+      },
+    ],
+  },
+  {
+    id: "diet",
+    icon: Apple,
+    tone: "emerald",
+    labelKey: "guide.tab.diet",
+    shortKey: "guide.tab.diet.short",
+    introTitleKey: "guide.diet.introTitle",
+    introBodyKey: "guide.diet.introBody",
+    itemsHeadingKey: "guide.diet.itemsHeading",
+    items: [
+      {
+        icon: Search,
+        titleKey: "guide.diet.i1.title",
+        bodyKey: "guide.diet.i1.body",
+      },
+      {
+        icon: UtensilsCrossed,
+        titleKey: "guide.diet.i2.title",
+        bodyKey: "guide.diet.i2.body",
+      },
+      {
+        icon: Scale,
+        titleKey: "guide.diet.i3.title",
+        bodyKey: "guide.diet.i3.body",
+      },
+      {
+        icon: Users,
+        titleKey: "guide.diet.i4.title",
+        bodyKey: "guide.diet.i4.body",
+      },
+      {
+        icon: PlusCircle,
+        titleKey: "guide.diet.i5.title",
+        bodyKey: "guide.diet.i5.body",
+      },
+      {
+        icon: ScanBarcode,
+        titleKey: "guide.diet.i6.title",
+        bodyKey: "guide.diet.i6.body",
+      },
+      {
+        icon: Bookmark,
+        titleKey: "guide.diet.i7.title",
+        bodyKey: "guide.diet.i7.body",
+      },
+    ],
+  },
+  {
+    id: "ai",
+    icon: Sparkles,
+    tone: "primary",
+    labelKey: "guide.tab.ai",
+    shortKey: "guide.tab.ai.short",
+    introTitleKey: "guide.ai.introTitle",
+    introBodyKey: "guide.ai.introBody",
+    stepsHeadingKey: "guide.ai.numberedHeading",
+    steps: [
+      { titleKey: "guide.ai.n1.title", bodyKey: "guide.ai.n1.body" },
+      { titleKey: "guide.ai.n2.title", bodyKey: "guide.ai.n2.body" },
+      { titleKey: "guide.ai.n3.title", bodyKey: "guide.ai.n3.body" },
+      { titleKey: "guide.ai.n4.title", bodyKey: "guide.ai.n4.body" },
+      { titleKey: "guide.ai.n5.title", bodyKey: "guide.ai.n5.body" },
+    ],
+    note: {
+      icon: Info,
+      titleKey: "guide.ai.noteTitle",
+      bodyKey: "guide.ai.noteBody",
+    },
+    itemsHeadingKey: "guide.ai.itemsHeading",
+    items: [
+      {
+        icon: Sparkles,
+        titleKey: "guide.ai.i1.title",
+        bodyKey: "guide.ai.i1.body",
+      },
+      {
+        icon: BrainCircuit,
+        titleKey: "guide.ai.i2.title",
+        bodyKey: "guide.ai.i2.body",
+      },
+      {
+        icon: ShieldCheck,
+        titleKey: "guide.ai.i3.title",
+        bodyKey: "guide.ai.i3.body",
+      },
+      {
+        icon: CheckCircle2,
+        titleKey: "guide.ai.i4.title",
+        bodyKey: "guide.ai.i4.body",
+      },
+    ],
+    showSamples: true,
+  },
+  {
+    id: "community",
+    icon: Users,
+    tone: "blue",
+    labelKey: "guide.tab.community",
+    shortKey: "guide.tab.community.short",
+    introTitleKey: "guide.community.introTitle",
+    introBodyKey: "guide.community.introBody",
+    badgesHeadingKey: "guide.community.badgesHeading",
+    badges: [
+      {
+        labelKey: "diet.addModal.badgeMyCustom",
+        pillClass:
+          "bg-purple-500/15 text-purple-700 dark:text-purple-300",
+        titleKey: "guide.community.b1.title",
+        bodyKey: "guide.community.b1.body",
+      },
+      {
+        labelKey: "diet.addModal.badgeCommunity",
+        pillClass: "bg-sky-500/15 text-sky-700 dark:text-sky-300",
+        titleKey: "guide.community.b2.title",
+        bodyKey: "guide.community.b2.body",
+      },
+      {
+        labelKey: "diet.addModal.badgeBd",
+        pillClass:
+          "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+        titleKey: "guide.community.b3.title",
+        bodyKey: "guide.community.b3.body",
+      },
+    ],
+    note: {
+      icon: ShieldCheck,
+      titleKey: "guide.community.noteTitle",
+      bodyKey: "guide.community.noteBody",
+    },
+    stepsHeadingKey: "guide.community.numberedHeading",
+    steps: [
+      {
+        titleKey: "guide.community.n1.title",
+        bodyKey: "guide.community.n1.body",
+      },
+      {
+        titleKey: "guide.community.n2.title",
+        bodyKey: "guide.community.n2.body",
+      },
+      {
+        titleKey: "guide.community.n3.title",
+        bodyKey: "guide.community.n3.body",
+      },
+    ],
+  },
+  {
+    id: "training",
+    icon: Dumbbell,
+    tone: "amber",
+    labelKey: "guide.tab.training",
+    shortKey: "guide.tab.training.short",
+    introTitleKey: "guide.training.introTitle",
+    introBodyKey: "guide.training.introBody",
+    itemsHeadingKey: "guide.training.itemsHeading",
+    items: [
+      {
+        icon: Calendar,
+        titleKey: "guide.training.i1.title",
+        bodyKey: "guide.training.i1.body",
+      },
+      {
+        icon: LayoutGrid,
+        titleKey: "guide.training.i2.title",
+        bodyKey: "guide.training.i2.body",
+      },
+      {
+        icon: Dumbbell,
+        titleKey: "guide.training.i3.title",
+        bodyKey: "guide.training.i3.body",
+      },
+      {
+        icon: PlusCircle,
+        titleKey: "guide.training.i4.title",
+        bodyKey: "guide.training.i4.body",
+      },
+      {
+        icon: CheckCircle2,
+        titleKey: "guide.training.i5.title",
+        bodyKey: "guide.training.i5.body",
+      },
+      {
+        icon: Trophy,
+        titleKey: "guide.training.i6.title",
+        bodyKey: "guide.training.i6.body",
+      },
+      {
+        icon: Activity,
+        titleKey: "guide.training.i7.title",
+        bodyKey: "guide.training.i7.body",
+      },
+      {
+        icon: BrainCircuit,
+        titleKey: "guide.training.i8.title",
+        bodyKey: "guide.training.i8.body",
+      },
+    ],
+  },
+  {
+    id: "progress",
+    icon: TrendingUp,
+    tone: "purple",
+    labelKey: "guide.tab.progress",
+    shortKey: "guide.tab.progress.short",
+    introTitleKey: "guide.progress.introTitle",
+    introBodyKey: "guide.progress.introBody",
+    itemsHeadingKey: "guide.progress.itemsHeading",
+    items: [
+      {
+        icon: TrendingUp,
+        titleKey: "guide.progress.i1.title",
+        bodyKey: "guide.progress.i1.body",
+      },
+      {
+        icon: ListOrdered,
+        titleKey: "guide.progress.i2.title",
+        bodyKey: "guide.progress.i2.body",
+      },
+      {
+        icon: Activity,
+        titleKey: "guide.progress.i3.title",
+        bodyKey: "guide.progress.i3.body",
+      },
+      {
+        icon: Ruler,
+        titleKey: "guide.progress.i4.title",
+        bodyKey: "guide.progress.i4.body",
+      },
+      {
+        icon: Moon,
+        titleKey: "guide.progress.i5.title",
+        bodyKey: "guide.progress.i5.body",
+      },
+      {
+        icon: BrainCircuit,
+        titleKey: "guide.progress.i6.title",
+        bodyKey: "guide.progress.i6.body",
+      },
+      {
+        icon: Trophy,
+        titleKey: "guide.progress.i7.title",
+        bodyKey: "guide.progress.i7.body",
+      },
+    ],
+  },
+  {
+    id: "settings",
+    icon: Settings2,
+    tone: "sky",
+    labelKey: "guide.tab.settings",
+    shortKey: "guide.tab.settings.short",
+    introTitleKey: "guide.settings.introTitle",
+    introBodyKey: "guide.settings.introBody",
+    itemsHeadingKey: "guide.settings.itemsHeading",
+    items: [
+      {
+        icon: ClipboardList,
+        titleKey: "guide.settings.i1.title",
+        bodyKey: "guide.settings.i1.body",
+      },
+      {
+        icon: Activity,
+        titleKey: "guide.settings.i2.title",
+        bodyKey: "guide.settings.i2.body",
+      },
+      {
+        icon: Target,
+        titleKey: "guide.settings.i3.title",
+        bodyKey: "guide.settings.i3.body",
+      },
+      {
+        icon: BrainCircuit,
+        titleKey: "guide.settings.i4.title",
+        bodyKey: "guide.settings.i4.body",
+      },
+      {
+        icon: Ruler,
+        titleKey: "guide.settings.i5.title",
+        bodyKey: "guide.settings.i5.body",
+      },
+      {
+        icon: Settings2,
+        titleKey: "guide.settings.i6.title",
+        bodyKey: "guide.settings.i6.body",
+      },
+      {
+        icon: Languages,
+        titleKey: "guide.settings.i7.title",
+        bodyKey: "guide.settings.i7.body",
+      },
+      {
+        icon: HelpCircle,
+        titleKey: "guide.settings.i8.title",
+        bodyKey: "guide.settings.i8.body",
+      },
+    ],
   },
 ];
 
@@ -61,8 +558,14 @@ export default function DietUserGuideModal({
   onOpenChange,
   onSelectSamplePrompt,
 }: DietUserGuideModalProps) {
-  const [activeTab, setActiveTab] = useState<GuideTab>("overview");
+  const { t } = useI18n();
+  const [activeTab, setActiveTab] = useState<GuideTabId>("overview");
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+
+  const active = GUIDE_TABS.find((tab) => tab.id === activeTab) ?? GUIDE_TABS[0];
+  const tone = TONE_STYLES[active.tone];
+  const ActiveIcon = active.icon;
+  const NoteIcon = active.note?.icon;
 
   const handleCopy = (text: string, index: number) => {
     navigator.clipboard.writeText(text);
@@ -77,34 +580,28 @@ export default function DietUserGuideModal({
         <DialogHeader className="p-4 sm:p-5 pb-3 border-b border-border/40 shrink-0 pr-10 sm:pr-12 text-left">
           <div className="flex items-center gap-1.5 text-primary font-bold text-[11px] sm:text-xs uppercase tracking-wider">
             <BookOpen className="w-3.5 h-3.5 shrink-0" />
-            <span>NutriBD Complete User Guide</span>
+            <span>{t("guide.badge")}</span>
           </div>
           <DialogTitle className="text-base sm:text-xl font-bold leading-snug">
-            How to Use Diet, AI &amp; Community Foods 🥗
+            {t("guide.title")}
           </DialogTitle>
           <DialogDescription className="text-[11px] sm:text-xs text-muted-foreground line-clamp-2 sm:line-clamp-none mt-0.5">
-            Everything you need to know about tracking nutrition, AI recipe calculations, community foods, and continuous AI learning.
+            {t("guide.subtitle")}
           </DialogDescription>
         </DialogHeader>
 
         {/* Tab Navigation Pill Bar */}
         <div className="px-3 sm:px-5 py-2.5 bg-muted/20 border-b border-border/30 shrink-0">
           <div className="flex gap-1.5 overflow-x-auto pb-0.5 no-scrollbar text-xs font-semibold [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {[
-              { id: "overview", label: "Overview", shortLabel: "Overview", icon: UtensilsCrossed },
-              { id: "ai", label: "AI Recipe Estimator", shortLabel: "AI Estimator", icon: Sparkles },
-              { id: "community", label: "Community Foods", shortLabel: "Community", icon: Users },
-              { id: "training", label: "AI Continuous Learning", shortLabel: "AI Learning", icon: BrainCircuit },
-              { id: "portions", label: "Portion Calculator", shortLabel: "Portions", icon: Scale },
-              { id: "templates", label: "Templates & Barcode", shortLabel: "Templates", icon: Bookmark },
-            ].map((tab) => {
+            {GUIDE_TABS.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
               return (
                 <button
                   key={tab.id}
                   type="button"
-                  onClick={() => setActiveTab(tab.id as GuideTab)}
+                  aria-current={isActive ? "true" : undefined}
+                  onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl whitespace-nowrap transition-all text-xs shrink-0 ${
                     isActive
                       ? "bg-primary text-white font-bold shadow-xs"
@@ -112,8 +609,8 @@ export default function DietUserGuideModal({
                   }`}
                 >
                   <Icon className="w-3.5 h-3.5 shrink-0" />
-                  <span className="sm:hidden">{tab.shortLabel}</span>
-                  <span className="hidden sm:inline">{tab.label}</span>
+                  <span className="sm:hidden">{t(tab.shortKey)}</span>
+                  <span className="hidden sm:inline">{t(tab.labelKey)}</span>
                 </button>
               );
             })}
@@ -122,365 +619,204 @@ export default function DietUserGuideModal({
 
         {/* Scrollable Content Body */}
         <div className="flex-1 min-h-0 overflow-y-auto p-3.5 sm:p-5 space-y-4 overscroll-contain pb-6 text-xs text-muted-foreground no-scrollbar">
-          {/* TAB 1: OVERVIEW */}
-          {activeTab === "overview" && (
-            <div className="space-y-3.5">
-              <div className="p-3.5 rounded-2xl bg-primary/10 border border-primary/20 text-foreground space-y-1.5">
-                <h3 className="font-bold text-sm flex items-center gap-1.5 text-primary">
-                  <UtensilsCrossed className="w-4 h-4" /> Welcome to NutriBD Nutrition Tracker
-                </h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  NutriBD is tailored specifically for Bangladeshi and global lifestyles. It combines verified traditional dishes, precise portion calculators, AI-powered recipe macro estimation, and a growing community database.
-                </p>
-              </div>
+          {/* Intro callout */}
+          <div
+            className={cn(
+              "p-3.5 rounded-2xl border text-foreground space-y-1.5",
+              tone.box,
+            )}
+          >
+            <h3
+              className={cn(
+                "font-bold text-sm flex items-center gap-1.5",
+                tone.title,
+              )}
+            >
+              <ActiveIcon className="w-4 h-4 shrink-0" />
+              {t(active.introTitleKey)}
+            </h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {t(active.introBodyKey)}
+            </p>
+          </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <div className="p-3 rounded-2xl bg-card border border-border/50 space-y-1.5">
-                  <div className="flex items-center gap-2 font-bold text-foreground">
-                    <span className="p-1.5 rounded-lg bg-amber-500/10 text-amber-600">
-                      <Flame className="w-4 h-4" />
-                    </span>
-                    <span>Daily Calorie &amp; Macro Goals</span>
+          {/* Numbered steps / fields */}
+          {active.steps && active.steps.length > 0 && (
+            <div className="space-y-2.5">
+              {active.stepsHeadingKey && (
+                <h4 className="font-bold text-foreground text-xs uppercase tracking-wider">
+                  {t(active.stepsHeadingKey)}
+                </h4>
+              )}
+              <div className="space-y-3">
+                {active.steps.map((step, idx) => (
+                  <div
+                    key={step.titleKey}
+                    className="p-3 rounded-2xl bg-card border border-border/50 space-y-1.5"
+                  >
+                    <div className="flex items-center gap-2 font-bold text-foreground">
+                      <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-white text-[10px] shrink-0">
+                        {idx + 1}
+                      </span>
+                      <span>{t(step.titleKey)}</span>
+                    </div>
+                    <p className="text-muted-foreground pl-7">
+                      {t(step.bodyKey)}
+                    </p>
                   </div>
-                  <p className="text-muted-foreground">
-                    Your daily calories, protein, carbs, fat, and fiber are calculated automatically based on your profile and fitness goal (weight loss, muscle gain, or maintenance).
-                  </p>
-                </div>
-
-                <div className="p-3 rounded-2xl bg-card border border-border/50 space-y-1.5">
-                  <div className="flex items-center gap-2 font-bold text-foreground">
-                    <span className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600">
-                      <UtensilsCrossed className="w-4 h-4" />
-                    </span>
-                    <span>4 Meal Categories</span>
-                  </div>
-                  <p className="text-muted-foreground">
-                    Log food under <strong>Breakfast</strong>, <strong>Lunch</strong>, <strong>Dinner</strong>, or <strong>Snacks</strong>. Each category shows its own subtotal and calorie distribution.
-                  </p>
-                </div>
-
-                <div className="p-3 rounded-2xl bg-card border border-border/50 space-y-1.5">
-                  <div className="flex items-center gap-2 font-bold text-foreground">
-                    <span className="p-1.5 rounded-lg bg-blue-500/10 text-blue-600">
-                      <Users className="w-4 h-4" />
-                    </span>
-                    <span>Shared Community Foods</span>
-                  </div>
-                  <p className="text-muted-foreground">
-                    Every custom dish created by any user is shared in the catalog, allowing the database to expand into thousands of authentic recipes.
-                  </p>
-                </div>
-
-                <div className="p-3 rounded-2xl bg-card border border-border/50 space-y-1.5">
-                  <div className="flex items-center gap-2 font-bold text-foreground">
-                    <span className="p-1.5 rounded-lg bg-purple-500/10 text-purple-600">
-                      <BrainCircuit className="w-4 h-4" />
-                    </span>
-                    <span>Trained-by-Time AI</span>
-                  </div>
-                  <p className="text-muted-foreground">
-                    The AI continuously references all custom dishes created over time to deliver ultra-realistic macro calculations for home cooking.
-                  </p>
-                </div>
+                ))}
               </div>
             </div>
           )}
 
-          {/* TAB 2: AI RECIPE ESTIMATOR */}
-          {activeTab === "ai" && (
-            <div className="space-y-3.5">
-              <div className="p-3.5 rounded-2xl bg-primary/10 border border-primary/20 text-foreground space-y-2">
-                <h3 className="font-bold text-sm flex items-center gap-1.5 text-primary">
-                  <Sparkles className="w-4 h-4" /> 1-Field AI Recipe Estimator
-                </h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  You don’t have to fill in 10 different form inputs! Simply describe what you cooked and what you ate into <strong>one single box</strong>. Our AI calculates everything and automatically fills all fields.
+          {/* Badge explanations */}
+          {active.badges && active.badges.length > 0 && (
+            <div className="space-y-2.5">
+              {active.badgesHeadingKey && (
+                <h4 className="font-bold text-foreground text-xs uppercase tracking-wider">
+                  {t(active.badgesHeadingKey)}
+                </h4>
+              )}
+              <div className="space-y-2.5">
+                {active.badges.map((badge) => (
+                  <div
+                    key={badge.labelKey}
+                    className="p-3 rounded-2xl bg-card border border-border/50 flex items-start gap-3"
+                  >
+                    <span
+                      className={cn(
+                        "text-[9px] px-2 py-0.5 rounded-full font-bold shrink-0 mt-0.5",
+                        badge.pillClass,
+                      )}
+                    >
+                      {t(badge.labelKey)}
+                    </span>
+                    <div>
+                      <strong className="text-foreground">
+                        {t(badge.titleKey)}:
+                      </strong>
+                      <p className="text-muted-foreground mt-0.5">
+                        {t(badge.bodyKey)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Feature cards */}
+          {active.items && active.items.length > 0 && (
+            <div className="space-y-2.5">
+              {active.itemsHeadingKey && (
+                <h4 className="font-bold text-foreground text-xs uppercase tracking-wider">
+                  {t(active.itemsHeadingKey)}
+                </h4>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                {active.items.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <div
+                      key={item.titleKey}
+                      className="p-3 rounded-2xl bg-card border border-border/50 space-y-1.5"
+                    >
+                      <div className="flex items-center gap-2 font-bold text-foreground">
+                        <span
+                          className={cn(
+                            "p-1.5 rounded-lg shrink-0",
+                            tone.box,
+                            tone.title,
+                          )}
+                        >
+                          <Icon className="w-4 h-4" />
+                        </span>
+                        <span>{t(item.titleKey)}</span>
+                      </div>
+                      <p className="text-muted-foreground">
+                        {t(item.bodyKey)}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Callout note */}
+          {active.note && NoteIcon && (
+            <div className="p-3 rounded-2xl bg-muted/40 border border-border/50 flex items-start gap-2.5">
+              <NoteIcon className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+              <div>
+                <strong className="text-foreground">
+                  {t(active.note.titleKey)}:
+                </strong>
+                <p className="text-muted-foreground mt-0.5">
+                  {t(active.note.bodyKey)}
                 </p>
               </div>
+            </div>
+          )}
 
-              <div className="space-y-2">
-                <h4 className="font-bold text-foreground text-xs uppercase tracking-wider">
-                  How to Write Your Description for Best Accuracy:
-                </h4>
-                <div className="space-y-2">
-                  <div className="p-3 rounded-2xl bg-card border border-border/50 flex items-start gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+          {/* Sample AI descriptions */}
+          {active.showSamples && (
+            <div className="space-y-2 pt-1">
+              <h4 className="font-bold text-foreground text-xs uppercase tracking-wider flex items-center justify-between">
+                <span>{t("guide.samplesHeading")}</span>
+                <span className="text-[10px] text-muted-foreground font-normal">
+                  {t("guide.samplesHint")}
+                </span>
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {SAMPLE_PROMPTS.map((sp, idx) => (
+                  <div
+                    key={sp.titleKey}
+                    className="p-3 rounded-2xl bg-muted/40 border border-border/50 flex flex-col justify-between gap-2.5 hover:border-primary/40 transition-all"
+                  >
                     <div>
-                      <strong className="text-foreground">Specify the Eaten Portion:</strong>
-                      <p className="text-muted-foreground mt-0.5">
-                        If you ate 50g, simply write <code>eaten portion 50g</code> or <code>ate 50g</code>. The AI will set <strong>Serving Size = 50g</strong> and scale the calories &amp; macros strictly for that 50g (NOT the whole batch!).
+                      <p className="font-bold text-foreground text-xs">
+                        {t(sp.titleKey)}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground italic mt-1 leading-relaxed">
+                        &ldquo;{sp.prompt}&rdquo;
                       </p>
                     </div>
-                  </div>
-
-                  <div className="p-3 rounded-2xl bg-card border border-border/50 flex items-start gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                    <div>
-                      <strong className="text-foreground">Bangladeshi Spices &amp; Oil (&ldquo;Koshano&rdquo; Style):</strong>
-                      <p className="text-muted-foreground mt-0.5">
-                        Traditional Bangladeshi curries, bhunas, and biryanis are naturally rich in oil and spices. The AI automatically factors in authentic cooking oil and ghee absorption unless you specify a boiled or zero-oil preparation.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="p-3 rounded-2xl bg-card border border-border/50 flex items-start gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                    <div>
-                      <strong className="text-foreground">Review &amp; Edit Before Saving:</strong>
-                      <p className="text-muted-foreground mt-0.5">
-                        After the AI calculates, it fills the dish name, category, serving size, calories, protein, carbs, fat, and fiber. You can review and tweak any number before clicking <strong>Save Food</strong>.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2 pt-1">
-                <h4 className="font-bold text-foreground text-xs uppercase tracking-wider flex items-center justify-between">
-                  <span>Try Sample Prompts:</span>
-                  <span className="text-[10px] text-muted-foreground font-normal">Click to copy or use</span>
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {SAMPLE_PROMPTS.map((sp, idx) => (
-                    <div
-                      key={idx}
-                      className="p-3 rounded-2xl bg-muted/40 border border-border/50 flex flex-col justify-between gap-2.5 hover:border-primary/40 transition-all"
-                    >
-                      <div>
-                        <p className="font-bold text-foreground text-xs">{sp.title}</p>
-                        <p className="text-[11px] text-muted-foreground italic mt-1 leading-relaxed">
-                          &ldquo;{sp.prompt}&rdquo;
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1.5 pt-1 flex-wrap">
+                    <div className="flex items-center gap-1.5 pt-1 flex-wrap">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleCopy(sp.prompt, idx)}
+                        className="h-7 text-[11px] px-2.5 rounded-lg gap-1 border-border/60 shrink-0"
+                      >
+                        {copiedIndex === idx ? (
+                          <>
+                            <Check className="w-3 h-3 text-emerald-500 shrink-0" />
+                            {t("guide.copied")}
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3 h-3 shrink-0" />
+                            {t("guide.copy")}
+                          </>
+                        )}
+                      </Button>
+                      {onSelectSamplePrompt && (
                         <Button
                           type="button"
                           size="sm"
-                          variant="outline"
-                          onClick={() => handleCopy(sp.prompt, idx)}
-                          className="h-7 text-[11px] px-2.5 rounded-lg gap-1 border-border/60 shrink-0"
+                          onClick={() => {
+                            onSelectSamplePrompt(sp.prompt);
+                            onOpenChange(false);
+                          }}
+                          className="h-7 text-[11px] px-2.5 rounded-lg bg-primary text-white font-semibold flex-1 sm:flex-initial"
                         >
-                          {copiedIndex === idx ? (
-                            <>
-                              <Check className="w-3 h-3 text-emerald-500 shrink-0" /> Copied
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="w-3 h-3 shrink-0" /> Copy
-                            </>
-                          )}
+                          {t("guide.useInAi")}
                         </Button>
-                        {onSelectSamplePrompt && (
-                          <Button
-                            type="button"
-                            size="sm"
-                            onClick={() => {
-                              onSelectSamplePrompt(sp.prompt);
-                              onOpenChange(false);
-                            }}
-                            className="h-7 text-[11px] px-2.5 rounded-lg bg-primary text-white font-semibold flex-1 sm:flex-initial"
-                          >
-                            Use in AI Estimator &rarr;
-                          </Button>
-                        )}
-                      </div>
+                      )}
                     </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 3: COMMUNITY FOODS & OWNERSHIP */}
-          {activeTab === "community" && (
-            <div className="space-y-3.5">
-              <div className="p-3.5 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-foreground space-y-2">
-                <h3 className="font-bold text-sm flex items-center gap-1.5 text-blue-600 dark:text-blue-400">
-                  <Users className="w-4 h-4 shrink-0" /> Shared Community Food Database
-                </h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Every custom food you or other users create is automatically shared across the platform. This transforms NutriBD into an ever-expanding, crowdsourced Bangladeshi &amp; global food database!
-                </p>
-              </div>
-
-              <div className="space-y-2.5">
-                <h4 className="font-bold text-foreground text-xs uppercase tracking-wider">
-                  Understanding Food Badges:
-                </h4>
-
-                <div className="p-3 rounded-2xl bg-card border border-border/50 flex items-start gap-3">
-                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-700 dark:text-purple-300 font-bold shrink-0 mt-0.5">
-                    My Custom
-                  </span>
-                  <div>
-                    <strong className="text-foreground">Custom Foods Created by You:</strong>
-                    <p className="text-muted-foreground mt-0.5">
-                      You have full ownership. You can log it, adjust portions, and you are the <strong>only person</strong> who can edit (<span className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">Pencil</span>) or delete (<span className="px-1 py-0.5 rounded bg-muted text-[10px] font-mono">Trash</span>) this food.
-                    </p>
                   </div>
-                </div>
-
-                <div className="p-3 rounded-2xl bg-card border border-border/50 flex items-start gap-3">
-                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-700 dark:text-sky-300 font-bold shrink-0 mt-0.5">
-                    Community
-                  </span>
-                  <div>
-                    <strong className="text-foreground">Shared by Other Community Users:</strong>
-                    <p className="text-muted-foreground mt-0.5">
-                      You can search for it, view all nutrition data, scale it by grams or multiplier, and log it to your daily meals anytime.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-2xl bg-card border border-border/50 flex items-start gap-3">
-                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold shrink-0 mt-0.5">
-                    BD
-                  </span>
-                  <div>
-                    <strong className="text-foreground">Built-in Bangladeshi Staples:</strong>
-                    <p className="text-muted-foreground mt-0.5">
-                      Verified traditional staples like Shahi Polao, Kacchi Biryani, Rui Macher Jhol, Alu Bhorta, Begun Vaji, Singara, and Chotpoti.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-3 rounded-2xl bg-muted/40 border border-border/50 flex items-start gap-2.5">
-                <ShieldCheck className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                <div>
-                  <strong className="text-foreground">Strict Ownership Protection:</strong>
-                  <p className="text-muted-foreground mt-0.5">
-                    To prevent tampering or data loss, non-owners cannot edit or delete community foods. The system strictly checks user identity on both the UI and the secure database server.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 4: CONTINUOUS AI TRAINING */}
-          {activeTab === "training" && (
-            <div className="space-y-3.5">
-              <div className="p-3.5 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-foreground space-y-2">
-                <h3 className="font-bold text-sm flex items-center gap-1.5 text-purple-600 dark:text-purple-400">
-                  <BrainCircuit className="w-4 h-4 shrink-0" /> Continuous AI Learning (&ldquo;Trained by Time&rdquo;)
-                </h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  How does our AI become smarter over time? NutriBD employs dynamic in-context retrieval to continuously train the AI on the latest user-verified recipes in the database!
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <div className="p-3 rounded-2xl bg-card border border-border/50 space-y-1.5">
-                  <div className="flex items-center gap-2 font-bold text-foreground">
-                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-white text-[10px] shrink-0">
-                      1
-                    </span>
-                    <span>Real-Time Database Retrieval</span>
-                  </div>
-                  <p className="text-muted-foreground pl-7">
-                    Whenever you run the AI Recipe Estimator, the system retrieves the most recent and keyword-matched custom foods created by users across the platform.
-                  </p>
-                </div>
-
-                <div className="p-3 rounded-2xl bg-card border border-border/50 space-y-1.5">
-                  <div className="flex items-center gap-2 font-bold text-foreground">
-                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-white text-[10px] shrink-0">
-                      2
-                    </span>
-                    <span>Dynamic Few-Shot Learning</span>
-                  </div>
-                  <p className="text-muted-foreground pl-7">
-                    These real custom food entries are injected into the AI&rsquo;s training context. The AI analyzes how real home cooks prepare dishes, the actual oil and ghee amounts used, and realistic portion weights.
-                  </p>
-                </div>
-
-                <div className="p-3 rounded-2xl bg-card border border-border/50 space-y-1.5">
-                  <div className="flex items-center gap-2 font-bold text-foreground">
-                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-white text-[10px] shrink-0">
-                      3
-                    </span>
-                    <span>Smart Fallback Calibration</span>
-                  </div>
-                  <p className="text-muted-foreground pl-7">
-                    Even when offline or in fallback mode, our deterministic culinary engine compares your dish against community custom foods to guarantee consistent, accurate macro estimates.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 5: PORTION CALCULATOR */}
-          {activeTab === "portions" && (
-            <div className="space-y-3.5">
-              <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-foreground space-y-2">
-                <h3 className="font-bold text-sm flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
-                  <Scale className="w-4 h-4" /> Flexible Portion Calculator
-                </h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  No two meals are the same weight! When selecting any dish from the catalog, you can adjust the portion in two ways:
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="p-3.5 rounded-2xl bg-card border border-border/50 space-y-2">
-                  <h4 className="font-bold text-foreground text-xs flex items-center gap-1.5">
-                    <span>🔢 Mode 1: Multiplier</span>
-                  </h4>
-                  <p className="text-muted-foreground">
-                    Scale by serving count using quick buttons (<code>0.5x</code>, <code>1x</code>, <code>1.5x</code>, <code>2x</code>, <code>3x</code>) or type any custom quantity.
-                  </p>
-                  <div className="p-2 rounded-xl bg-muted/40 text-[11px]">
-                    <strong>Example:</strong> 1 plate (250g) at <code>1.5x</code> = 375g portion calculated instantly.
-                  </div>
-                </div>
-
-                <div className="p-3.5 rounded-2xl bg-card border border-border/50 space-y-2">
-                  <h4 className="font-bold text-foreground text-xs flex items-center gap-1.5">
-                    <span>⚖️ Mode 2: Grams (Scale Mode)</span>
-                  </h4>
-                  <p className="text-muted-foreground">
-                    Weigh your food on a kitchen scale and type the exact grams you ate (e.g. <code>85g</code>).
-                  </p>
-                  <div className="p-2 rounded-xl bg-muted/40 text-[11px]">
-                    <strong>Example:</strong> If base serving is 250g (300 kcal) and you ate 100g, NutriBD scales calories to exactly 120 kcal.
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 6: TEMPLATES & BARCODES */}
-          {activeTab === "templates" && (
-            <div className="space-y-3.5">
-              <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-foreground space-y-2">
-                <h3 className="font-bold text-sm flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
-                  <Bookmark className="w-4 h-4" /> Save Meal Templates &amp; Scan Barcodes
-                </h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Save time on recurring meals and packaged items:
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <div className="p-3 rounded-2xl bg-card border border-border/50 space-y-1.5">
-                  <h4 className="font-bold text-foreground text-xs flex items-center gap-2">
-                    <Bookmark className="w-4 h-4 text-primary" />
-                    <span>Saved Meal Templates (1-Tap Logging)</span>
-                  </h4>
-                  <p className="text-muted-foreground">
-                    Do you eat the same breakfast or gym meal every day? Click <strong>&ldquo;Save as Template&rdquo;</strong> in any meal card. It creates a 1-tap template at the top carousel so you can log your entire meal in 1 second tomorrow!
-                  </p>
-                </div>
-
-                <div className="p-3 rounded-2xl bg-card border border-border/50 space-y-1.5">
-                  <h4 className="font-bold text-foreground text-xs flex items-center gap-2">
-                    <HelpCircle className="w-4 h-4 text-primary shrink-0" />
-                    <span>Barcode Scanner &rarr; Custom Food Catalog</span>
-                  </h4>
-                  <p className="text-muted-foreground">
-                    Scan packaged items (milk, oats, protein bars, snacks) using your camera or barcode number. Rather than locking you into rigid numbers, NutriBD lets you review and edit the name, serving size, and macros, then saves it directly to your <strong>Custom Foods</strong> catalog. You can then search, portion-scale, and log it to your diet anytime!
-                  </p>
-                </div>
+                ))}
               </div>
             </div>
           )}
@@ -489,14 +825,14 @@ export default function DietUserGuideModal({
         {/* Footer */}
         <div className="p-3 sm:p-4 border-t border-border/40 bg-muted/20 flex items-center justify-between gap-2 shrink-0">
           <p className="text-[11px] text-muted-foreground hidden sm:block">
-            Have questions? Check the AI Recipe Estimator or Portion Calculator anytime!
+            {t("guide.footerHint")}
           </p>
           <Button
             type="button"
             onClick={() => onOpenChange(false)}
             className="rounded-xl bg-primary hover:bg-primary/90 text-white font-bold text-xs px-5 w-full sm:w-auto h-9 sm:h-10 shadow-xs"
           >
-            Got it, let&rsquo;s track! &rarr;
+            {t("guide.close")}
           </Button>
         </div>
       </DialogContent>

@@ -11,6 +11,7 @@ import { settingsEn, settingsBn } from "./dictionaries/settings";
 import { aboutEn, aboutBn } from "./dictionaries/about";
 import { calculatorsEn, calculatorsBn } from "./dictionaries/calculators";
 import { sharedEn, sharedBn } from "./dictionaries/shared";
+import { guideEn, guideBn } from "./dictionaries/guide";
 
 export * from "./config";
 
@@ -32,6 +33,7 @@ export const dictionaries: Record<Locale, Record<string, string>> = {
     ...aboutEn,
     ...calculatorsEn,
     ...sharedEn,
+    ...guideEn,
   },
   bn: {
     ...commonBn,
@@ -46,6 +48,7 @@ export const dictionaries: Record<Locale, Record<string, string>> = {
     ...aboutBn,
     ...calculatorsBn,
     ...sharedBn,
+    ...guideBn,
   },
 };
 
