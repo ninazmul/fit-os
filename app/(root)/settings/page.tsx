@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import PageHeader from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { exportUserData } from "@/lib/actions/export.actions";
 import {
   Select,
   SelectContent,
@@ -21,6 +23,7 @@ import {
   Info,
   ExternalLink,
   Heart,
+  Loader2,
 } from "lucide-react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
@@ -41,23 +44,28 @@ const AdUnit = dynamic(() => import("@/components/shared/AdUnit"), {
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
+  const [exporting, setExporting] = useState(false);
 
-  const handleExportData = () => {
-    toast.success("Preparing CSV/JSON data export...");
-    const dummyData = {
-      app: APP_NAME,
-      version: APP_VERSION,
-      exportedAt: new Date().toISOString(),
-      status: "Success",
-    };
-    const blob = new Blob([JSON.stringify(dummyData, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "nutribd-export-data.json";
-    a.click();
+  const handleExportData = async () => {
+    try {
+      setExporting(true);
+      const json = await exportUserData();
+      const blob = new Blob([json], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `nutribd-my-data-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast.success("Your data export is ready! 📦");
+    } catch (err) {
+      console.error("Export data error:", err);
+      toast.error("Failed to export your data. Please try again.");
+    } finally {
+      setExporting(false);
+    }
   };
 
   return (
@@ -149,18 +157,27 @@ export default function SettingsPage() {
           Export & Privacy
         </h2>
 
-        <div className="flex items-center justify-between p-4 rounded-2xl bg-muted/40 text-xs">
+        <div className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-muted/40 text-xs">
           <div>
-            <p className="font-bold text-sm">Download My Data (JSON / CSV)</p>
+            <p className="font-bold text-sm">Download My Data (JSON)</p>
             <p className="text-muted-foreground text-[11px]">
-              Export complete workout, nutrition, and weight history
+              Export your profile, meals, workouts, weights, measurements,
+              sleep, water &amp; saved meals
             </p>
           </div>
           <Button
             onClick={handleExportData}
-            className="rounded-xl text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold"
+            disabled={exporting}
+            className="rounded-xl text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold shrink-0"
           >
-            Export Data
+            {exporting ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                Exporting...
+              </>
+            ) : (
+              "Export Data"
+            )}
           </Button>
         </div>
       </div>
