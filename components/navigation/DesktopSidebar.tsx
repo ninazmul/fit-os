@@ -155,7 +155,7 @@ export default function DesktopSidebar() {
         {/* Footer */}
         <div className="p-4 border-t border-border space-y-3">
           <div className="flex justify-center">
-            <LanguageToggle className="w-full justify-center" />
+            <LanguageToggle variant="segmented" className="w-full justify-center" />
           </div>
 
           <button

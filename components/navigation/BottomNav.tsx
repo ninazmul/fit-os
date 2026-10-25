@@ -18,13 +18,18 @@ const QuickAddSheet = dynamic(
   { ssr: false },
 );
 
+const allNavItems = navGroups.flatMap((group) => group.items);
+const leadingNavItems = ["/", "/diet"]
+  .map((href) => allNavItems.find((item) => item.href === href))
+  .filter((item): item is NonNullable<typeof item> => Boolean(item));
+const trailingNavItems = ["/workout", "/profile"]
+  .map((href) => allNavItems.find((item) => item.href === href))
+  .filter((item): item is NonNullable<typeof item> => Boolean(item));
+
 export default function BottomNav() {
   const pathname = usePathname();
   const { t } = useI18n();
   const [quickAddOpen, setQuickAddOpen] = useState(false);
-  const mobileNavItems = navGroups.flatMap((group) => group.items).slice(0, 4);
-  const leadingItems = mobileNavItems.slice(0, 2);
-  const trailingItems = mobileNavItems.slice(2);
 
   return (
     <>
@@ -32,7 +37,7 @@ export default function BottomNav() {
 
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70 border-t border-border/50 shadow-lg safe-area-bottom touch-manipulation select-none">
         <div className="flex items-center justify-around px-1 py-1 relative">
-          {leadingItems.map((item) => {
+          {leadingNavItems.map((item) => {
             const Icon = item.icon;
             const isActive = isNavItemActive(pathname, item.href);
 
@@ -72,7 +77,7 @@ export default function BottomNav() {
             </button>
           </div>
 
-          {trailingItems.map((item) => {
+          {trailingNavItems.map((item) => {
             const Icon = item.icon;
             const isActive = isNavItemActive(pathname, item.href);
 
