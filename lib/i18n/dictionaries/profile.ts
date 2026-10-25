@@ -128,6 +128,61 @@ export const profileEn: Record<string, string> = {
   "profile.modal.aggressivePace": "Intense",
   "profile.modal.recommendedPill": "Goal Recommendation",
   "profile.modal.customNotice": "Custom Targets Active",
+
+  // ──── Goal Celebration & Milestone History ────
+  "profile.celebration.title": "Congratulations! 🎉",
+  "profile.celebration.weightJourney": "Weight Journey",
+  "profile.celebration.netChange": "Net Change",
+  "profile.celebration.daysLabel": "Days",
+  "profile.celebration.workoutsLabel": "Workouts",
+  "profile.celebration.mealsLabel": "Meals Logged",
+  "profile.celebration.bodyChanges": "Body Measurement Changes",
+  "profile.celebration.downloadCard": "Download Celebration Card (PNG)",
+  "profile.celebration.downloadSuccess": "Celebration card downloaded!",
+  "profile.celebration.downloadFailed": "Failed to generate card.",
+  "profile.celebration.completeAndNext": "Complete Goal & Set Next →",
+  "profile.celebration.nextGoalTitle": "Set Your Next Goal",
+  "profile.celebration.nextGoalDesc":
+    "Choose your next fitness journey. Your milestone has been saved permanently.",
+  "profile.celebration.cleanupNotice":
+    "Completing this goal will archive your journey summary and clean up old meal & measurement logs to keep your database fast. Your current weight and latest body measurements are preserved.",
+  "profile.celebration.nextMaintain": "Maintain My New Physique",
+  "profile.celebration.nextMaintainDesc":
+    "Keep your current weight steady with balanced nutrition",
+  "profile.celebration.nextGain": "Build Lean Muscle",
+  "profile.celebration.nextGainDesc":
+    "Controlled surplus to build strength and muscle",
+  "profile.celebration.nextLose": "Continue Fat Loss",
+  "profile.celebration.nextLoseDesc":
+    "Set a new target weight and keep losing body fat",
+  "profile.celebration.newTargetWeight": "New Target Weight",
+  "profile.celebration.completeButton": "Complete & Start Next Goal",
+  "profile.celebration.archiving": "Archiving...",
+  "profile.celebration.goalArchived":
+    "Goal archived! Old data cleaned. Your new journey begins now. 🚀",
+  "profile.celebration.archiveFailed": "Failed to archive goal.",
+  "profile.celebration.backToStats": "Back to Stats",
+  "profile.celebration.goalAchievedBanner": "🎉 You've reached your target weight!",
+  "profile.celebration.viewCelebration": "Celebrate",
+  "profile.celebration.cardGoalCrushed": "GOAL CRUSHED 🏆",
+  "profile.celebration.cardStartWeight": "START WEIGHT",
+  "profile.celebration.cardFinalWeight": "FINAL WEIGHT",
+  "profile.celebration.cardDays": "DAYS",
+  "profile.celebration.cardWorkouts": "WORKOUTS",
+  "profile.celebration.cardMeals": "MEALS",
+  "profile.celebration.cardWaist": "Waist",
+  "profile.celebration.cardChest": "Chest",
+  "profile.celebration.cardHip": "Hip",
+
+  // ──── Milestone History ────
+  "profile.milestones.title": "Goal Achievements & Milestone History",
+  "profile.milestones.empty": "No completed milestones yet",
+  "profile.milestones.emptyHint":
+    "Your journey snapshots will appear here once you achieve a goal.",
+  "profile.milestones.completedOn": "Completed",
+  "profile.milestones.duration": "{days} days",
+  "profile.milestones.weightChange": "Weight",
+  "profile.milestones.shareCard": "Share Card",
 };
 
 export const profileBn: Record<string, string> = {
@@ -258,4 +313,59 @@ export const profileBn: Record<string, string> = {
   "profile.modal.aggressivePace": "তীব্র",
   "profile.modal.recommendedPill": "লক্ষ্যের প্রস্তাবিত পরিমাপ",
   "profile.modal.customNotice": "কাস্টম লক্ষ্য সক্রিয়",
+
+  // ──── Goal Celebration & Milestone History ────
+  "profile.celebration.title": "অভিনন্দন! 🎉",
+  "profile.celebration.weightJourney": "ওজনের যাত্রা",
+  "profile.celebration.netChange": "মোট পরিবর্তন",
+  "profile.celebration.daysLabel": "দিন",
+  "profile.celebration.workoutsLabel": "ওয়ার্কআউট",
+  "profile.celebration.mealsLabel": "খাবার লগ",
+  "profile.celebration.bodyChanges": "শরীরের মাপের পরিবর্তন",
+  "profile.celebration.downloadCard": "সেলিব্রেশন কার্ড ডাউনলোড করুন (PNG)",
+  "profile.celebration.downloadSuccess": "সেলিব্রেশন কার্ড ডাউনলোড হয়েছে!",
+  "profile.celebration.downloadFailed": "কার্ড তৈরি করা যায়নি।",
+  "profile.celebration.completeAndNext": "লক্ষ্য সম্পন্ন করুন ও পরবর্তী নির্ধারণ করুন →",
+  "profile.celebration.nextGoalTitle": "আপনার পরবর্তী লক্ষ্য নির্ধারণ করুন",
+  "profile.celebration.nextGoalDesc":
+    "আপনার পরবর্তী ফিটনেস যাত্রা বেছে নিন। আপনার মাইলফলক স্থায়ীভাবে সংরক্ষিত হয়েছে।",
+  "profile.celebration.cleanupNotice":
+    "এই লক্ষ্য সম্পন্ন করলে আপনার যাত্রার সংক্ষিপ্তসার সংরক্ষণ করা হবে এবং ডাটাবেজ দ্রুত রাখতে পুরনো খাবার ও মাপের লগ পরিষ্কার করা হবে। আপনার বর্তমান ওজন ও সর্বশেষ মাপ সংরক্ষিত থাকবে।",
+  "profile.celebration.nextMaintain": "বর্তমান শরীর বজায় রাখুন",
+  "profile.celebration.nextMaintainDesc":
+    "সুষম পুষ্টি দিয়ে বর্তমান ওজন ধরে রাখুন",
+  "profile.celebration.nextGain": "পেশি গঠন করুন",
+  "profile.celebration.nextGainDesc":
+    "শক্তি ও পেশি বৃদ্ধির জন্য নিয়ন্ত্রিত সারপ্লাস",
+  "profile.celebration.nextLose": "চর্বি কমানো চালিয়ে যান",
+  "profile.celebration.nextLoseDesc":
+    "নতুন লক্ষ্য ওজন নির্ধারণ করুন এবং চর্বি কমাতে থাকুন",
+  "profile.celebration.newTargetWeight": "নতুন লক্ষ্য ওজন",
+  "profile.celebration.completeButton": "সম্পন্ন করুন ও পরবর্তী লক্ষ্য শুরু করুন",
+  "profile.celebration.archiving": "সংরক্ষণ হচ্ছে...",
+  "profile.celebration.goalArchived":
+    "লক্ষ্য সংরক্ষিত! পুরনো ডেটা পরিষ্কার হয়েছে। আপনার নতুন যাত্রা শুরু হলো। 🚀",
+  "profile.celebration.archiveFailed": "লক্ষ্য সংরক্ষণ করা যায়নি।",
+  "profile.celebration.backToStats": "পরিসংখ্যানে ফিরুন",
+  "profile.celebration.goalAchievedBanner": "🎉 আপনি আপনার লক্ষ্য ওজনে পৌঁছেছেন!",
+  "profile.celebration.viewCelebration": "উদযাপন করুন",
+  "profile.celebration.cardGoalCrushed": "লক্ষ্য অর্জিত 🏆",
+  "profile.celebration.cardStartWeight": "শুরুর ওজন",
+  "profile.celebration.cardFinalWeight": "চূড়ান্ত ওজন",
+  "profile.celebration.cardDays": "দিন",
+  "profile.celebration.cardWorkouts": "ওয়ার্কআউট",
+  "profile.celebration.cardMeals": "খাবার",
+  "profile.celebration.cardWaist": "কোমর",
+  "profile.celebration.cardChest": "বুক",
+  "profile.celebration.cardHip": "নিতম্ব",
+
+  // ──── Milestone History ────
+  "profile.milestones.title": "লক্ষ্য অর্জন ও মাইলফলক ইতিহাস",
+  "profile.milestones.empty": "এখনো কোনো মাইলফলক নেই",
+  "profile.milestones.emptyHint":
+    "একটি লক্ষ্য অর্জন করলে আপনার যাত্রার স্ন্যাপশট এখানে দেখা যাবে।",
+  "profile.milestones.completedOn": "সম্পন্ন",
+  "profile.milestones.duration": "{days} দিন",
+  "profile.milestones.weightChange": "ওজন",
+  "profile.milestones.shareCard": "কার্ড শেয়ার করুন",
 };

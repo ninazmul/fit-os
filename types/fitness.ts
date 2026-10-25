@@ -307,3 +307,31 @@ export interface IDailyScore {
   gradeEmoji: string;
   breakdown: IDailyScoreBreakdown[];
 }
+
+// ===== Goal History / Milestone Archiving =====
+
+export interface IGoalHistoryMeasurements {
+  waistChange?: number;
+  chestChange?: number;
+  hipChange?: number;
+}
+
+export interface IGoalHistory {
+  _id?: string;
+  clerkId: string;
+  goal: PrimaryGoal;
+  startDate: string; // YYYY-MM-DD
+  completedDate: string; // YYYY-MM-DD
+  startWeight: number; // kg
+  achievedWeight: number; // kg
+  targetWeight: number; // kg
+  weightChange: number; // kg (negative = lost, positive = gained)
+  daysActive: number;
+  totalWorkoutsLogged: number;
+  totalMealsLogged: number;
+  measurementsSummary: IGoalHistoryMeasurements;
+  headline: string;
+  achievementBadge: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}

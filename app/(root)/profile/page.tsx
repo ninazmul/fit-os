@@ -8,10 +8,16 @@ import {
   generateAIProfileAssessment,
   type AIProfileAssessmentData,
 } from "@/lib/actions/ai-profile.actions";
+import {
+  getGoalCelebrationStats,
+  getGoalHistory,
+  type GoalCelebrationStats,
+} from "@/lib/actions/goal-history.actions";
 import { useDataUpdateListener } from "@/lib/events";
 import OnboardingModal from "@/components/shared/OnboardingModal";
 import BodyMeasurementModal from "@/components/shared/BodyMeasurementModal";
 import GoalTargetsEditorModal from "@/components/profile/GoalTargetsEditorModal";
+import GoalCelebrationModal from "@/components/profile/GoalCelebrationModal";
 import StatCard from "@/components/shared/StatCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,10 +47,13 @@ import {
   Dumbbell,
   ChevronRight,
   Sliders,
+  Trophy,
+  Download,
+  History,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
-import type { IBodyMeasurement } from "@/types/fitness";
+import type { IBodyMeasurement, IGoalHistory } from "@/types/fitness";
 
 const AdUnit = dynamic(() => import("@/components/shared/AdUnit"), {
   ssr: false,
@@ -113,6 +122,10 @@ export default function ProfilePage() {
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [measurementModalOpen, setMeasurementModalOpen] = useState(false);
   const [goalModalOpen, setGoalModalOpen] = useState(false);
+  const [celebrationModalOpen, setCelebrationModalOpen] = useState(false);
+  const [celebrationStats, setCelebrationStats] =
+    useState<GoalCelebrationStats | null>(null);
+  const [milestoneHistory, setMilestoneHistory] = useState<IGoalHistory[]>([]);
   const [aiAssessment, setAiAssessment] =
     useState<AIProfileAssessmentData | null>(null);
   const [aiAssessmentLoading, setAiAssessmentLoading] = useState(false);
@@ -120,14 +133,19 @@ export default function ProfilePage() {
   const fetchAll = async () => {
     try {
       setLoading(true);
-      const [profileData, history, aiData] = await Promise.all([
-        getFullProfileHealthMetrics(),
-        getBodyMeasurements(20),
-        generateAIProfileAssessment(),
-      ]);
+      const [profileData, history, aiData, goalStats, goalMilestones] =
+        await Promise.all([
+          getFullProfileHealthMetrics(),
+          getBodyMeasurements(20),
+          generateAIProfileAssessment(),
+          getGoalCelebrationStats(),
+          getGoalHistory(),
+        ]);
       setData(profileData);
       setMeasurementsHistory(history);
       setAiAssessment(aiData);
+      setCelebrationStats(goalStats);
+      setMilestoneHistory(goalMilestones);
     } catch (err) {
       console.error("Error loading profile:", err);
     } finally {
@@ -245,6 +263,42 @@ export default function ProfilePage() {
         initialData={latest}
         onSuccess={fetchAll}
       />
+      {celebrationStats && (
+        <GoalCelebrationModal
+          open={celebrationModalOpen}
+          onOpenChange={setCelebrationModalOpen}
+          stats={celebrationStats}
+          onCompleted={fetchAll}
+        />
+      )}
+
+      {/* Goal Achieved Banner */}
+      {celebrationStats?.isGoalAchieved && (
+        <div className="relative overflow-hidden rounded-3xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-emerald-500/10 p-4 sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0 p-2.5 rounded-2xl bg-gradient-to-br from-amber-500/20 to-yellow-500/20">
+                <Trophy className="w-6 h-6 text-amber-500" />
+              </div>
+              <div>
+                <p className="text-sm font-black text-amber-700 dark:text-amber-300">
+                  {t("profile.celebration.goalAchievedBanner")}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {celebrationStats.headline}
+                </p>
+              </div>
+            </div>
+            <Button
+              onClick={() => setCelebrationModalOpen(true)}
+              className="rounded-xl gap-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-bold shadow-lg"
+            >
+              <Sparkles className="w-4 h-4" />
+              {t("profile.celebration.viewCelebration")}
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Header Banner */}
       <div className="glass-card p-6 rounded-3xl border border-border/50 flex flex-wrap sm:items-center justify-between gap-4">
@@ -1169,6 +1223,116 @@ export default function ProfilePage() {
           <div className="p-8 text-center text-xs text-muted-foreground">
             <Brain className="w-8 h-8 mx-auto mb-2 text-primary/40" />
             {t("profile.ai.loading")}
+          </div>
+        )}
+      </div>
+
+      {/* ─── Milestone History ─── */}
+      <div className="glass-card p-5 rounded-3xl border border-border/50">
+        <div className="flex items-center gap-2 mb-4">
+          <History className="w-5 h-5 text-primary" />
+          <h2 className="text-base font-bold">
+            {t("profile.milestones.title")}
+          </h2>
+        </div>
+
+        {milestoneHistory.length === 0 ? (
+          <div className="text-center py-8 rounded-2xl border-2 border-dashed border-border/50 bg-muted/20">
+            <Trophy className="w-10 h-10 text-muted-foreground/40 mx-auto mb-2" />
+            <p className="text-sm font-medium text-muted-foreground">
+              {t("profile.milestones.empty")}
+            </p>
+            <p className="text-xs text-muted-foreground/70 mt-1">
+              {t("profile.milestones.emptyHint")}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {milestoneHistory.map((milestone) => {
+              const goalLabel =
+                milestone.goal === "lose_weight"
+                  ? "🔥 Fat Loss"
+                  : milestone.goal === "gain_muscle"
+                    ? "💪 Muscle Gain"
+                    : "⚖️ Maintenance";
+              const changeSign = milestone.weightChange > 0 ? "+" : "";
+              return (
+                <div
+                  key={milestone._id || milestone.completedDate}
+                  className="p-4 rounded-2xl bg-muted/40 border border-border/30 hover:bg-muted/60 transition-colors"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">
+                        {milestone.achievementBadge?.split(" ")[0] || "🏆"}
+                      </span>
+                      <div>
+                        <p className="text-sm font-bold">{milestone.headline}</p>
+                        <div className="flex flex-wrap items-center gap-2 mt-1">
+                          <Badge
+                            variant="secondary"
+                            className="text-[10px] rounded-full bg-primary/10 text-primary border-0"
+                          >
+                            {goalLabel}
+                          </Badge>
+                          <span className="text-[10px] text-muted-foreground">
+                            {t("profile.milestones.completedOn")}{" "}
+                            {new Date(milestone.completedDate).toLocaleDateString(
+                              "en-US",
+                              { month: "short", day: "numeric", year: "numeric" },
+                            )}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mt-3">
+                    <div className="p-2 rounded-xl bg-background/60 text-center">
+                      <p
+                        className={cn(
+                          "text-sm font-black",
+                          milestone.weightChange < 0
+                            ? "text-emerald-600 dark:text-emerald-400"
+                            : milestone.weightChange > 0
+                              ? "text-blue-600 dark:text-blue-400"
+                              : "text-foreground",
+                        )}
+                      >
+                        {changeSign}{milestone.weightChange} kg
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {t("profile.milestones.weightChange")}
+                      </p>
+                    </div>
+                    <div className="p-2 rounded-xl bg-background/60 text-center">
+                      <p className="text-sm font-black text-purple-600 dark:text-purple-400">
+                        {milestone.daysActive}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {t("profile.celebration.daysLabel")}
+                      </p>
+                    </div>
+                    <div className="p-2 rounded-xl bg-background/60 text-center">
+                      <p className="text-sm font-black text-blue-600 dark:text-blue-400">
+                        {milestone.totalWorkoutsLogged}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {t("profile.celebration.workoutsLabel")}
+                      </p>
+                    </div>
+                    <div className="hidden sm:block p-2 rounded-xl bg-background/60 text-center">
+                      <p className="text-sm font-black text-emerald-600 dark:text-emerald-400">
+                        {milestone.totalMealsLogged}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {t("profile.celebration.mealsLabel")}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
