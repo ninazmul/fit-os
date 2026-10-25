@@ -57,7 +57,7 @@ function percent(consumed: number, target: number) {
 }
 
 function format(value: number) {
-  return Number.isInteger(value) ? String(value) : value.toFixed(1);
+  return String(Math.round(value));
 }
 
 /**
