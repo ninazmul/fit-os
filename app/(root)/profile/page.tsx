@@ -8,8 +8,10 @@ import {
   generateAIProfileAssessment,
   type AIProfileAssessmentData,
 } from "@/lib/actions/ai-profile.actions";
+import { useDataUpdateListener } from "@/lib/events";
 import OnboardingModal from "@/components/shared/OnboardingModal";
 import BodyMeasurementModal from "@/components/shared/BodyMeasurementModal";
+import GoalTargetsEditorModal from "@/components/profile/GoalTargetsEditorModal";
 import StatCard from "@/components/shared/StatCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -38,6 +40,7 @@ import {
   Utensils,
   Dumbbell,
   ChevronRight,
+  Sliders,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
@@ -109,6 +112,7 @@ export default function ProfilePage() {
   const [, setLoading] = useState(true);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [measurementModalOpen, setMeasurementModalOpen] = useState(false);
+  const [goalModalOpen, setGoalModalOpen] = useState(false);
   const [aiAssessment, setAiAssessment] =
     useState<AIProfileAssessmentData | null>(null);
   const [aiAssessmentLoading, setAiAssessmentLoading] = useState(false);
@@ -146,6 +150,16 @@ export default function ProfilePage() {
   useEffect(() => {
     fetchAll();
   }, []);
+
+  useDataUpdateListener((category) => {
+    if (
+      category === "profile" ||
+      category === "all" ||
+      category === "measurement"
+    ) {
+      fetchAll();
+    }
+  });
 
   const profile = data?.profile;
   const metrics = data?.metrics;
@@ -214,6 +228,13 @@ export default function ProfilePage() {
         open={onboardingOpen}
         onOpenChange={setOnboardingOpen}
         initialData={profile}
+      />
+      <GoalTargetsEditorModal
+        open={goalModalOpen}
+        onOpenChange={setGoalModalOpen}
+        profile={profile}
+        recommendedMacros={data?.recommendedMacros}
+        onSaved={fetchAll}
       />
       <BodyMeasurementModal
         open={measurementModalOpen}
@@ -284,6 +305,13 @@ export default function ProfilePage() {
 
         <div className="flex gap-2 flex-wrap items-center justify-center mt-2 sm:mt-0">
           <Button
+            onClick={() => setGoalModalOpen(true)}
+            className="rounded-xl gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-sm"
+          >
+            <Target className="w-4 h-4" />
+            {t("profile.actions.adjustTargets")}
+          </Button>
+          <Button
             onClick={() => setMeasurementModalOpen(true)}
             className="rounded-xl gap-1.5 bg-emerald-600 hover:bg-emerald-600/90 text-white font-bold"
           >
@@ -292,7 +320,8 @@ export default function ProfilePage() {
           </Button>
           <Button
             onClick={() => setOnboardingOpen(true)}
-            className="rounded-xl gap-1.5 bg-primary hover:bg-primary/90 font-bold"
+            variant="outline"
+            className="rounded-xl gap-1.5 border-border/80 font-bold"
           >
             <Settings2 className="w-4 h-4" />
             {t("profile.actions.editProfile")}
@@ -584,10 +613,31 @@ export default function ProfilePage() {
 
       {/* Daily Calorie & Macro Targets */}
       <div className="glass-card p-5 rounded-3xl border border-border/50 space-y-4">
-        <h2 className="text-base font-bold flex items-center gap-2">
-          <Target className="w-5 h-5 text-primary" />
-          {t("profile.targets.title")}
-        </h2>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-base font-bold flex items-center gap-2">
+              <Target className="w-5 h-5 text-primary" />
+              {t("profile.targets.title")}
+            </h2>
+            {profile?.dailyCaloriesGoal && (
+              <Badge
+                variant="outline"
+                className="text-[10px] rounded-full border-primary/30 bg-primary/5 text-primary font-medium"
+              >
+                {t("profile.modal.customNotice")}
+              </Badge>
+            )}
+          </div>
+          <Button
+            size="sm"
+            onClick={() => setGoalModalOpen(true)}
+            variant="outline"
+            className="rounded-xl text-xs font-bold gap-1.5 border-primary/30 hover:bg-primary/10 text-primary ml-auto"
+          >
+            <Sliders className="w-3.5 h-3.5" />
+            {t("profile.actions.adjustTargets")}
+          </Button>
+        </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           <div className="p-3 rounded-2xl bg-gradient-to-br from-orange-500/10 to-transparent border border-orange-500/20">
@@ -721,10 +771,20 @@ export default function ProfilePage() {
       {/* Water & Additional Targets Detail */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="glass-card p-5 rounded-3xl border border-border/50">
-          <h2 className="text-sm font-bold mb-3 flex items-center gap-2">
-            <Droplet className="w-4 h-4 text-cyan-500" />
-            {t("profile.weightProgress.title")}
-          </h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-bold flex items-center gap-2">
+              <Scale className="w-4 h-4 text-primary" />
+              {t("profile.weightProgress.title")}
+            </h2>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setGoalModalOpen(true)}
+              className="h-7 px-2.5 rounded-lg text-xs font-semibold text-primary hover:bg-primary/10"
+            >
+              {t("profile.actions.updateGoal")} &rarr;
+            </Button>
+          </div>
           <div className="space-y-2.5">
             <div className="flex items-center justify-between p-2.5 rounded-xl bg-muted/40">
               <div>

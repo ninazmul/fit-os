@@ -60,7 +60,7 @@ npx tsc --noEmit # fast type check
 
 - `lib/food-portion.ts` — `extractGramsFromServing`, `calculateNutritionByGrams`, `calculateNutritionByMultiplier` (dual portion modes).
 - `lib/health-calculations.ts` — BMI, body-fat %, WHR, WHtR, LBM/fat-mass.
-- `lib/actions/profile.actions.ts` — `calculateRecommendedMacros` (Mifflin-St Jeor BMR → TDEE multipliers → protein 2.0g/kg, fat 25%), `getProfileNutritionTargets`.
+- `lib/actions/profile.actions.ts` — `calculateRecommendedMacros` (Mifflin-St Jeor BMR → TDEE multipliers → goal-tailored protein 1.2–2.0g/kg, fat 25%), `getProfileNutritionTargets`, `updateNutritionTargets`.
 - `lib/events.ts` — `notifyDataUpdated(category)` after mutations + `useDataUpdateListener` for live cross-component refresh.
 - `lib/actions/export.actions.ts` — `exportUserData()` returns the signed-in user's full data (clerkId-scoped, own custom foods only) as a JSON string; powers Settings → "Download My Data".
 - Models: UserProfile, MealLog, WorkoutLog, WeightLog, BodyMeasurement, SleepLog, WaterLog, Food, SavedMeal, WorkoutPlan.

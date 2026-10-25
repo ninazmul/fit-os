@@ -97,6 +97,37 @@ export const profileEn: Record<string, string> = {
   "profile.ai.risk": "Risk:",
   "profile.ai.preventiveHabits": "Preventive habits",
   "profile.ai.loading": "Generating your personalized AI assessment…",
+  "profile.actions.adjustTargets": "Adjust Targets",
+  "profile.actions.updateGoal": "Update Goal",
+  "profile.modal.goalTargetsTitle": "Goal & Nutrition Targets",
+  "profile.modal.goalTargetsDesc":
+    "Customize your primary fitness goal, target weight, and daily macro targets.",
+  "profile.modal.chooseGoal": "Choose Your Primary Goal",
+  "profile.modal.loseWeight": "Lose Weight / Fat Loss",
+  "profile.modal.loseWeightDesc":
+    "Calorie deficit to burn fat and preserve lean muscle",
+  "profile.modal.maintain": "Maintain Weight",
+  "profile.modal.maintainDesc":
+    "Balanced energy intake for steady vitality & health",
+  "profile.modal.gainMuscle": "Build Muscle / Gain",
+  "profile.modal.gainMuscleDesc":
+    "Controlled surplus to fuel strength and muscle growth",
+  "profile.modal.proteinLevel": "Protein Level Preference",
+  "profile.modal.proteinBalanced": "Balanced (1.2 g/kg)",
+  "profile.modal.proteinFitness": "Fitness & Fat Loss (1.6 g/kg)",
+  "profile.modal.proteinAthlete": "Athlete & Hypertrophy (2.0 g/kg)",
+  "profile.modal.proteinCustom": "Custom (g)",
+  "profile.modal.suggestButton": "Suggest for My Goal",
+  "profile.modal.saveTargets": "Save & Apply Targets",
+  "profile.modal.savingTargets": "Saving...",
+  "profile.modal.targetsSaved": "Nutrition targets updated successfully!",
+  "profile.modal.targetsSaveFailed": "Failed to update targets.",
+  "profile.modal.caloriePace": "Calorie Deficit / Surplus",
+  "profile.modal.mildPace": "Gentle",
+  "profile.modal.standardPace": "Standard",
+  "profile.modal.aggressivePace": "Intense",
+  "profile.modal.recommendedPill": "Goal Recommendation",
+  "profile.modal.customNotice": "Custom Targets Active",
 };
 
 export const profileBn: Record<string, string> = {
@@ -196,4 +227,35 @@ export const profileBn: Record<string, string> = {
   "profile.ai.risk": "ঝুঁকি:",
   "profile.ai.preventiveHabits": "প্রতিরোধমূলক অভ্যাস",
   "profile.ai.loading": "আপনার ব্যক্তিগত এআই মূল্যায়ন তৈরি হচ্ছে…",
+  "profile.actions.adjustTargets": "লক্ষ্য সমন্বয় করুন",
+  "profile.actions.updateGoal": "লক্ষ্য পরিবর্তন করুন",
+  "profile.modal.goalTargetsTitle": "লক্ষ্য ও পুষ্টি পরিমাপ",
+  "profile.modal.goalTargetsDesc":
+    "আপনার মূল ফিটনেস লক্ষ্য, কাঙ্ক্ষিত ওজন ও দৈনিক ম্যাক্রো লক্ষ্য কাস্টমাইজ করুন।",
+  "profile.modal.chooseGoal": "আপনার মূল লক্ষ্য বেছে নিন",
+  "profile.modal.loseWeight": "ওজন কমানো / চর্বি হ্রাস",
+  "profile.modal.loseWeightDesc":
+    "চর্বি পোড়াতে ও পেশি রক্ষা করতে ক্যালোরি ঘাটতি",
+  "profile.modal.maintain": "ওজন বজায় রাখা",
+  "profile.modal.maintainDesc":
+    "স্থায়ী শক্তি ও সুস্বাস্থ্যের জন্য সুষম ক্যালোরি",
+  "profile.modal.gainMuscle": "পেশি গঠন / ওজন বৃদ্ধি",
+  "profile.modal.gainMuscleDesc":
+    "শক্তি ও পেশি বৃদ্ধির জন্য নিয়ন্ত্রিত সারপ্লাস",
+  "profile.modal.proteinLevel": "প্রোটিন গ্রহণের মাত্রা",
+  "profile.modal.proteinBalanced": "ভারসাম্যপূর্ণ (১.২ গ্রাম/কেজি)",
+  "profile.modal.proteinFitness": "ফিটনেস ও ফ্যাট লস (১.৬ গ্রাম/কেজি)",
+  "profile.modal.proteinAthlete": "অ্যাথলিট ও পেশি গঠন (২.০ গ্রাম/কেজি)",
+  "profile.modal.proteinCustom": "কাস্টম (গ্রাম)",
+  "profile.modal.suggestButton": "লক্ষ্য অনুযায়ী পরামর্শ হিসাব করুন",
+  "profile.modal.saveTargets": "সংরক্ষণ ও প্রয়োগ করুন",
+  "profile.modal.savingTargets": "সংরক্ষণ হচ্ছে...",
+  "profile.modal.targetsSaved": "পুষ্টি লক্ষ্য সফলভাবে আপডেট হয়েছে!",
+  "profile.modal.targetsSaveFailed": "লক্ষ্য আপডেট করা যায়নি।",
+  "profile.modal.caloriePace": "ক্যালোরি সমন্বয়",
+  "profile.modal.mildPace": "সহনীয়",
+  "profile.modal.standardPace": "স্বাভাবিক",
+  "profile.modal.aggressivePace": "তীব্র",
+  "profile.modal.recommendedPill": "লক্ষ্যের প্রস্তাবিত পরিমাপ",
+  "profile.modal.customNotice": "কাস্টম লক্ষ্য সক্রিয়",
 };

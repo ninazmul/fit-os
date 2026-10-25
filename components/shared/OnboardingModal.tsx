@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { calculateRecommendedMacros, createOrUpdateProfile } from "@/lib/actions/profile.actions";
+import { notifyDataUpdated } from "@/lib/events";
 import type { Gender, ActivityLevel, PrimaryGoal } from "@/types/fitness";
 import { APP_NAME } from "@/lib/constants";
 import toast from "react-hot-toast";
@@ -82,6 +83,7 @@ export default function OnboardingModal({
       age,
       height,
       currentWeight,
+      targetWeight,
       activityLevel,
       goal,
     });
@@ -118,6 +120,7 @@ export default function OnboardingModal({
         unitSystem: "metric",
       });
 
+      notifyDataUpdated("all");
       toast.success(
         t("shared.onboarding.profileSaved", { appName: APP_NAME }),
       );
