@@ -12,7 +12,8 @@ import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n";
  * calling the model for fixed labels is slow and unnecessary.
  */
 
-const GEMINI_MODEL = "gemini-2.5-flash";
+/** Primary model, then a lighter fallback if it is temporarily unavailable. */
+const GEMINI_MODELS = ["gemini-3.8-flash", "gemini-flash-latest"];
 
 /** Bounded in-memory cache so repeated renders don't re-hit the API. */
 const CACHE_LIMIT = 500;
@@ -98,23 +99,32 @@ ${JSON.stringify(pending.map((p) => p.text))}
 Output strictly valid JSON:
 { "translations": ["...", "..."] }`;
 
-  try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.2,
-            responseMimeType: "application/json",
-          },
-        }),
-      },
-    );
+  const requestBody = JSON.stringify({
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: {
+      temperature: 0.2,
+      responseMimeType: "application/json",
+    },
+  });
 
-    if (!res.ok) throw new Error(`Gemini responded ${res.status}`);
+  try {
+    // Try each model in order until one responds (newest first).
+    let res: Response | undefined;
+    for (const model of GEMINI_MODELS) {
+      res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: requestBody,
+        },
+      );
+      if (res.ok) break;
+    }
+
+    if (!res || !res.ok) {
+      throw new Error(`Gemini responded ${res?.status ?? "no response"}`);
+    }
 
     const data = await res.json();
     const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text;

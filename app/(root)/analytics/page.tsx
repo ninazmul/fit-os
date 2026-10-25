@@ -584,7 +584,7 @@ export default function AnalyticsPage() {
                             : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
                       }`}
                     >
-                      {step.impact}
+                      {localizedStep.impact ?? step.impact}
                     </span>
                   </div>
                   <p className="text-xs font-bold">{localizedStep.title}</p>
@@ -749,7 +749,9 @@ export default function AnalyticsPage() {
                           : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
                       }`}
                     >
-                      {t("analytics.confidence", { level: cor.confidence })}
+                      {t("analytics.confidence", {
+                        level: localizedCor.confidence ?? cor.confidence,
+                      })}
                     </span>
                   </div>
                   <p className="text-[11px] text-muted-foreground leading-relaxed">
