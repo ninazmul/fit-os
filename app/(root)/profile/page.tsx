@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
+import { useUser } from "@clerk/nextjs";
 import { useI18n } from "@/components/shared/I18nProvider";
 import { getFullProfileHealthMetrics } from "@/lib/actions/profile.actions";
 import { getBodyMeasurements } from "@/lib/actions/body-measurement.actions";
@@ -148,6 +150,8 @@ function MeasurementChangeGroup({
 
 export default function ProfilePage() {
   const { t, locale } = useI18n();
+  const { user: clerkUser } = useUser();
+  const avatarUrl = clerkUser?.imageUrl;
   const [data, setData] = useState<HealthData>(null);
   const [measurementsHistory, setMeasurementsHistory] = useState<
     IBodyMeasurement[]
@@ -374,9 +378,19 @@ export default function ProfilePage() {
           {/* User info left */}
           <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
             <div className="relative shrink-0">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-primary via-primary/80 to-emerald-600 flex items-center justify-center text-primary-foreground text-xl sm:text-2xl font-black shadow-md shadow-primary/20 ring-2 ring-primary/20">
-                {profile?.name ? profile.name[0].toUpperCase() : "U"}
-              </div>
+              {avatarUrl ? (
+                <Image
+                  src={avatarUrl}
+                  alt={profile?.name || t("profile.defaultName")}
+                  width={128}
+                  height={128}
+                  className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover shadow-md shadow-primary/20 ring-2 ring-primary/20"
+                />
+              ) : (
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-primary via-primary/80 to-emerald-600 flex items-center justify-center text-primary-foreground text-xl sm:text-2xl font-black shadow-md shadow-primary/20 ring-2 ring-primary/20">
+                  {profile?.name ? profile.name[0].toUpperCase() : "U"}
+                </div>
+              )}
               <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 ring-2 ring-background">
                 <CheckCircle2 className="w-3 h-3 text-white" />
               </span>
