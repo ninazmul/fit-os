@@ -96,6 +96,8 @@ export const sharedEn: Record<string, string> = {
   "shared.quickAction.addWater": "Add Water",
   "shared.quickAction.selectMeal": "Select Meal",
   "shared.quickAction.recentFoods": "Recent Foods (1-Tap Log)",
+  "shared.quickAction.mealHelp":
+    "Pick a meal slot, then tap a recent food or enter a custom item:",
   "shared.quickAction.customItemHelp": "Or enter a quick custom item:",
   "shared.quickAction.foodNamePlaceholder": "Food name (e.g. 2 Eggs + Toast)",
   "shared.quickAction.calories": "Calories (kcal)",
@@ -112,7 +114,11 @@ export const sharedEn: Record<string, string> = {
   "shared.quickAction.workoutTitlePlaceholder": "e.g. Upper Body / Running",
   "shared.quickAction.estimatedCalories": "Estimated Calories (kcal)",
   "shared.quickAction.logWorkout": "Log Workout",
+  "shared.quickAction.workoutHelp":
+    "Log a workout session with duration and estimated calories:",
   "shared.quickAction.todayWeight": "Today's Weight (kg)",
+  "shared.quickAction.weightHelp":
+    "Log today's body weight to keep your trend up to date:",
   "shared.quickAction.weightPlaceholder": "e.g. 72.5",
   "shared.quickAction.weightNotesPlaceholder": "e.g. Morning empty stomach",
   "shared.quickAction.logWeight": "Log Weight",
@@ -301,6 +307,8 @@ export const sharedBn: Record<string, string> = {
   "shared.quickAction.addWater": "পানি যোগ করুন",
   "shared.quickAction.selectMeal": "খাবার নির্বাচন করুন",
   "shared.quickAction.recentFoods": "সাম্প্রতিক খাবার (এক ট্যাপে লগ)",
+  "shared.quickAction.mealHelp":
+    "খাবারের সময় নির্বাচন করুন, তারপর সাম্প্রতিক খাবারে ট্যাপ করুন বা কাস্টম আইটেম লিখুন:",
   "shared.quickAction.customItemHelp": "অথবা দ্রুত একটি কাস্টম আইটেম লিখুন:",
   "shared.quickAction.foodNamePlaceholder":
     "খাবারের নাম (যেমন: ২টি ডিম + টোস্ট)",
@@ -317,7 +325,11 @@ export const sharedBn: Record<string, string> = {
   "shared.quickAction.workoutTitlePlaceholder": "যেমন: আপার বডি / দৌড়",
   "shared.quickAction.estimatedCalories": "আনুমানিক ক্যালোরি (kcal)",
   "shared.quickAction.logWorkout": "ওয়ার্কআউট লগ করুন",
+  "shared.quickAction.workoutHelp":
+    "সময়কাল ও আনুমানিক ক্যালোরিসহ একটি ওয়ার্কআউট সেশন লগ করুন:",
   "shared.quickAction.todayWeight": "আজকের ওজন (kg)",
+  "shared.quickAction.weightHelp":
+    "আপনার ওজনের ধারা হালনাগাদ রাখতে আজকের ওজন লগ করুন:",
   "shared.quickAction.weightPlaceholder": "যেমন: ৭২.৫",
   "shared.quickAction.weightNotesPlaceholder": "যেমন: সকালে খালি পেটে",
   "shared.quickAction.logWeight": "ওজন লগ করুন",
