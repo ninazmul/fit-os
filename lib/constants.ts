@@ -4,7 +4,7 @@
  */
 
 // Single source of truth for the app version — update here only.
-const VERSION_RAW = "3.4.0";
+const VERSION_RAW = "3.5.0";
 const VERSION = `v${VERSION_RAW}`;
 
 export const APP_CONFIG = {
