@@ -17,13 +17,11 @@ import {
   Moon,
   TrendingUp,
   Lock,
+  ChevronDown,
 } from "lucide-react";
 import AdUnit from "@/components/shared/AdUnit";
 import FitnessCalculator from "@/components/shared/FitnessCalculator";
-import {
-  buildPublicPageMetadata,
-  publicSeoPages,
-} from "@/lib/seo";
+import { buildPublicPageMetadata, publicSeoPages } from "@/lib/seo";
 import {
   APP_NAME,
   APP_VERSION,
@@ -160,22 +158,38 @@ const structuredData = [
 
 // Production animated Macro Ring indicator
 const MacroRing = () => (
-  <svg viewBox="0 0 120 120" className="h-16 w-16 sm:h-20 sm:w-20 shrink-0 drop-shadow-sm">
+  <svg
+    viewBox="0 0 120 120"
+    role="img"
+    aria-label="Illustrative health score ring showing 92 out of 100"
+    className="h-16 w-16 shrink-0 drop-shadow-sm sm:h-20 sm:w-20"
+  >
+    <defs>
+      <linearGradient
+        id="landingRingPrimary"
+        x1="0%"
+        y1="0%"
+        x2="100%"
+        y2="100%"
+      >
+        <stop offset="0%" stopColor="hsl(var(--primary))" />
+        <stop offset="100%" stopColor="#34D399" />
+      </linearGradient>
+    </defs>
     <circle
       cx="60"
       cy="60"
       r="50"
       fill="none"
-      stroke="#E2E8F0"
       strokeWidth="10"
-      className="dark:stroke-slate-800"
+      className="stroke-muted"
     />
     <circle
       cx="60"
       cy="60"
       r="50"
       fill="none"
-      stroke="hsl(var(--primary))"
+      stroke="url(#landingRingPrimary)"
       strokeWidth="10"
       strokeLinecap="round"
       strokeDasharray="314.15"
@@ -187,22 +201,20 @@ const MacroRing = () => (
       cy="60"
       r="50"
       fill="none"
-      stroke="#3B82F6"
       strokeWidth="10"
       strokeLinecap="round"
       strokeDasharray="314.15"
       strokeDashoffset="235.6"
       transform="rotate(60 60 60)"
+      className="stroke-blue-500"
     />
     <text
       x="60"
       y="57"
       textAnchor="middle"
-      fontFamily="'Space Grotesk', sans-serif"
       fontSize="18"
       fontWeight="800"
-      fill="#0F172A"
-      className="dark:fill-white"
+      className="fill-foreground"
     >
       92
     </text>
@@ -210,11 +222,10 @@ const MacroRing = () => (
       x="60"
       y="71"
       textAnchor="middle"
-      fontFamily="Inter, sans-serif"
       fontSize="7.5"
       fontWeight="700"
-      fill="#10B981"
       letterSpacing="0.05em"
+      className="fill-emerald-500"
     >
       HEALTH AI
     </text>
@@ -223,11 +234,15 @@ const MacroRing = () => (
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-background text-foreground selection:bg-primary/20 selection:text-primary">
+    <div className="relative min-h-[100dvh] overflow-x-hidden bg-background text-foreground selection:bg-primary/20 selection:text-primary">
       {/* Background Decorative Mesh & Glow */}
-      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
+      >
         <div className="absolute -top-40 left-1/2 h-[500px] w-[700px] -translate-x-1/2 rounded-full bg-gradient-to-br from-primary/15 via-emerald-500/10 to-transparent blur-3xl" />
-        <div className="absolute top-[40%] right-[-10%] h-[400px] w-[500px] rounded-full bg-gradient-to-bl from-blue-500/10 via-purple-500/10 to-transparent blur-3xl" />
+        <div className="absolute right-[-10%] top-[40%] h-[400px] w-[500px] rounded-full bg-gradient-to-bl from-blue-500/10 via-purple-500/10 to-transparent blur-3xl" />
+        <div className="absolute bottom-[-10%] left-[-5%] h-[360px] w-[420px] rounded-full bg-gradient-to-tr from-emerald-500/10 via-primary/10 to-transparent blur-3xl" />
       </div>
 
       {/* JSON-LD Structured Data */}
@@ -242,7 +257,10 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       <div className="relative z-10 mx-auto max-w-7xl px-4 pb-12 pt-4 sm:px-6 lg:px-8">
         {/* Top Navbar */}
         <header className="sticky top-3 z-30 mb-6 flex items-center justify-between gap-3 rounded-3xl border border-border/60 bg-background/80 px-4 py-3 shadow-lg shadow-black/5 backdrop-blur-xl sm:mb-10 sm:px-6">
-          <Link href="/sign-in" className="flex min-w-0 items-center gap-3 group">
+          <Link
+            href="/sign-in"
+            className="flex min-w-0 items-center gap-3 group"
+          >
             <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border/50 bg-card p-1 shadow-sm transition-transform duration-300 group-hover:scale-105">
               <Image
                 src={APP_LOGO}
@@ -257,7 +275,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 <span className="truncate text-lg font-black tracking-tight font-heading">
                   {APP_NAME}
                 </span>
-                <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-black text-primary">
+                <span className="hidden rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-black text-primary sm:inline-flex">
                   {APP_VERSION}
                 </span>
                 <span className="hidden sm:inline-flex rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
@@ -273,13 +291,13 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           <div className="flex items-center gap-2">
             <Link
               href="#calc"
-              className="hidden sm:inline-flex items-center gap-1.5 rounded-2xl border border-border/60 bg-muted/40 px-4 py-2 text-xs font-bold text-foreground transition-all hover:bg-muted/80"
+              className="hidden items-center gap-1.5 rounded-2xl border border-border/60 bg-muted/40 px-4 py-2.5 text-xs font-bold text-foreground transition-all hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 sm:inline-flex"
             >
               Calculators <Zap className="h-3.5 w-3.5 text-primary" />
             </Link>
             <Link
               href="#auth"
-              className="flex shrink-0 items-center gap-1.5 rounded-2xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow-md shadow-primary/25 transition-all hover:bg-primary/90 hover:scale-[1.02]"
+              className="flex shrink-0 items-center gap-1.5 rounded-2xl bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground shadow-md shadow-primary/25 transition-all hover:scale-[1.02] hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98]"
             >
               Get Started <ArrowRight className="h-3.5 w-3.5" />
             </Link>
@@ -304,7 +322,10 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 </span>
               </h1>
               <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base sm:leading-7">
-                Calculate your exact BMI, BMR, TDEE, body fat % and ideal weight. Track calories from 100+ Bangladeshi & global foods, log workouts, measure recovery, and get real-time Google Gemini AI coaching.
+                Calculate your exact BMI, BMR, TDEE, body fat % and ideal
+                weight. Track calories from 100+ Bangladeshi & global foods, log
+                workouts, measure recovery, and get real-time Google Gemini AI
+                coaching.
               </p>
             </div>
 
@@ -317,17 +338,34 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               ].map(([value, label], index) => (
                 <div
                   key={label}
-                  className={`px-3 py-3.5 text-center ${index > 0 ? "border-l border-border/50" : ""
-                    }`}
+                  className={`px-3 py-3.5 text-center ${
+                    index > 0 ? "border-l border-border/50" : ""
+                  }`}
                 >
                   <p className="text-base font-black text-primary sm:text-xl">
                     {value}
                   </p>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mt-0.5">
+                  <p className="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                     {label}
                   </p>
                 </div>
               ))}
+            </div>
+
+            {/* CTA Buttons */}
+            <div className="flex flex-col gap-3 pt-1 sm:flex-row">
+              <Link
+                href="#auth"
+                className="flex items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-3.5 text-sm font-black text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:scale-[1.02] hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.99]"
+              >
+                Create Free Account <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link
+                href="#calc"
+                className="flex items-center justify-center gap-2 rounded-2xl border border-border/60 bg-card/80 px-6 py-3.5 text-sm font-bold text-foreground transition-all hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 active:scale-[0.99]"
+              >
+                Explore Calculators <Zap className="h-4 w-4 text-primary" />
+              </Link>
             </div>
 
             {/* Feature Highlights Grid */}
@@ -337,7 +375,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 return (
                   <article
                     key={item.title}
-                    className="group relative overflow-hidden rounded-2xl border border-border/50 bg-card/60 p-4 transition-all duration-300 hover:border-primary/40 hover:bg-card/90 hover:shadow-md"
+                    className="group relative overflow-hidden rounded-2xl border border-border/50 bg-card/60 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:bg-card/90 hover:shadow-md"
                   >
                     <div className="flex items-start gap-3">
                       <div
@@ -366,12 +404,12 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                 Instant Online Calculators:
               </p>
-              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
                 {calculatorLinks.map((page) => (
                   <Link
                     key={page.path}
                     href={page.path}
-                    className="flex shrink-0 items-center gap-1.5 rounded-full border border-border/60 bg-muted/40 px-3.5 py-1.5 text-xs font-bold text-foreground transition-all hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
+                    className="flex shrink-0 items-center gap-1.5 rounded-full border border-border/60 bg-muted/40 px-3.5 py-1.5 text-xs font-bold text-foreground transition-all hover:border-primary/40 hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
                   >
                     <Zap className="h-3 w-3 text-primary" />
                     {page.path
@@ -381,22 +419,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                   </Link>
                 ))}
               </div>
-            </div>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-col gap-3 sm:flex-row pt-2">
-              <Link
-                href="#auth"
-                className="flex items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-3.5 text-sm font-black text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:bg-primary/90 hover:scale-[1.02]"
-              >
-                Create Free Account <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link
-                href="#calc"
-                className="flex items-center justify-center gap-2 rounded-2xl border border-border/60 bg-card/80 px-6 py-3.5 text-sm font-bold text-foreground transition-all hover:bg-muted"
-              >
-                Explore Calculators <Zap className="h-4 w-4 text-primary" />
-              </Link>
             </div>
           </section>
 
@@ -424,7 +446,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             </div>
 
             {/* Trust Badges */}
-            <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[10px] font-bold uppercase leading-tight tracking-wide text-muted-foreground">
               {[
                 { text: "No Credit Card", icon: Lock },
                 { text: "Encrypted Data", icon: ShieldCheck },
@@ -432,9 +454,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               ].map(({ text, icon: Icon }) => (
                 <div
                   key={text}
-                  className="flex items-center justify-center gap-1 rounded-xl border border-border/50 bg-card/50 px-2 py-2"
+                  className="flex flex-col items-center justify-center gap-1 rounded-xl border border-border/50 bg-card/50 px-2 py-2.5 transition-colors hover:border-primary/30 hover:bg-primary/5"
                 >
-                  <Icon className="w-3 h-3 text-primary" />
+                  <Icon className="h-3.5 w-3.5 text-primary" />
                   <span>{text}</span>
                 </div>
               ))}
@@ -449,7 +471,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               Engineered for Complete Body Intelligence
             </h2>
             <p className="text-xs text-muted-foreground sm:text-sm leading-relaxed">
-              NutriBD combines verified exercise science with multimodal Gemini AI to give you real, sustainable results.
+              NutriBD combines verified exercise science with multimodal Gemini
+              AI to give you real, sustainable results.
             </p>
           </div>
 
@@ -459,9 +482,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               return (
                 <article
                   key={pillar.title}
-                  className="space-y-3 rounded-3xl border border-border/60 bg-card/60 p-5 shadow-sm transition-all hover:border-primary/40 hover:shadow-md"
+                  className="group space-y-3 rounded-3xl border border-border/60 bg-card/60 p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg"
                 >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 text-primary shadow-sm transition-transform duration-300 group-hover:scale-105">
                     <Icon className="h-5 w-5" />
                   </div>
                   <h3 className="text-sm font-bold">{pillar.title}</h3>
@@ -501,50 +524,85 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 Everything you need to know about {APP_NAME}
               </h2>
               <p className="text-xs leading-relaxed text-muted-foreground sm:text-sm">
-                Learn how {APP_NAME} combines clinical fitness algorithms, intelligent meal tracking, and Gemini AI coaching to help you reach your goals.
+                Learn how {APP_NAME} combines clinical fitness algorithms,
+                intelligent meal tracking, and Gemini AI coaching to help you
+                reach your goals.
               </p>
             </div>
 
             <div className="space-y-3 lg:col-span-7">
-              {faqItems.map((faq) => (
-                <div
+              {faqItems.map((faq, index) => (
+                <details
                   key={faq.q}
-                  className="space-y-2 rounded-2xl border border-border/60 bg-card/60 p-4 shadow-sm transition-all hover:border-border"
+                  open={index === 0}
+                  className="group rounded-2xl border border-border/60 bg-card/60 p-4 shadow-sm transition-all hover:border-primary/40 open:border-primary/40 open:bg-card/90 open:shadow-md"
                 >
-                  <h3 className="flex items-center gap-2 text-xs font-bold sm:text-sm text-foreground">
-                    <Activity className="h-3.5 w-3.5 shrink-0 text-primary" />
-                    {faq.q}
-                  </h3>
-                  <p className="pl-5 text-xs leading-relaxed text-muted-foreground">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-xs font-bold text-foreground marker:content-none sm:text-sm [&::-webkit-details-marker]:hidden">
+                    <span className="flex items-center gap-2">
+                      <Activity className="h-3.5 w-3.5 shrink-0 text-primary" />
+                      {faq.q}
+                    </span>
+                    <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-300 group-open:rotate-180" />
+                  </summary>
+                  <p className="mt-2.5 pl-5 text-xs leading-relaxed text-muted-foreground">
                     {faq.a}
                   </p>
-                </div>
+                </details>
               ))}
             </div>
           </div>
         </section>
 
         {/* Production Footer */}
-        <footer className="flex flex-col items-center justify-between gap-4 border-t border-border/60 py-8 text-center text-xs text-muted-foreground sm:flex-row sm:text-left">
-          <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
-            <span className="font-black text-foreground">{APP_NAME} {APP_VERSION}</span>
-            <span>&middot;</span>
-            <Link href="/about" className="text-pink-600 dark:text-pink-400 font-bold hover:underline">
-              About Us & Donate ❤️
-            </Link>
-            <span>&middot;</span>
-            <span>{APP_TAGLINE}</span>
+        <footer className="border-t border-border/60 py-10">
+          <div className="flex flex-col items-center justify-between gap-6 text-center sm:flex-row sm:text-left">
+            <div className="space-y-2">
+              <div className="flex items-center justify-center gap-2 sm:justify-start">
+                <span className="font-black text-foreground">{APP_NAME}</span>
+                <span className="rounded-full border border-border/60 bg-muted/50 px-2 py-0.5 text-[10px] font-black text-muted-foreground">
+                  {APP_VERSION}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground">{APP_TAGLINE}</p>
+            </div>
+
+            <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs font-bold">
+              <Link
+                href="#calc"
+                className="text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Calculators
+              </Link>
+              <Link
+                href="#auth"
+                className="text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/about"
+                className="text-pink-600 transition-colors hover:text-pink-500 dark:text-pink-400"
+              >
+                About & Donate ❤️
+              </Link>
+            </nav>
           </div>
-          <div>
-            Crafted with ❤️ by{" "}
-            <a
-              href={APP_AUTHOR_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-bold text-primary underline underline-offset-4 hover:text-primary/80 transition-colors"
-            >
-              {APP_AUTHOR}
-            </a>
+
+          <div className="mt-6 flex flex-col items-center justify-between gap-2 border-t border-border/40 pt-5 text-xs text-muted-foreground sm:flex-row">
+            <span>
+              &copy; {new Date().getFullYear()} {APP_NAME}. All rights reserved.
+            </span>
+            <span>
+              Crafted with ❤️ by{" "}
+              <a
+                href={APP_AUTHOR_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-bold text-primary underline underline-offset-4 transition-colors hover:text-primary/80"
+              >
+                {APP_AUTHOR}
+              </a>
+            </span>
           </div>
         </footer>
       </div>
