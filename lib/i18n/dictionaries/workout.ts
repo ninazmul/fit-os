@@ -41,6 +41,8 @@ export const workoutEn: Record<string, string> = {
   "workout.today.createPlan": "Create Weekly Plan",
   "workout.today.selectAtLeastOne": "Select at least one completed exercise",
   "workout.today.saved": "Today's workout saved 💪",
+  "workout.today.showDetails": "Show exercises",
+  "workout.today.hideDetails": "Hide exercises",
   // Plan view
   "workout.plan.heading": "Your Weekly Workout Plan",
   "workout.plan.description":
@@ -176,6 +178,8 @@ export const workoutBn: Record<string, string> = {
   "workout.today.selectAtLeastOne":
     "কমপক্ষে একটি সম্পন্ন ব্যায়াম নির্বাচন করুন",
   "workout.today.saved": "আজকের ওয়ার্কআউট সংরক্ষিত হয়েছে 💪",
+  "workout.today.showDetails": "ব্যায়াম দেখুন",
+  "workout.today.hideDetails": "ব্যায়াম লুকান",
   // Plan view
   "workout.plan.heading": "আপনার সাপ্তাহিক ওয়ার্কআউট প্ল্যান",
   "workout.plan.description":

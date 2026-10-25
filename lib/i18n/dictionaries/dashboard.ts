@@ -57,19 +57,6 @@ export const dashboardEn: Record<string, string> = {
   "dashboard.habit.logWorkout": "Log workout",
   "dashboard.habit.logSleep": "Log sleep",
   "dashboard.habit.logWater": "Log water",
-  // Workout plan completion dialog
-  "dashboard.planDialog.title": "Complete Workout Plan",
-  "dashboard.planDialog.description":
-    "Select the exercises and set counts you finished today.",
-  "dashboard.planDialog.plannedSummary":
-    "{min} min planned · {kcal} kcal planned",
-  "dashboard.planDialog.plannedTime": "Planned: {sets} sets × {time}s",
-  "dashboard.planDialog.plannedReps": "Planned: {sets} sets × {reps} reps",
-  "dashboard.planDialog.setsDone": "Sets done",
-  "dashboard.planDialog.secondsPerSet": "Seconds/set",
-  "dashboard.planDialog.repsPerSet": "Reps/set",
-  "dashboard.planDialog.saving": "Saving...",
-  "dashboard.planDialog.save": "Save Completed Workout",
   // Toasts
   "dashboard.toast.itemRemoved": "Item removed",
   "dashboard.toast.removeItemFailed": "Failed to remove item",
@@ -134,19 +121,6 @@ export const dashboardBn: Record<string, string> = {
   "dashboard.habit.logWorkout": "ওয়ার্কআউট লগ করুন",
   "dashboard.habit.logSleep": "ঘুম লগ করুন",
   "dashboard.habit.logWater": "পানি লগ করুন",
-  // Workout plan completion dialog
-  "dashboard.planDialog.title": "ওয়ার্কআউট প্ল্যান সম্পন্ন করুন",
-  "dashboard.planDialog.description":
-    "আজ আপনি যে ব্যায়ামগুলো ও কত সেট শেষ করেছেন তা নির্বাচন করুন।",
-  "dashboard.planDialog.plannedSummary":
-    "{min} মিনিট পরিকল্পিত · {kcal} কিলোক্যালরি পরিকল্পিত",
-  "dashboard.planDialog.plannedTime": "পরিকল্পিত: {sets} সেট × {time} সেকেন্ড",
-  "dashboard.planDialog.plannedReps": "পরিকল্পিত: {sets} সেট × {reps} রেপ",
-  "dashboard.planDialog.setsDone": "সম্পন্ন সেট",
-  "dashboard.planDialog.secondsPerSet": "সেকেন্ড/সেট",
-  "dashboard.planDialog.repsPerSet": "রেপ/সেট",
-  "dashboard.planDialog.saving": "সংরক্ষণ হচ্ছে...",
-  "dashboard.planDialog.save": "সম্পন্ন ওয়ার্কআউট সংরক্ষণ করুন",
   // Toasts
   "dashboard.toast.itemRemoved": "আইটেম মুছে ফেলা হয়েছে",
   "dashboard.toast.removeItemFailed": "আইটেম মুছতে ব্যর্থ হয়েছে",

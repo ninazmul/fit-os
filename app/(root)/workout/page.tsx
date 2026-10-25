@@ -19,7 +19,6 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -32,6 +31,10 @@ import {
 import StatCard from "@/components/shared/StatCard";
 import EmptyState from "@/components/shared/EmptyState";
 import PageHeader from "@/components/shared/PageHeader";
+import {
+  ExerciseChecklistItem,
+  type ChecklistExercise,
+} from "@/components/shared/ExerciseChecklistItem";
 import { useI18n } from "@/components/shared/I18nProvider";
 import {
   Dumbbell,
@@ -44,12 +47,10 @@ import {
   Sparkles,
   CheckCircle2,
   Pencil,
-  Minus,
   RotateCcw,
   X,
 } from "lucide-react";
 import { getLocalDateString } from "@/lib/utils";
-import type { TranslationVars } from "@/lib/i18n";
 import type {
   WorkoutType,
   IWorkoutExercise,
@@ -97,11 +98,6 @@ type PlanDayEditor = {
   dayOfWeek: number;
   title: string;
   exercises: PlanExerciseEditor[];
-};
-
-type CompletionExerciseEditor = PlanExerciseEditor & {
-  selected: boolean;
-  setsCompleted: number;
 };
 
 type QuickWorkoutExercise = IWorkoutExercise & {
@@ -246,8 +242,6 @@ const workoutTemplates: { nameKey: string; days: PlanDayEditor[] }[] = [
   },
 ];
 
-type TranslateFn = (key: string, vars?: TranslationVars) => string;
-
 /** Map a saved plan day into the editable draft shape. */
 const toPlanDayEditor = (day: IWorkoutPlanDay): PlanDayEditor => ({
   _id: day._id,
@@ -265,7 +259,7 @@ const toPlanDayEditor = (day: IWorkoutPlanDay): PlanDayEditor => ({
 /** Seed a checklist row from a planned exercise (defaults to fully completed). */
 const toCompletionEditor = (
   exercise: IWorkoutPlanExercise | PlanExerciseEditor,
-): CompletionExerciseEditor => ({
+): ChecklistExercise => ({
   exerciseName: exercise.exerciseName,
   trackingMode: exercise.trackingMode || "reps",
   sets: exercise.sets,
@@ -278,7 +272,7 @@ const toCompletionEditor = (
 /** Persist a completed plan day (only the selected exercises are sent). */
 const saveDayCompletion = async (
   dayId: string,
-  exercises: CompletionExerciseEditor[],
+  exercises: ChecklistExercise[],
 ) => {
   await completeWorkoutPlanDay(
     getLocalDateString(),
@@ -292,142 +286,6 @@ const saveDayCompletion = async (
     })),
   );
 };
-
-/** Compact −/+ stepper used to pick sets and reps quickly (mobile friendly). */
-function NumberStepper({
-  value,
-  onChange,
-  min = 0,
-  max = 99,
-  step = 1,
-  disabled = false,
-  ariaLabel,
-}: {
-  value: number;
-  onChange: (value: number) => void;
-  min?: number;
-  max?: number;
-  step?: number;
-  disabled?: boolean;
-  ariaLabel: string;
-}) {
-  const clamp = (next: number) => Math.min(max, Math.max(min, next));
-  const buttonClass =
-    "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-background text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60";
-  return (
-    <div className="flex items-center gap-1.5">
-      <button
-        type="button"
-        aria-label={`${ariaLabel} −`}
-        onClick={() => onChange(clamp(value - step))}
-        disabled={disabled || value <= min}
-        className={buttonClass}
-      >
-        <Minus className="h-3.5 w-3.5" />
-      </button>
-      <span className="w-9 text-center text-sm font-black tabular-nums text-foreground">
-        {value}
-      </span>
-      <button
-        type="button"
-        aria-label={`${ariaLabel} +`}
-        onClick={() => onChange(clamp(value + step))}
-        disabled={disabled || value >= max}
-        className={buttonClass}
-      >
-        <Plus className="h-3.5 w-3.5" />
-      </button>
-    </div>
-  );
-}
-
-/** One selectable exercise row: checkbox + sets/reps steppers. */
-function ExerciseChecklistItem({
-  exercise,
-  onChange,
-  t,
-}: {
-  exercise: CompletionExerciseEditor;
-  onChange: (patch: Partial<CompletionExerciseEditor>) => void;
-  t: TranslateFn;
-}) {
-  const isTime = exercise.trackingMode === "time";
-  return (
-    <div
-      className={`rounded-2xl border p-3 transition-colors ${
-        exercise.selected
-          ? "border-primary/40 bg-primary/5"
-          : "border-border/60 bg-card/60"
-      }`}
-    >
-      <div className="flex items-start gap-3">
-        <Checkbox
-          checked={exercise.selected}
-          onCheckedChange={(checked) =>
-            onChange({ selected: Boolean(checked) })
-          }
-          className="mt-0.5"
-          aria-label={exercise.exerciseName}
-        />
-        <div className="min-w-0 flex-1">
-          <p
-            className={`truncate text-sm font-bold ${
-              exercise.selected
-                ? "text-foreground"
-                : "text-muted-foreground line-through"
-            }`}
-          >
-            {exercise.exerciseName}
-          </p>
-          <p className="text-[11px] text-muted-foreground">
-            {t("workout.completion.plannedSets", {
-              sets: exercise.sets,
-              detail: isTime ? `${exercise.seconds}s` : `${exercise.reps} reps`,
-            })}
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-3 grid grid-cols-2 gap-3 pl-7">
-        <div className="space-y-1">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
-            {t("workout.form.setsDone")}
-          </p>
-          <NumberStepper
-            value={exercise.setsCompleted}
-            min={0}
-            max={exercise.sets}
-            disabled={!exercise.selected}
-            ariaLabel={t("workout.form.setsDone")}
-            onChange={(value) => onChange({ setsCompleted: value })}
-          />
-        </div>
-        <div className="space-y-1">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
-            {isTime
-              ? t("workout.form.secondsPerSet")
-              : t("workout.form.repsPerSet")}
-          </p>
-          <NumberStepper
-            value={isTime ? exercise.seconds : exercise.reps}
-            min={0}
-            max={isTime ? 600 : 100}
-            step={isTime ? 5 : 1}
-            disabled={!exercise.selected}
-            ariaLabel={
-              isTime
-                ? t("workout.form.secondsPerSet")
-                : t("workout.form.repsPerSet")
-            }
-            onChange={(value) =>
-              onChange(isTime ? { seconds: value } : { reps: value })
-            }
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function WorkoutPage() {
   const { t } = useI18n();
@@ -446,12 +304,12 @@ export default function WorkoutPage() {
     null,
   );
   const [completionExercises, setCompletionExercises] = useState<
-    CompletionExerciseEditor[]
+    ChecklistExercise[]
   >([]);
 
   // Today's inline workout checklist
   const [todayChecklist, setTodayChecklist] = useState<
-    CompletionExerciseEditor[]
+    ChecklistExercise[]
   >([]);
   const [savingToday, setSavingToday] = useState(false);
 
@@ -529,7 +387,7 @@ export default function WorkoutPage() {
 
   const updateTodayExercise = (
     index: number,
-    patch: Partial<CompletionExerciseEditor>,
+    patch: Partial<ChecklistExercise>,
   ) => {
     setTodayChecklist((prev) =>
       prev.map((item, itemIndex) =>
@@ -719,7 +577,7 @@ export default function WorkoutPage() {
 
   const updateCompletionExercise = (
     index: number,
-    patch: Partial<CompletionExerciseEditor>,
+    patch: Partial<ChecklistExercise>,
   ) => {
     setCompletionExercises((prev) =>
       prev.map((item, itemIndex) =>

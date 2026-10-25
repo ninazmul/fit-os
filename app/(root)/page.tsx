@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { getDashboardData } from "@/lib/actions/dashboard.actions";
 import { removeMealItem } from "@/lib/actions/meal.actions";
 import { completeWorkoutPlanDay } from "@/lib/actions/workout.actions";
@@ -12,24 +12,19 @@ import dynamic from "next/dynamic";
 import PageHeader from "@/components/shared/PageHeader";
 import NutritionSummary from "@/components/shared/NutritionSummary";
 import EmptyState from "@/components/shared/EmptyState";
+import {
+  ExerciseChecklistItem,
+  type ChecklistExercise,
+} from "@/components/shared/ExerciseChecklistItem";
 import { DashboardSkeleton } from "@/components/shared/SkeletonLoaders";
 import { useI18n } from "@/components/shared/I18nProvider";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import {
   CalendarCheck,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Plus,
   UtensilsCrossed,
   Trash2,
@@ -38,19 +33,28 @@ import {
   Moon,
   Sun,
   Apple,
+  CheckCircle2,
+  RotateCcw,
 } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 
-type DashboardCompletionExercise = {
+/** Seed a checklist row from a planned exercise (defaults to fully completed). */
+const toChecklistExercise = (exercise: {
   exerciseName: string;
-  trackingMode: "reps" | "time";
+  trackingMode?: "reps" | "time";
   sets: number;
   reps: number;
-  seconds: number;
-  selected: boolean;
-  setsCompleted: number;
-};
+  seconds?: number;
+}): ChecklistExercise => ({
+  exerciseName: exercise.exerciseName,
+  trackingMode: exercise.trackingMode || "reps",
+  sets: exercise.sets,
+  reps: exercise.reps,
+  seconds: exercise.seconds || 0,
+  selected: true,
+  setsCompleted: exercise.sets,
+});
 
 const QuickActionModal = dynamic(
   () => import("@/components/shared/QuickActionModal"),
@@ -118,17 +122,21 @@ export default function DashboardPage() {
     "meal" | "weight" | "water" | "workout" | "sleep"
   >("water");
   const [quickWorkoutOpen, setQuickWorkoutOpen] = useState(false);
-  const [planCompleting, setPlanCompleting] = useState(false);
-  const [planCompletionOpen, setPlanCompletionOpen] = useState(false);
-  const [planCompletionExercises, setPlanCompletionExercises] = useState<
-    DashboardCompletionExercise[]
-  >([]);
+  const [savingWorkout, setSavingWorkout] = useState(false);
+  const [workoutCardOpen, setWorkoutCardOpen] = useState(false);
+  const [workoutChecklist, setWorkoutChecklist] = useState<ChecklistExercise[]>(
+    [],
+  );
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchMealSlot, setSearchMealSlot] = useState<MealType>("lunch");
   const [barcodeOpen, setBarcodeOpen] = useState(false);
 
   const [itemDeletingKey, setItemDeletingKey] = useState<string | null>(null);
+
+  // Guard so we only re-seed the workout checklist when the day (or plan)
+  // actually changes, never on background refreshes.
+  const seededPlanKeyRef = useRef<string>("");
 
   const isToday = selectedDateStr === getLocalDateString();
 
@@ -141,6 +149,25 @@ export default function DashboardPage() {
         setData(res);
         if (res?.needsOnboarding) {
           setOnboardingOpen(true);
+        }
+        // Re-seed the workout checklist only when the day or plan changes so
+        // in-progress ticks survive background refreshes.
+        const plan = res?.todayWorkoutPlan;
+        const planKey = plan?._id
+          ? `${selectedDateStr}:${plan._id}`
+          : `${selectedDateStr}:none`;
+        if (seededPlanKeyRef.current !== planKey) {
+          seededPlanKeyRef.current = planKey;
+          setWorkoutChecklist(
+            plan?.exercises?.length
+              ? plan.exercises.map(toChecklistExercise)
+              : [],
+          );
+          // Expand only while the plan is still pending — keeps the dashboard
+          // compact once today's session is already logged.
+          setWorkoutCardOpen(
+            Boolean(plan?.exercises?.length) && !res?.today?.workoutDone,
+          );
         }
       } catch (err) {
         console.error("Dashboard fetch error:", err);
@@ -195,61 +222,61 @@ export default function DashboardPage() {
   };
 
   // ──────────────────────────── Workout Handlers ────────────────────────────
-  const openPlanCompletionDialog = () => {
-    if (!todayWorkoutPlan?._id) return;
-
-    setPlanCompletionExercises(
-      todayWorkoutPlan.exercises.map(
-        (exercise: {
-          exerciseName: string;
-          trackingMode?: "reps" | "time";
-          sets: number;
-          reps: number;
-          seconds?: number;
-        }) => ({
-          exerciseName: exercise.exerciseName,
-          trackingMode: exercise.trackingMode || "reps",
-          sets: exercise.sets,
-          reps: exercise.reps,
-          seconds: exercise.seconds || 0,
-          selected: true,
-          setsCompleted: exercise.sets,
-        }),
-      ),
+  const resetWorkoutChecklist = () => {
+    setWorkoutChecklist(
+      todayWorkoutPlan?.exercises?.length
+        ? todayWorkoutPlan.exercises.map(toChecklistExercise)
+        : [],
     );
-    setPlanCompletionOpen(true);
   };
 
-  const handleCompleteWorkoutPlan = async () => {
+  const updateWorkoutExercise = (
+    index: number,
+    patch: Partial<ChecklistExercise>,
+  ) => {
+    setWorkoutChecklist((prev) =>
+      prev.map((item, itemIndex) =>
+        itemIndex === index ? { ...item, ...patch } : item,
+      ),
+    );
+  };
+
+  const handleSaveTodayWorkout = async () => {
     if (!todayWorkoutPlan?._id) return;
 
+    const completed = workoutChecklist.filter(
+      (exercise) => exercise.selected && exercise.setsCompleted > 0,
+    );
+    if (completed.length === 0) {
+      toast.error(t("workout.today.selectAtLeastOne"));
+      return;
+    }
+
     try {
-      setPlanCompleting(true);
+      setSavingWorkout(true);
       await completeWorkoutPlanDay(
         selectedDateStr,
         todayWorkoutPlan._id,
-        planCompletionExercises
-          .filter((exercise) => exercise.selected && exercise.setsCompleted > 0)
-          .map((exercise) => ({
-            exerciseName: exercise.exerciseName,
-            trackingMode: exercise.trackingMode,
-            setsCompleted: exercise.setsCompleted,
-            reps: exercise.trackingMode === "time" ? 0 : exercise.reps,
-            seconds: exercise.trackingMode === "time" ? exercise.seconds : 0,
-          })),
+        completed.map((exercise) => ({
+          exerciseName: exercise.exerciseName,
+          trackingMode: exercise.trackingMode,
+          setsCompleted: exercise.setsCompleted,
+          reps: exercise.trackingMode === "time" ? 0 : exercise.reps,
+          seconds: exercise.trackingMode === "time" ? exercise.seconds : 0,
+        })),
       );
       toast.success(
         t("dashboard.toast.workoutPlanCompleted", {
           title: todayWorkoutPlan.title,
         }),
       );
+      setWorkoutCardOpen(false);
       notifyDataUpdated("workout");
-      setPlanCompletionOpen(false);
       await fetchDashboard(false);
     } catch {
       toast.error(t("dashboard.toast.completeWorkoutFailed"));
     } finally {
-      setPlanCompleting(false);
+      setSavingWorkout(false);
     }
   };
 
@@ -325,6 +352,23 @@ export default function DashboardPage() {
 
   const hasFoodLogged = (today.mealCount || 0) > 0;
 
+  const workoutSelectedCount = workoutChecklist.filter(
+    (exercise) => exercise.selected && exercise.setsCompleted > 0,
+  ).length;
+
+  // Jump to the inline checklist when today's plan is still pending,
+  // otherwise fall back to the manual quick-log workout sheet.
+  const focusTodayWorkout = () => {
+    if (todayWorkoutPlan && !today.workoutDone) {
+      setWorkoutCardOpen(true);
+      document
+        .getElementById("today-workout")
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    setQuickWorkoutOpen(true);
+  };
+
   const habitTiles = [
     {
       key: "water",
@@ -349,10 +393,7 @@ export default function DashboardPage() {
       pct: today.workoutDone ? 100 : 0,
       barClass: "bg-amber-500",
       iconClass: "text-amber-600 dark:text-amber-400 bg-amber-500/10",
-      onClick: () =>
-        todayWorkoutPlan && !today.workoutDone
-          ? openPlanCompletionDialog()
-          : setQuickWorkoutOpen(true),
+      onClick: focusTodayWorkout,
       actionLabel:
         todayWorkoutPlan && !today.workoutDone
           ? t("dashboard.habit.complete")
@@ -415,142 +456,6 @@ export default function DashboardPage() {
           await fetchDashboard(false);
         }}
       />
-      <Dialog open={planCompletionOpen} onOpenChange={setPlanCompletionOpen}>
-        <DialogContent className="sm:max-w-lg rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold">
-              {t("dashboard.planDialog.title")}
-            </DialogTitle>
-            <DialogDescription className="text-xs">
-              {t("dashboard.planDialog.description")}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-3">
-            <div className="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-3">
-              <p className="text-sm font-black">{todayWorkoutPlan?.title}</p>
-              <p className="text-xs text-muted-foreground">
-                {t("dashboard.planDialog.plannedSummary", {
-                  min: todayWorkoutPlan?.estimatedDurationMinutes || 0,
-                  kcal: todayWorkoutPlan?.estimatedCaloriesBurned || 0,
-                })}
-              </p>
-            </div>
-
-            {planCompletionExercises.map((exercise, index) => (
-              <div
-                key={`${exercise.exerciseName}-${index}`}
-                className="rounded-2xl border border-border/60 bg-card p-3 space-y-3"
-              >
-                <div className="flex items-start gap-3">
-                  <Checkbox
-                    checked={exercise.selected}
-                    onCheckedChange={(checked) =>
-                      setPlanCompletionExercises(
-                        planCompletionExercises.map((item, itemIndex) =>
-                          itemIndex === index
-                            ? { ...item, selected: Boolean(checked) }
-                            : item,
-                        ),
-                      )
-                    }
-                    className="mt-1"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-bold truncate">
-                      {exercise.exerciseName}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {exercise.trackingMode === "time"
-                        ? t("dashboard.planDialog.plannedTime", {
-                            sets: exercise.sets,
-                            time: exercise.seconds,
-                          })
-                        : t("dashboard.planDialog.plannedReps", {
-                            sets: exercise.sets,
-                            reps: exercise.reps,
-                          })}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <Label className="text-[11px]">
-                      {t("dashboard.planDialog.setsDone")}
-                    </Label>
-                    <Input
-                      type="number"
-                      min={0}
-                      max={exercise.sets}
-                      value={exercise.setsCompleted}
-                      disabled={!exercise.selected}
-                      onChange={(e) =>
-                        setPlanCompletionExercises(
-                          planCompletionExercises.map((item, itemIndex) =>
-                            itemIndex === index
-                              ? {
-                                  ...item,
-                                  setsCompleted: Math.min(
-                                    item.sets,
-                                    Number(e.target.value) || 0,
-                                  ),
-                                }
-                              : item,
-                          ),
-                        )
-                      }
-                      className="rounded-xl bg-background"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-[11px]">
-                      {exercise.trackingMode === "time"
-                        ? t("dashboard.planDialog.secondsPerSet")
-                        : t("dashboard.planDialog.repsPerSet")}
-                    </Label>
-                    <Input
-                      type="number"
-                      min={0}
-                      value={
-                        exercise.trackingMode === "time"
-                          ? exercise.seconds
-                          : exercise.reps
-                      }
-                      disabled={!exercise.selected}
-                      onChange={(e) =>
-                        setPlanCompletionExercises(
-                          planCompletionExercises.map((item, itemIndex) => {
-                            if (itemIndex !== index) return item;
-                            return item.trackingMode === "time"
-                              ? {
-                                  ...item,
-                                  seconds: Number(e.target.value) || 0,
-                                }
-                              : { ...item, reps: Number(e.target.value) || 0 };
-                          }),
-                        )
-                      }
-                      className="rounded-xl bg-background"
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
-
-            <Button
-              type="button"
-              onClick={handleCompleteWorkoutPlan}
-              disabled={planCompleting}
-              className="w-full rounded-xl bg-primary hover:bg-primary/90 font-bold"
-            >
-              {planCompleting
-                ? t("dashboard.planDialog.saving")
-                : t("dashboard.planDialog.save")}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* ─────────────── Section A — Compact page header ─────────────── */}
       <PageHeader
@@ -670,7 +575,7 @@ export default function DashboardPage() {
           </Button>
           <Button
             variant="outline"
-            onClick={() => setQuickWorkoutOpen(true)}
+            onClick={focusTodayWorkout}
             className="h-11 gap-1.5 rounded-2xl border-border/60 text-xs font-semibold"
           >
             <Dumbbell className="h-4 w-4 text-amber-500" />
@@ -687,6 +592,142 @@ export default function DashboardPage() {
             </Link>
           </Button>
         </div>
+      </section>
+
+      {/* ─────────────── Today's planned workout — inline checklist ─────────────── */}
+      <section
+        id="today-workout"
+        aria-label={isToday ? t("workout.today.badge") : dayLabel}
+        className="glass-card scroll-mt-20 space-y-4 rounded-3xl border border-border/50 p-5 sm:p-6"
+      >
+        {todayWorkoutPlan ? (
+          <>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 space-y-1">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-primary">
+                  <Dumbbell className="h-3 w-3" />
+                  {isToday ? t("workout.today.badge") : dayLabel}
+                </div>
+                <h2 className="truncate font-heading text-base font-black tracking-tight sm:text-lg">
+                  {todayWorkoutPlan.title}
+                </h2>
+              </div>
+
+              <div className="flex shrink-0 items-center gap-2">
+                {today.workoutDone ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                    <CheckCircle2 className="h-3 w-3" />
+                    {t("dashboard.habit.complete")}
+                  </span>
+                ) : (
+                  <span className="text-xs font-bold tabular-nums text-primary">
+                    {t("workout.today.progress", {
+                      done: workoutSelectedCount,
+                      total: workoutChecklist.length,
+                    })}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setWorkoutCardOpen((prev) => !prev)}
+                  aria-expanded={workoutCardOpen}
+                  aria-controls="today-workout-body"
+                  aria-label={
+                    workoutCardOpen
+                      ? t("workout.today.hideDetails")
+                      : t("workout.today.showDetails")
+                  }
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-border/60 text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                >
+                  <ChevronDown
+                    className={cn(
+                      "h-4 w-4 transition-transform",
+                      workoutCardOpen && "rotate-180",
+                    )}
+                  />
+                </button>
+              </div>
+            </div>
+
+            {workoutCardOpen && (
+              <div id="today-workout-body" className="space-y-4">
+                <div className="space-y-2">
+                  {workoutChecklist.map((exercise, index) => (
+                    <ExerciseChecklistItem
+                      key={`${exercise.exerciseName}-${index}`}
+                      exercise={exercise}
+                      t={t}
+                      onChange={(patch) => updateWorkoutExercise(index, patch)}
+                    />
+                  ))}
+                </div>
+
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button
+                    type="button"
+                    onClick={handleSaveTodayWorkout}
+                    disabled={savingWorkout || workoutSelectedCount === 0}
+                    className="h-11 flex-1 gap-2 rounded-xl font-bold"
+                  >
+                    <CheckCircle2 className="h-4 w-4" />
+                    {savingWorkout
+                      ? t("workout.actions.savingDots")
+                      : t("workout.today.save")}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={resetWorkoutChecklist}
+                    disabled={savingWorkout}
+                    className="h-11 gap-2 rounded-xl font-bold text-muted-foreground"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    {t("workout.today.reset")}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <Dumbbell className="h-4 w-4" />
+              </span>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-bold">
+                  {t("workout.today.restTitle")}
+                </p>
+                <p className="truncate text-[11px] text-muted-foreground">
+                  {t("workout.today.restDescription")}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex shrink-0 items-center gap-1.5">
+              <Button
+                asChild
+                size="sm"
+                variant="outline"
+                className="h-9 gap-1.5 rounded-xl border-primary/30 font-bold text-primary hover:bg-primary/10"
+              >
+                <Link href="/workout">
+                  <Plus className="h-3.5 w-3.5" />
+                  {t("workout.today.createPlan")}
+                </Link>
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => setQuickWorkoutOpen(true)}
+                className="h-9 gap-1.5 rounded-xl font-semibold text-muted-foreground"
+              >
+                {t("dashboard.quickActions.workout")}
+              </Button>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* ─────────────── Section D — Today's meals ─────────────── */}
