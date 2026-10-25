@@ -14,7 +14,7 @@ import {
   type GoalCelebrationStats,
 } from "@/lib/actions/goal-history.actions";
 import { useDataUpdateListener } from "@/lib/events";
-import PageHeader from "@/components/shared/PageHeader";
+
 import OnboardingModal from "@/components/shared/OnboardingModal";
 import BodyMeasurementModal from "@/components/shared/BodyMeasurementModal";
 import GoalTargetsEditorModal from "@/components/profile/GoalTargetsEditorModal";
@@ -39,7 +39,7 @@ import {
   Minus,
   Plus,
   Info,
-  User,
+
   Calendar,
   Brain,
   RefreshCw,
@@ -363,45 +363,7 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Standard Header */}
-      <PageHeader
-        title={t("nav.profile")}
-        subtitle={
-          isBn
-            ? "স্বাস্থ্য মেট্রিক্স, পুষ্টি লক্ষ্য এবং শরীরের পরিমাপ"
-            : "Personal health metrics, nutrition targets & body measurements"
-        }
-        icon={User}
-        actions={
-          <div className="hidden sm:flex items-center gap-2">
-            <Button
-              onClick={() => setGoalModalOpen(true)}
-              size="sm"
-              className="rounded-xl gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-xs text-xs"
-            >
-              <Target className="w-3.5 h-3.5" />
-              {t("profile.actions.adjustTargets")}
-            </Button>
-            <Button
-              onClick={() => setMeasurementModalOpen(true)}
-              size="sm"
-              className="rounded-xl gap-1.5 bg-emerald-600 hover:bg-emerald-600/90 text-white font-bold shadow-xs text-xs"
-            >
-              <Ruler className="w-3.5 h-3.5" />
-              {t("profile.actions.logMeasurements")}
-            </Button>
-            <Button
-              onClick={() => setOnboardingOpen(true)}
-              size="sm"
-              variant="outline"
-              className="rounded-xl gap-1.5 border-border/80 font-bold text-xs"
-            >
-              <Settings2 className="w-3.5 h-3.5" />
-              {t("profile.actions.editProfile")}
-            </Button>
-          </div>
-        }
-      />
+
 
       {/* Profile Hero Card */}
       <div className="glass-card p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-border/50 relative overflow-hidden space-y-4">
