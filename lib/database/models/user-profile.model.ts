@@ -27,6 +27,7 @@ const UserProfileSchema = new Schema(
     dailyCarbGoal: { type: Number, default: 200 },
     dailyFiberGoal: { type: Number, default: 30 },
     unitSystem: { type: String, enum: ["metric", "imperial"], default: "metric" },
+    useCustomMacros: { type: Boolean, default: false },
     onboardingCompleted: { type: Boolean, default: false },
   },
   { timestamps: true }

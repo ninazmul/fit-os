@@ -30,49 +30,54 @@ export async function logWeight(formData: WeightLogFormValues) {
   let adaptiveUpdate = null;
 
   if (existingProfile) {
-    const oldCalories = existingProfile.dailyCaloriesGoal;
-    const oldProtein = existingProfile.dailyProteinGoal;
+    const isCustom = existingProfile.useCustomMacros === true;
 
-    const newMacros = await calculateRecommendedMacros({
-      gender: existingProfile.gender,
-      age: existingProfile.age,
-      height: existingProfile.height,
-      currentWeight: validated.weight,
-      targetWeight: existingProfile.targetWeight,
-      activityLevel: existingProfile.activityLevel,
-      goal: existingProfile.goal,
-    });
+    if (!isCustom) {
+      const oldCalories = existingProfile.dailyCaloriesGoal;
+      const oldProtein = existingProfile.dailyProteinGoal;
 
-    await UserProfile.findOneAndUpdate(
-      { clerkId: user.id },
-      {
+      const newMacros = await calculateRecommendedMacros({
+        gender: existingProfile.gender,
+        age: existingProfile.age,
+        height: existingProfile.height,
         currentWeight: validated.weight,
-        dailyCaloriesGoal: newMacros.dailyCaloriesGoal,
-        dailyProteinGoal: newMacros.dailyProteinGoal,
-        dailyFatGoal: newMacros.dailyFatGoal,
-        dailyCarbGoal: newMacros.dailyCarbGoal,
-        dailyFiberGoal: newMacros.dailyFiberGoal,
-        waterGoalMl: newMacros.waterGoalMl,
-      }
-    );
+        targetWeight: existingProfile.targetWeight,
+        activityLevel: existingProfile.activityLevel,
+        goal: existingProfile.goal,
+      });
 
-    const calorieDiff = newMacros.dailyCaloriesGoal - oldCalories;
-    const proteinDiff = Math.round((newMacros.dailyProteinGoal - oldProtein) * 10) / 10;
+      await UserProfile.findOneAndUpdate(
+        { clerkId: user.id },
+        {
+          currentWeight: validated.weight,
+          dailyCaloriesGoal: newMacros.dailyCaloriesGoal,
+          dailyProteinGoal: newMacros.dailyProteinGoal,
+          dailyFatGoal: newMacros.dailyFatGoal,
+          dailyCarbGoal: newMacros.dailyCarbGoal,
+          dailyFiberGoal: newMacros.dailyFiberGoal,
+          waterGoalMl: newMacros.waterGoalMl,
+          useCustomMacros: false,
+        }
+      );
 
-    adaptiveUpdate = {
-      recalculated: true,
-      weightDiff: Math.round((validated.weight - existingProfile.currentWeight) * 10) / 10,
-      newCalories: newMacros.dailyCaloriesGoal,
-      calorieDiff,
-      newProtein: newMacros.dailyProteinGoal,
-      proteinDiff,
-      newWaterMl: newMacros.waterGoalMl,
-    };
-  } else {
-    await UserProfile.findOneAndUpdate(
-      { clerkId: user.id },
-      { currentWeight: validated.weight }
-    );
+      const calorieDiff = newMacros.dailyCaloriesGoal - oldCalories;
+      const proteinDiff = Math.round((newMacros.dailyProteinGoal - oldProtein) * 10) / 10;
+
+      adaptiveUpdate = {
+        recalculated: true,
+        weightDiff: Math.round((validated.weight - existingProfile.currentWeight) * 10) / 10,
+        newCalories: newMacros.dailyCaloriesGoal,
+        newProtein: newMacros.dailyProteinGoal,
+        newWaterMl: newMacros.waterGoalMl,
+        calorieDiff,
+        proteinDiff,
+      };
+    } else {
+      await UserProfile.findOneAndUpdate(
+        { clerkId: user.id },
+        { currentWeight: validated.weight }
+      );
+    }
   }
 
   revalidatePath("/");

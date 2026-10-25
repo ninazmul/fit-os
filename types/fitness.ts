@@ -29,6 +29,7 @@ export interface IUserProfile {
   dailyFatGoal: number;
   dailyCarbGoal: number;
   dailyFiberGoal: number;
+  useCustomMacros?: boolean;
   unitSystem: UnitSystem;
   onboardingCompleted: boolean;
   createdAt?: Date;

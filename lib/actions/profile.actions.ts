@@ -217,16 +217,59 @@ export async function getFullProfileHealthMetrics() {
     goal: profile.goal as PrimaryGoal,
   });
 
+  const isCustom = profile.useCustomMacros === true;
+
   const activeMacros = {
-    dailyCaloriesGoal: profile.dailyCaloriesGoal || recommended.dailyCaloriesGoal,
-    dailyProteinGoal: profile.dailyProteinGoal || recommended.dailyProteinGoal,
-    dailyFatGoal: profile.dailyFatGoal || recommended.dailyFatGoal,
-    dailyCarbGoal: profile.dailyCarbGoal || recommended.dailyCarbGoal,
-    dailyFiberGoal: profile.dailyFiberGoal || recommended.dailyFiberGoal,
-    waterGoalMl: profile.waterGoalMl || recommended.waterGoalMl,
+    dailyCaloriesGoal:
+      isCustom && profile.dailyCaloriesGoal
+        ? profile.dailyCaloriesGoal
+        : recommended.dailyCaloriesGoal,
+    dailyProteinGoal:
+      isCustom && profile.dailyProteinGoal
+        ? profile.dailyProteinGoal
+        : recommended.dailyProteinGoal,
+    dailyFatGoal:
+      isCustom && profile.dailyFatGoal
+        ? profile.dailyFatGoal
+        : recommended.dailyFatGoal,
+    dailyCarbGoal:
+      isCustom && profile.dailyCarbGoal
+        ? profile.dailyCarbGoal
+        : recommended.dailyCarbGoal,
+    dailyFiberGoal:
+      isCustom && profile.dailyFiberGoal
+        ? profile.dailyFiberGoal
+        : recommended.dailyFiberGoal,
+    waterGoalMl:
+      isCustom && profile.waterGoalMl
+        ? profile.waterGoalMl
+        : recommended.waterGoalMl,
     bmr: recommended.bmr,
     tdee: recommended.tdee,
+    isCustom,
   };
+
+  // If targets are automatic (not custom) and stored DB numbers are stale, auto-sync DB immediately
+  if (
+    !isCustom &&
+    (profile.dailyCaloriesGoal !== recommended.dailyCaloriesGoal ||
+      profile.dailyProteinGoal !== recommended.dailyProteinGoal)
+  ) {
+    await UserProfile.updateOne(
+      { clerkId: user.id },
+      {
+        $set: {
+          dailyCaloriesGoal: recommended.dailyCaloriesGoal,
+          dailyProteinGoal: recommended.dailyProteinGoal,
+          dailyFatGoal: recommended.dailyFatGoal,
+          dailyCarbGoal: recommended.dailyCarbGoal,
+          dailyFiberGoal: recommended.dailyFiberGoal,
+          waterGoalMl: recommended.waterGoalMl,
+          useCustomMacros: false,
+        },
+      },
+    );
+  }
 
   const activityLabels: Record<ActivityLevel, string> = {
     sedentary: "Sedentary (Little/No Exercise)",
@@ -305,17 +348,60 @@ export async function getProfileNutritionTargets() {
     goal: profile.goal as PrimaryGoal,
   });
 
+  const isCustom = profile.useCustomMacros === true;
+
   const activeMacros = {
-    dailyCaloriesGoal: profile.dailyCaloriesGoal || recommended.dailyCaloriesGoal,
-    dailyProteinGoal: profile.dailyProteinGoal || recommended.dailyProteinGoal,
-    dailyFatGoal: profile.dailyFatGoal || recommended.dailyFatGoal,
-    dailyCarbGoal: profile.dailyCarbGoal || recommended.dailyCarbGoal,
-    dailyFiberGoal: profile.dailyFiberGoal || recommended.dailyFiberGoal,
-    waterGoalMl: profile.waterGoalMl || recommended.waterGoalMl,
+    dailyCaloriesGoal:
+      isCustom && profile.dailyCaloriesGoal
+        ? profile.dailyCaloriesGoal
+        : recommended.dailyCaloriesGoal,
+    dailyProteinGoal:
+      isCustom && profile.dailyProteinGoal
+        ? profile.dailyProteinGoal
+        : recommended.dailyProteinGoal,
+    dailyFatGoal:
+      isCustom && profile.dailyFatGoal
+        ? profile.dailyFatGoal
+        : recommended.dailyFatGoal,
+    dailyCarbGoal:
+      isCustom && profile.dailyCarbGoal
+        ? profile.dailyCarbGoal
+        : recommended.dailyCarbGoal,
+    dailyFiberGoal:
+      isCustom && profile.dailyFiberGoal
+        ? profile.dailyFiberGoal
+        : recommended.dailyFiberGoal,
+    waterGoalMl:
+      isCustom && profile.waterGoalMl
+        ? profile.waterGoalMl
+        : recommended.waterGoalMl,
     bmr: recommended.bmr,
     tdee: recommended.tdee,
     proteinRatioUsed: recommended.proteinRatioUsed,
+    isCustom,
   };
+
+  // If not custom and stale in DB, auto-sync DB
+  if (
+    !isCustom &&
+    (profile.dailyCaloriesGoal !== recommended.dailyCaloriesGoal ||
+      profile.dailyProteinGoal !== recommended.dailyProteinGoal)
+  ) {
+    await UserProfile.updateOne(
+      { clerkId: user.id },
+      {
+        $set: {
+          dailyCaloriesGoal: recommended.dailyCaloriesGoal,
+          dailyProteinGoal: recommended.dailyProteinGoal,
+          dailyFatGoal: recommended.dailyFatGoal,
+          dailyCarbGoal: recommended.dailyCarbGoal,
+          dailyFiberGoal: recommended.dailyFiberGoal,
+          waterGoalMl: recommended.waterGoalMl,
+          useCustomMacros: false,
+        },
+      },
+    );
+  }
 
   return JSON.parse(
     JSON.stringify({
@@ -341,6 +427,7 @@ export interface TargetUpdateValues {
   dailyCarbGoal?: number;
   dailyFiberGoal?: number;
   waterGoalMl?: number;
+  useCustomMacros?: boolean;
 }
 
 /**
@@ -352,28 +439,22 @@ export async function updateNutritionTargets(targets: TargetUpdateValues) {
   const user = await currentUser();
   if (!user) throw new Error("Unauthorized");
 
+  const existingProfile = (await UserProfile.findOne({
+    clerkId: user.id,
+  }).lean()) as IUserProfile | null;
+
   const updateFields: Record<string, unknown> = {};
 
-  if (typeof targets.dailyCaloriesGoal === "number" && !isNaN(targets.dailyCaloriesGoal)) {
-    updateFields.dailyCaloriesGoal = Math.max(500, Math.round(targets.dailyCaloriesGoal));
+  if (typeof targets.useCustomMacros === "boolean") {
+    updateFields.useCustomMacros = targets.useCustomMacros;
   }
-  if (typeof targets.dailyProteinGoal === "number" && !isNaN(targets.dailyProteinGoal)) {
-    updateFields.dailyProteinGoal = Math.max(20, Math.round(targets.dailyProteinGoal));
-  }
-  if (typeof targets.dailyFatGoal === "number" && !isNaN(targets.dailyFatGoal)) {
-    updateFields.dailyFatGoal = Math.max(10, Math.round(targets.dailyFatGoal));
-  }
-  if (typeof targets.dailyCarbGoal === "number" && !isNaN(targets.dailyCarbGoal)) {
-    updateFields.dailyCarbGoal = Math.max(0, Math.round(targets.dailyCarbGoal));
-  }
-  if (typeof targets.dailyFiberGoal === "number" && !isNaN(targets.dailyFiberGoal)) {
-    updateFields.dailyFiberGoal = Math.max(5, Math.round(targets.dailyFiberGoal));
-  }
-  if (typeof targets.waterGoalMl === "number" && !isNaN(targets.waterGoalMl)) {
-    updateFields.waterGoalMl = Math.max(500, Math.round(targets.waterGoalMl));
-  }
-  if (typeof targets.targetWeight === "number" && !isNaN(targets.targetWeight)) {
-    updateFields.targetWeight = Math.max(20, Math.round(targets.targetWeight * 10) / 10);
+
+  if (
+    typeof targets.targetWeight === "number" &&
+    !isNaN(targets.targetWeight)
+  ) {
+    updateFields.targetWeight =
+      Math.max(20, Math.round(targets.targetWeight * 10) / 10);
   }
   if (targets.goal) {
     updateFields.goal = targets.goal;
@@ -381,8 +462,99 @@ export async function updateNutritionTargets(targets: TargetUpdateValues) {
   if (targets.activityLevel) {
     updateFields.activityLevel = targets.activityLevel;
   }
-  if (typeof targets.workoutDaysPerWeek === "number" && !isNaN(targets.workoutDaysPerWeek)) {
-    updateFields.workoutDaysPerWeek = Math.max(0, Math.min(7, Math.round(targets.workoutDaysPerWeek)));
+  if (
+    typeof targets.workoutDaysPerWeek === "number" &&
+    !isNaN(targets.workoutDaysPerWeek)
+  ) {
+    updateFields.workoutDaysPerWeek = Math.max(
+      0,
+      Math.min(7, Math.round(targets.workoutDaysPerWeek)),
+    );
+  }
+
+  const isCustom =
+    targets.useCustomMacros ?? existingProfile?.useCustomMacros ?? false;
+
+  if (isCustom) {
+    if (
+      typeof targets.dailyCaloriesGoal === "number" &&
+      !isNaN(targets.dailyCaloriesGoal)
+    ) {
+      updateFields.dailyCaloriesGoal = Math.max(
+        500,
+        Math.round(targets.dailyCaloriesGoal),
+      );
+    }
+    if (
+      typeof targets.dailyProteinGoal === "number" &&
+      !isNaN(targets.dailyProteinGoal)
+    ) {
+      updateFields.dailyProteinGoal = Math.max(
+        20,
+        Math.round(targets.dailyProteinGoal),
+      );
+    }
+    if (
+      typeof targets.dailyFatGoal === "number" &&
+      !isNaN(targets.dailyFatGoal)
+    ) {
+      updateFields.dailyFatGoal = Math.max(
+        10,
+        Math.round(targets.dailyFatGoal),
+      );
+    }
+    if (
+      typeof targets.dailyCarbGoal === "number" &&
+      !isNaN(targets.dailyCarbGoal)
+    ) {
+      updateFields.dailyCarbGoal = Math.max(
+        0,
+        Math.round(targets.dailyCarbGoal),
+      );
+    }
+    if (
+      typeof targets.dailyFiberGoal === "number" &&
+      !isNaN(targets.dailyFiberGoal)
+    ) {
+      updateFields.dailyFiberGoal = Math.max(
+        5,
+        Math.round(targets.dailyFiberGoal),
+      );
+    }
+    if (
+      typeof targets.waterGoalMl === "number" &&
+      !isNaN(targets.waterGoalMl)
+    ) {
+      updateFields.waterGoalMl = Math.max(
+        500,
+        Math.round(targets.waterGoalMl),
+      );
+    }
+    updateFields.useCustomMacros = true;
+  } else if (existingProfile) {
+    const newGoal = (targets.goal || existingProfile.goal) as PrimaryGoal;
+    const newActivity = (targets.activityLevel ||
+      existingProfile.activityLevel) as ActivityLevel;
+    const newTargetWeight =
+      targets.targetWeight || existingProfile.targetWeight;
+
+    const recommended = await calculateRecommendedMacros({
+      gender: existingProfile.gender as Gender,
+      age: existingProfile.age,
+      height: existingProfile.height,
+      currentWeight: existingProfile.currentWeight,
+      targetWeight: newTargetWeight,
+      activityLevel: newActivity,
+      goal: newGoal,
+    });
+
+    updateFields.dailyCaloriesGoal = recommended.dailyCaloriesGoal;
+    updateFields.dailyProteinGoal = recommended.dailyProteinGoal;
+    updateFields.dailyFatGoal = recommended.dailyFatGoal;
+    updateFields.dailyCarbGoal = recommended.dailyCarbGoal;
+    updateFields.dailyFiberGoal = recommended.dailyFiberGoal;
+    updateFields.waterGoalMl = recommended.waterGoalMl;
+    updateFields.useCustomMacros = false;
   }
 
   const profile = await UserProfile.findOneAndUpdate(
@@ -405,6 +577,26 @@ export async function createOrUpdateProfile(formData: ProfileFormValues) {
   if (!user) throw new Error("Unauthorized");
 
   const validated = profileSchema.parse(formData);
+
+  if (!validated.useCustomMacros) {
+    const recommended = await calculateRecommendedMacros({
+      gender: validated.gender as Gender,
+      age: validated.age,
+      height: validated.height,
+      currentWeight: validated.currentWeight,
+      targetWeight: validated.targetWeight,
+      activityLevel: validated.activityLevel as ActivityLevel,
+      goal: validated.goal as PrimaryGoal,
+    });
+
+    validated.dailyCaloriesGoal = recommended.dailyCaloriesGoal;
+    validated.dailyProteinGoal = recommended.dailyProteinGoal;
+    validated.dailyFatGoal = recommended.dailyFatGoal;
+    validated.dailyCarbGoal = recommended.dailyCarbGoal;
+    validated.dailyFiberGoal = recommended.dailyFiberGoal;
+    validated.waterGoalMl = recommended.waterGoalMl;
+    validated.useCustomMacros = false;
+  }
 
   const profile = await UserProfile.findOneAndUpdate(
     { clerkId: user.id },

@@ -118,6 +118,7 @@ export default function OnboardingModal({
         dailyFiberGoal,
         waterGoalMl,
         unitSystem: "metric",
+        useCustomMacros: false,
       });
 
       notifyDataUpdated("all");

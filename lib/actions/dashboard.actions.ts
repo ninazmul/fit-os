@@ -18,6 +18,9 @@ import type {
   IWeightLog,
   IWorkoutLog,
   MealType,
+  Gender,
+  ActivityLevel,
+  PrimaryGoal,
 } from "@/types/fitness";
 
 type DashboardWaterLog = IWaterLog & { amountMl?: number | string };
@@ -26,6 +29,7 @@ type DashboardSleepLog = ISleepLog & { quality?: number | string };
 import { analyzeWeightTrend } from "@/lib/weight-prediction";
 import { getLocalDateString } from "@/lib/utils";
 import { getRecentFoods } from "@/lib/actions/recent-meals.actions";
+import { calculateRecommendedMacros } from "@/lib/actions/profile.actions";
 
 export async function getDashboardData(dateStr?: string) {
   await connectToDatabase();
@@ -36,6 +40,53 @@ export async function getDashboardData(dateStr?: string) {
     clerkId: user.id,
   }).lean()) as IUserProfile | null;
   if (!profile) return { needsOnboarding: true };
+
+  const isCustom = profile.useCustomMacros === true;
+  let targetCalories = profile.dailyCaloriesGoal;
+  let targetProtein = profile.dailyProteinGoal;
+  let targetCarb = profile.dailyCarbGoal;
+  let targetFat = profile.dailyFatGoal;
+  let targetFiber = profile.dailyFiberGoal;
+  let targetWater = profile.waterGoalMl;
+
+  if (!isCustom) {
+    const recommended = await calculateRecommendedMacros({
+      gender: profile.gender as Gender,
+      age: profile.age,
+      height: profile.height,
+      currentWeight: profile.currentWeight,
+      targetWeight: profile.targetWeight,
+      activityLevel: profile.activityLevel as ActivityLevel,
+      goal: profile.goal as PrimaryGoal,
+    });
+
+    targetCalories = recommended.dailyCaloriesGoal;
+    targetProtein = recommended.dailyProteinGoal;
+    targetFat = recommended.dailyFatGoal;
+    targetCarb = recommended.dailyCarbGoal;
+    targetFiber = recommended.dailyFiberGoal;
+    targetWater = recommended.waterGoalMl;
+
+    if (
+      profile.dailyCaloriesGoal !== recommended.dailyCaloriesGoal ||
+      profile.dailyProteinGoal !== recommended.dailyProteinGoal
+    ) {
+      await UserProfile.updateOne(
+        { clerkId: user.id },
+        {
+          $set: {
+            dailyCaloriesGoal: recommended.dailyCaloriesGoal,
+            dailyProteinGoal: recommended.dailyProteinGoal,
+            dailyFatGoal: recommended.dailyFatGoal,
+            dailyCarbGoal: recommended.dailyCarbGoal,
+            dailyFiberGoal: recommended.dailyFiberGoal,
+            waterGoalMl: recommended.waterGoalMl,
+            useCustomMacros: false,
+          },
+        },
+      );
+    }
+  }
 
   const today = dateStr || getLocalDateString();
   const selectedDayOfWeek = new Date(`${today}T12:00:00`).getDay();
@@ -276,11 +327,11 @@ export async function getDashboardData(dateStr?: string) {
   );
 
   // ===== Phase 1: Daily Score (0-100) =====
-  const calorieDiff = Math.abs(todayCalories - profile.dailyCaloriesGoal);
-  const calorieTolerance = profile.dailyCaloriesGoal * 0.15;
+  const calorieDiff = Math.abs(todayCalories - targetCalories);
+  const calorieTolerance = targetCalories * 0.15;
   const caloriesHit = todayCalories > 0 && calorieDiff <= calorieTolerance;
-  const proteinHit = todayProtein >= profile.dailyProteinGoal * 0.8;
-  const waterHit = todayWaterMl >= profile.waterGoalMl * 0.8;
+  const proteinHit = todayProtein >= targetProtein * 0.8;
+  const waterHit = todayWaterMl >= targetWater * 0.8;
   const workoutHit = workouts.length > 0;
   const sleepHit = todaySleepHours !== null && todaySleepHours >= 6;
   const weightHit = weightLog !== null;
@@ -292,7 +343,7 @@ export async function getDashboardData(dateStr?: string) {
         ? 25
         : Math.min(
             25,
-            Math.round((todayCalories / profile.dailyCaloriesGoal) * 25),
+            Math.round((todayCalories / targetCalories) * 25),
           ),
       maxPoints: 25,
       done: caloriesHit,
@@ -303,7 +354,7 @@ export async function getDashboardData(dateStr?: string) {
         ? 20
         : Math.min(
             20,
-            Math.round((todayProtein / profile.dailyProteinGoal) * 20),
+            Math.round((todayProtein / targetProtein) * 20),
           ),
       maxPoints: 20,
       done: proteinHit,
@@ -314,7 +365,7 @@ export async function getDashboardData(dateStr?: string) {
         ? 20
         : Math.min(
             20,
-            Math.round((todayWaterMl / profile.waterGoalMl) * 20),
+            Math.round((todayWaterMl / targetWater) * 20),
           ),
       maxPoints: 20,
       done: waterHit,
@@ -384,8 +435,8 @@ export async function getDashboardData(dateStr?: string) {
   } else if (meals.length === 0) {
     primaryMission = "You haven't logged any meals today. Tap + Quick Add!";
     missionAction = "meal";
-  } else if (todayWaterMl < profile.waterGoalMl * 0.5 && currentHour >= 12) {
-    primaryMission = `Hydration checkpoint: You're at ${Math.round((todayWaterMl / profile.waterGoalMl) * 100)}% of your water target!`;
+  } else if (todayWaterMl < targetWater * 0.5 && currentHour >= 12) {
+    primaryMission = `Hydration checkpoint: You're at ${Math.round((todayWaterMl / targetWater) * 100)}% of your water target!`;
     missionAction = "water";
   } else if (!workouts.length && currentHour >= 16) {
     primaryMission = "Hit your workout target before the day ends!";
@@ -405,12 +456,12 @@ export async function getDashboardData(dateStr?: string) {
     missionAction,
     completedCount,
     totalCount: 6,
-    remainingCalories: Math.max(0, profile.dailyCaloriesGoal - todayCalories),
+    remainingCalories: Math.max(0, targetCalories - todayCalories),
     remainingProtein: Math.max(
       0,
-      Math.round((profile.dailyProteinGoal - todayProtein) * 10) / 10,
+      Math.round((targetProtein - todayProtein) * 10) / 10,
     ),
-    remainingWaterMl: Math.max(0, profile.waterGoalMl - todayWaterMl),
+    remainingWaterMl: Math.max(0, targetWater - todayWaterMl),
   };
 
   return JSON.parse(
@@ -422,12 +473,12 @@ export async function getDashboardData(dateStr?: string) {
         goal: profile.goal,
         currentWeight: profile.currentWeight,
         targetWeight: profile.targetWeight,
-        dailyCaloriesGoal: profile.dailyCaloriesGoal,
-        dailyProteinGoal: profile.dailyProteinGoal,
-        dailyCarbGoal: profile.dailyCarbGoal,
-        dailyFatGoal: profile.dailyFatGoal,
-        dailyFiberGoal: profile.dailyFiberGoal,
-        waterGoalMl: profile.waterGoalMl,
+        dailyCaloriesGoal: targetCalories,
+        dailyProteinGoal: targetProtein,
+        dailyCarbGoal: targetCarb,
+        dailyFatGoal: targetFat,
+        dailyFiberGoal: targetFiber,
+        waterGoalMl: targetWater,
         workoutDaysPerWeek: profile.workoutDaysPerWeek,
       },
       today: {

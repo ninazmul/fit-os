@@ -22,6 +22,7 @@ export const profileSchema = z.object({
   dailyFatGoal: z.coerce.number().min(0).max(500),
   dailyCarbGoal: z.coerce.number().min(0).max(1000),
   dailyFiberGoal: z.coerce.number().min(0).max(100),
+  useCustomMacros: z.boolean().optional(),
   unitSystem: z.enum(["metric", "imperial"]).optional(),
 });
 

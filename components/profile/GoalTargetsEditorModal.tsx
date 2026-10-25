@@ -72,6 +72,9 @@ export default function GoalTargetsEditorModal({
   // Calorie pace adjustment preset (e.g. -450, 0, +300)
   const [calorieAdjustment, setCalorieAdjustment] = useState<number>(-450);
 
+  // Custom mode state
+  const [isCustomMode, setIsCustomMode] = useState<boolean>(false);
+
   // Active editable targets
   const [calories, setCalories] = useState<number>(2000);
   const [protein, setProtein] = useState<number>(120);
@@ -87,22 +90,50 @@ export default function GoalTargetsEditorModal({
   useEffect(() => {
     if (!open || !profile) return;
 
+    const hasCustom = profile.useCustomMacros === true;
+    setIsCustomMode(hasCustom);
+
     setGoal(profile.goal || "lose_weight");
     setTargetWeight(profile.targetWeight || profile.currentWeight || 65);
     setActivityLevel((profile.activityLevel as ActivityLevel) || "moderate");
     setWorkoutDaysPerWeek(profile.workoutDaysPerWeek ?? 4);
 
-    // Initial targets (prefer real saved user targets)
-    setCalories(profile.dailyCaloriesGoal || recommendedMacros?.dailyCaloriesGoal || 2000);
-    setProtein(profile.dailyProteinGoal || recommendedMacros?.dailyProteinGoal || 120);
-    setCarbs(profile.dailyCarbGoal || recommendedMacros?.dailyCarbGoal || 200);
-    setFat(profile.dailyFatGoal || recommendedMacros?.dailyFatGoal || 60);
-    setFiber(profile.dailyFiberGoal || recommendedMacros?.dailyFiberGoal || 30);
-    setWaterMl(profile.waterGoalMl || recommendedMacros?.waterGoalMl || 3000);
+    // Initial targets (prefer recommended unless user explicitly enabled custom macros)
+    const initCal =
+      hasCustom && profile.dailyCaloriesGoal
+        ? profile.dailyCaloriesGoal
+        : recommendedMacros?.dailyCaloriesGoal || 2000;
+    const initProt =
+      hasCustom && profile.dailyProteinGoal
+        ? profile.dailyProteinGoal
+        : recommendedMacros?.dailyProteinGoal || 120;
+    const initCarb =
+      hasCustom && profile.dailyCarbGoal
+        ? profile.dailyCarbGoal
+        : recommendedMacros?.dailyCarbGoal || 200;
+    const initFat =
+      hasCustom && profile.dailyFatGoal
+        ? profile.dailyFatGoal
+        : recommendedMacros?.dailyFatGoal || 60;
+    const initFib =
+      hasCustom && profile.dailyFiberGoal
+        ? profile.dailyFiberGoal
+        : recommendedMacros?.dailyFiberGoal || 30;
+    const initWater =
+      hasCustom && profile.waterGoalMl
+        ? profile.waterGoalMl
+        : recommendedMacros?.waterGoalMl || 3000;
+
+    setCalories(initCal);
+    setProtein(initProt);
+    setCarbs(initCarb);
+    setFat(initFat);
+    setFiber(initFib);
+    setWaterMl(initWater);
 
     // Derive approximate protein tier
     const curW = profile.currentWeight || 70;
-    const ratio = (profile.dailyProteinGoal || 120) / curW;
+    const ratio = initProt / curW;
     if (Math.abs(ratio - 1.2) < 0.15) {
       setProteinTier("balanced");
       setProteinRatio(1.2);
@@ -200,6 +231,7 @@ export default function GoalTargetsEditorModal({
       setFat(computed.dailyFatGoal);
       setFiber(computed.dailyFiberGoal);
       setWaterMl(computed.waterGoalMl);
+      setIsCustomMode(false);
     } catch (e) {
       console.error("Suggestion error:", e);
     } finally {
@@ -233,6 +265,7 @@ export default function GoalTargetsEditorModal({
         dailyCarbGoal: carbs,
         dailyFiberGoal: fiber,
         waterGoalMl: waterMl,
+        useCustomMacros: isCustomMode,
       });
 
       notifyDataUpdated("all");
@@ -512,6 +545,47 @@ export default function GoalTargetsEditorModal({
             </div>
           </div>
 
+          {/* Target Mode Switcher */}
+          <div className="flex items-center justify-between p-3 rounded-2xl bg-muted/40 border border-border/50">
+            <div>
+              <p className="text-xs font-bold leading-tight flex items-center gap-1.5">
+                <Target className="w-3.5 h-3.5 text-primary" />
+                Target Calculation Mode
+              </p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                {isCustomMode
+                  ? "✍️ Custom: You've manually customized your daily numbers."
+                  : "🎯 Automatic: Calculated directly from your Mifflin-St Jeor TDEE & goal."}
+              </p>
+            </div>
+            <div className="flex items-center gap-1 bg-background/80 p-1 rounded-xl border border-border/50">
+              <button
+                type="button"
+                onClick={() => handleComputeSuggestion()}
+                className={cn(
+                  "px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all",
+                  !isCustomMode
+                    ? "bg-primary text-primary-foreground shadow-2xs"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                🎯 Auto (TDEE)
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsCustomMode(true)}
+                className={cn(
+                  "px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all",
+                  isCustomMode
+                    ? "bg-amber-500 text-white shadow-2xs"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                ✍️ Custom
+              </button>
+            </div>
+          </div>
+
           {/* 4. "Suggest for My Goal" action */}
           <div className="flex items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-primary/10 via-emerald-500/5 to-transparent border border-primary/20">
             <div className="flex items-center gap-2">
@@ -581,14 +655,24 @@ export default function GoalTargetsEditorModal({
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {/* Calories */}
             <div className="p-3 rounded-2xl bg-orange-500/5 border border-orange-500/20 space-y-1">
-              <Label className="text-[11px] font-bold text-orange-600 dark:text-orange-400">
-                Daily Calories (kcal)
-              </Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-[11px] font-bold text-orange-600 dark:text-orange-400">
+                  Daily Calories (kcal)
+                </Label>
+                {isCustomMode && (
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                    Custom
+                  </span>
+                )}
+              </div>
               <Input
                 type="number"
                 step="25"
                 value={calories}
-                onChange={(e) => setCalories(Number(e.target.value))}
+                onChange={(e) => {
+                  setCalories(Number(e.target.value));
+                  setIsCustomMode(true);
+                }}
                 className="rounded-xl font-bold text-orange-600 dark:text-orange-400 text-base"
               />
             </div>
@@ -605,6 +689,7 @@ export default function GoalTargetsEditorModal({
                 onChange={(e) => {
                   setProtein(Number(e.target.value));
                   setProteinTier("custom");
+                  setIsCustomMode(true);
                 }}
                 className="rounded-xl font-bold text-emerald-600 dark:text-emerald-400 text-base"
               />
@@ -619,7 +704,10 @@ export default function GoalTargetsEditorModal({
                 type="number"
                 step="5"
                 value={carbs}
-                onChange={(e) => setCarbs(Number(e.target.value))}
+                onChange={(e) => {
+                  setCarbs(Number(e.target.value));
+                  setIsCustomMode(true);
+                }}
                 className="rounded-xl font-bold text-blue-600 dark:text-blue-400 text-base"
               />
             </div>
@@ -633,7 +721,10 @@ export default function GoalTargetsEditorModal({
                 type="number"
                 step="2"
                 value={fat}
-                onChange={(e) => setFat(Number(e.target.value))}
+                onChange={(e) => {
+                  setFat(Number(e.target.value));
+                  setIsCustomMode(true);
+                }}
                 className="rounded-xl font-bold text-purple-600 dark:text-purple-400 text-base"
               />
             </div>
@@ -647,7 +738,10 @@ export default function GoalTargetsEditorModal({
                 type="number"
                 step="1"
                 value={fiber}
-                onChange={(e) => setFiber(Number(e.target.value))}
+                onChange={(e) => {
+                  setFiber(Number(e.target.value));
+                  setIsCustomMode(true);
+                }}
                 className="rounded-xl font-bold text-teal-600 dark:text-teal-400 text-base"
               />
             </div>
@@ -661,7 +755,10 @@ export default function GoalTargetsEditorModal({
                 type="number"
                 step="100"
                 value={waterMl}
-                onChange={(e) => setWaterMl(Number(e.target.value))}
+                onChange={(e) => {
+                  setWaterMl(Number(e.target.value));
+                  setIsCustomMode(true);
+                }}
                 className="rounded-xl font-bold text-cyan-600 dark:text-cyan-400 text-base"
               />
             </div>

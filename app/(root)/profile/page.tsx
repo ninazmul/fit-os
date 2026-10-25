@@ -359,8 +359,12 @@ export default function ProfilePage() {
 
       {/* Standard Header */}
       <PageHeader
-        title={profile?.name || t("profile.defaultName")}
-        subtitle={`${profile?.gender ? profile.gender.charAt(0).toUpperCase() + profile.gender.slice(1) : ""} · ${profile?.age || "--"} ${t("profile.meta.years")} · ${profile?.height || "--"} cm`}
+        title={t("nav.profile")}
+        subtitle={
+          isBn
+            ? "স্বাস্থ্য মেট্রিক্স, পুষ্টি লক্ষ্য এবং শরীরের পরিমাপ"
+            : "Personal health metrics, nutrition targets & body measurements"
+        }
         icon={User}
         actions={
           <div className="hidden sm:flex items-center gap-2">
@@ -439,40 +443,39 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Quick Metrics Capsule Strip */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5 bg-muted/40 p-2.5 rounded-2xl border border-border/40 shrink-0">
+          {/* Quick Metrics Capsule Strip (non-redundant) */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-2.5 bg-muted/40 p-2.5 rounded-2xl border border-border/40 shrink-0">
             <div className="px-2.5 py-1 text-center sm:text-left">
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                {t("profile.metric.currentWeight")}
-              </p>
-              <p className="text-sm sm:text-base font-black text-foreground">
-                {profile?.currentWeight || "--"}{" "}
-                <span className="text-[10px] text-muted-foreground font-normal">kg</span>
-              </p>
-            </div>
-            <div className="px-2.5 py-1 text-center sm:text-left border-l border-border/40">
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                {t("profile.weightProgress.targetWeight")}
-              </p>
-              <p className="text-sm sm:text-base font-black text-primary">
-                {profile?.targetWeight || "--"}{" "}
-                <span className="text-[10px] text-muted-foreground font-normal">kg</span>
-              </p>
-            </div>
-            <div className="px-2.5 py-1 text-center sm:text-left border-l border-border/40">
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                 BMI
               </p>
-              <p className="text-sm sm:text-base font-black text-foreground">
-                {metrics?.bmi || "--"}
-              </p>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="text-sm sm:text-base font-black text-foreground">
+                  {metrics?.bmi || "--"}
+                </span>
+                {metrics?.bmiCategory && (
+                  <span className={cn("text-[10px] font-bold", metrics.bmiCategory.color)}>
+                    {metrics.bmiCategory.label}
+                  </span>
+                )}
+              </div>
             </div>
             <div className="px-2.5 py-1 text-center sm:text-left border-l border-border/40">
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                 {t("profile.targets.calories")}
               </p>
-              <p className="text-sm sm:text-base font-black text-orange-600 dark:text-orange-400">
-                {macros?.dailyCaloriesGoal || profile?.dailyCaloriesGoal || "--"}
+              <p className="text-sm sm:text-base font-black text-orange-600 dark:text-orange-400 mt-0.5">
+                {macros?.dailyCaloriesGoal || profile?.dailyCaloriesGoal || "--"}{" "}
+                <span className="text-[10px] text-muted-foreground font-normal">kcal</span>
+              </p>
+            </div>
+            <div className="px-2.5 py-1 text-center sm:text-left border-l border-border/40 col-span-2 sm:col-span-1">
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                {t("profile.targets.water")}
+              </p>
+              <p className="text-sm sm:text-base font-black text-cyan-600 dark:text-cyan-400 mt-0.5">
+                {macros?.waterGoalMl || profile?.waterGoalMl || "--"}{" "}
+                <span className="text-[10px] text-muted-foreground font-normal">ml</span>
               </p>
             </div>
           </div>
@@ -784,29 +787,33 @@ export default function ProfilePage() {
             )}
           </div>
 
-          {/* Quick Demographics & Info */}
+          {/* Fitness & Target Details */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div className="glass-card p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-border/50 space-y-2.5">
               <h3 className="text-xs sm:text-sm font-bold flex items-center gap-2">
                 <Activity className="w-4 h-4 text-primary" />
-                {t("profile.quickFacts.title")}
+                {isBn ? "মেটাবলিক ও লক্ষ্য সারসংক্ষেপ" : "Metabolic & Routine Summary"}
               </h3>
               <div className="space-y-2">
                 <div className="flex items-center justify-between p-2 rounded-xl bg-muted/40 text-xs">
-                  <span className="text-muted-foreground">{t("profile.quickFacts.age")}</span>
-                  <span className="font-bold">{profile?.age || "--"} {t("profile.meta.years")}</span>
+                  <span className="text-muted-foreground">{t("profile.metric.bmrTitle")}</span>
+                  <span className="font-bold text-amber-600 dark:text-amber-400">{metrics?.bmr || "--"} kcal</span>
                 </div>
                 <div className="flex items-center justify-between p-2 rounded-xl bg-muted/40 text-xs">
-                  <span className="text-muted-foreground">{t("profile.quickFacts.height")}</span>
-                  <span className="font-bold">{profile?.height || "--"} cm</span>
+                  <span className="text-muted-foreground">{t("profile.metric.tdeeTitle")}</span>
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">{metrics?.tdee || "--"} kcal</span>
                 </div>
                 <div className="flex items-center justify-between p-2 rounded-xl bg-muted/40 text-xs">
-                  <span className="text-muted-foreground">{t("profile.quickFacts.gender")}</span>
-                  <span className="font-bold capitalize">{profile?.gender || "--"}</span>
+                  <span className="text-muted-foreground">{t("profile.targets.dailyTarget")}</span>
+                  <span className="font-bold text-orange-600 dark:text-orange-400">
+                    {macros?.dailyCaloriesGoal || profile?.dailyCaloriesGoal || "--"} kcal
+                  </span>
                 </div>
                 <div className="flex items-center justify-between p-2 rounded-xl bg-muted/40 text-xs">
                   <span className="text-muted-foreground">{t("profile.quickFacts.workoutSchedule")}</span>
-                  <span className="font-bold">{profile?.workoutDaysPerWeek || 0} {t("profile.quickFacts.daysPerWeek")}</span>
+                  <span className="font-bold">
+                    {profile?.workoutDaysPerWeek || 0} {t("profile.quickFacts.daysPerWeek")}
+                  </span>
                 </div>
               </div>
             </div>
@@ -862,12 +869,19 @@ export default function ProfilePage() {
                   <Target className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                   {t("profile.targets.title")}
                 </h3>
-                {profile?.dailyCaloriesGoal && (
+                {profile?.useCustomMacros ? (
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] rounded-full border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400 font-bold"
+                  >
+                    {t("profile.modal.customNotice")}
+                  </Badge>
+                ) : (
                   <Badge
                     variant="outline"
                     className="text-[10px] rounded-full border-primary/30 bg-primary/5 text-primary font-bold"
                   >
-                    {t("profile.modal.customNotice")}
+                    🎯 {isBn ? "স্বয়ংক্রিয় হিসাব (TDEE)" : "Auto TDEE Synced"}
                   </Badge>
                 )}
               </div>
