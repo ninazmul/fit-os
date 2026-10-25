@@ -43,13 +43,18 @@ import {
   Calendar,
   Sparkles,
   CheckCircle2,
+  Pencil,
+  Minus,
+  RotateCcw,
   X,
 } from "lucide-react";
 import { getLocalDateString } from "@/lib/utils";
+import type { TranslationVars } from "@/lib/i18n";
 import type {
   WorkoutType,
   IWorkoutExercise,
   IWorkoutPlanDay,
+  IWorkoutPlanExercise,
 } from "@/types/fitness";
 import dynamic from "next/dynamic";
 import toast from "react-hot-toast";
@@ -241,6 +246,189 @@ const workoutTemplates: { nameKey: string; days: PlanDayEditor[] }[] = [
   },
 ];
 
+type TranslateFn = (key: string, vars?: TranslationVars) => string;
+
+/** Map a saved plan day into the editable draft shape. */
+const toPlanDayEditor = (day: IWorkoutPlanDay): PlanDayEditor => ({
+  _id: day._id,
+  dayOfWeek: day.dayOfWeek,
+  title: day.title,
+  exercises: day.exercises.map((exercise) => ({
+    exerciseName: exercise.exerciseName,
+    trackingMode: exercise.trackingMode || "reps",
+    sets: exercise.sets,
+    reps: exercise.reps,
+    seconds: exercise.seconds || 0,
+  })),
+});
+
+/** Seed a checklist row from a planned exercise (defaults to fully completed). */
+const toCompletionEditor = (
+  exercise: IWorkoutPlanExercise | PlanExerciseEditor,
+): CompletionExerciseEditor => ({
+  exerciseName: exercise.exerciseName,
+  trackingMode: exercise.trackingMode || "reps",
+  sets: exercise.sets,
+  reps: exercise.reps,
+  seconds: exercise.seconds || 0,
+  selected: true,
+  setsCompleted: exercise.sets,
+});
+
+/** Persist a completed plan day (only the selected exercises are sent). */
+const saveDayCompletion = async (
+  dayId: string,
+  exercises: CompletionExerciseEditor[],
+) => {
+  await completeWorkoutPlanDay(
+    getLocalDateString(),
+    dayId,
+    exercises.map((exercise) => ({
+      exerciseName: exercise.exerciseName,
+      trackingMode: exercise.trackingMode,
+      setsCompleted: exercise.setsCompleted,
+      reps: exercise.trackingMode === "time" ? 0 : exercise.reps,
+      seconds: exercise.trackingMode === "time" ? exercise.seconds : 0,
+    })),
+  );
+};
+
+/** Compact −/+ stepper used to pick sets and reps quickly (mobile friendly). */
+function NumberStepper({
+  value,
+  onChange,
+  min = 0,
+  max = 99,
+  step = 1,
+  disabled = false,
+  ariaLabel,
+}: {
+  value: number;
+  onChange: (value: number) => void;
+  min?: number;
+  max?: number;
+  step?: number;
+  disabled?: boolean;
+  ariaLabel: string;
+}) {
+  const clamp = (next: number) => Math.min(max, Math.max(min, next));
+  const buttonClass =
+    "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-background text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60";
+  return (
+    <div className="flex items-center gap-1.5">
+      <button
+        type="button"
+        aria-label={`${ariaLabel} −`}
+        onClick={() => onChange(clamp(value - step))}
+        disabled={disabled || value <= min}
+        className={buttonClass}
+      >
+        <Minus className="h-3.5 w-3.5" />
+      </button>
+      <span className="w-9 text-center text-sm font-black tabular-nums text-foreground">
+        {value}
+      </span>
+      <button
+        type="button"
+        aria-label={`${ariaLabel} +`}
+        onClick={() => onChange(clamp(value + step))}
+        disabled={disabled || value >= max}
+        className={buttonClass}
+      >
+        <Plus className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+}
+
+/** One selectable exercise row: checkbox + sets/reps steppers. */
+function ExerciseChecklistItem({
+  exercise,
+  onChange,
+  t,
+}: {
+  exercise: CompletionExerciseEditor;
+  onChange: (patch: Partial<CompletionExerciseEditor>) => void;
+  t: TranslateFn;
+}) {
+  const isTime = exercise.trackingMode === "time";
+  return (
+    <div
+      className={`rounded-2xl border p-3 transition-colors ${
+        exercise.selected
+          ? "border-primary/40 bg-primary/5"
+          : "border-border/60 bg-card/60"
+      }`}
+    >
+      <div className="flex items-start gap-3">
+        <Checkbox
+          checked={exercise.selected}
+          onCheckedChange={(checked) =>
+            onChange({ selected: Boolean(checked) })
+          }
+          className="mt-0.5"
+          aria-label={exercise.exerciseName}
+        />
+        <div className="min-w-0 flex-1">
+          <p
+            className={`truncate text-sm font-bold ${
+              exercise.selected
+                ? "text-foreground"
+                : "text-muted-foreground line-through"
+            }`}
+          >
+            {exercise.exerciseName}
+          </p>
+          <p className="text-[11px] text-muted-foreground">
+            {t("workout.completion.plannedSets", {
+              sets: exercise.sets,
+              detail: isTime ? `${exercise.seconds}s` : `${exercise.reps} reps`,
+            })}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-3 pl-7">
+        <div className="space-y-1">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+            {t("workout.form.setsDone")}
+          </p>
+          <NumberStepper
+            value={exercise.setsCompleted}
+            min={0}
+            max={exercise.sets}
+            disabled={!exercise.selected}
+            ariaLabel={t("workout.form.setsDone")}
+            onChange={(value) => onChange({ setsCompleted: value })}
+          />
+        </div>
+        <div className="space-y-1">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+            {isTime
+              ? t("workout.form.secondsPerSet")
+              : t("workout.form.repsPerSet")}
+          </p>
+          <NumberStepper
+            value={isTime ? exercise.seconds : exercise.reps}
+            min={0}
+            max={isTime ? 600 : 100}
+            step={isTime ? 5 : 1}
+            disabled={!exercise.selected}
+            ariaLabel={
+              isTime
+                ? t("workout.form.secondsPerSet")
+                : t("workout.form.repsPerSet")
+            }
+            onChange={(value) =>
+              onChange(isTime ? { seconds: value } : { reps: value })
+            }
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function WorkoutPage() {
   const { t } = useI18n();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -249,6 +437,7 @@ export default function WorkoutPage() {
   const [prs, setPrs] = useState<Record<string, any>>({});
   const [planDays, setPlanDays] = useState<PlanDayEditor[]>([createPlanDay(6)]);
   const [savedPlanDays, setSavedPlanDays] = useState<IWorkoutPlanDay[]>([]);
+  const [planEditing, setPlanEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [planSaving, setPlanSaving] = useState(false);
   const [completingDayId, setCompletingDayId] = useState<string | null>(null);
@@ -259,6 +448,12 @@ export default function WorkoutPage() {
   const [completionExercises, setCompletionExercises] = useState<
     CompletionExerciseEditor[]
   >([]);
+
+  // Today's inline workout checklist
+  const [todayChecklist, setTodayChecklist] = useState<
+    CompletionExerciseEditor[]
+  >([]);
+  const [savingToday, setSavingToday] = useState(false);
 
   // New Workout Dialog State
   const [modalOpen, setModalOpen] = useState(false);
@@ -293,21 +488,14 @@ export default function WorkoutPage() {
       const days = (plan?.days || []) as IWorkoutPlanDay[];
       setSavedPlanDays(days);
       if (days.length > 0) {
-        setPlanDays(
-          days.map((day) => ({
-            _id: day._id,
-            dayOfWeek: day.dayOfWeek,
-            title: day.title,
-            exercises: day.exercises.map((ex) => ({
-              exerciseName: ex.exerciseName,
-              trackingMode: ex.trackingMode || "reps",
-              sets: ex.sets,
-              reps: ex.reps,
-              seconds: ex.seconds || 0,
-            })),
-          })),
-        );
+        setPlanDays(days.map(toPlanDayEditor));
       }
+      const todayPlan = days.find(
+        (day) => day.dayOfWeek === new Date().getDay(),
+      );
+      setTodayChecklist(
+        todayPlan ? todayPlan.exercises.map(toCompletionEditor) : [],
+      );
     } catch (err) {
       console.error("Error fetching workouts:", err);
     } finally {
@@ -324,6 +512,62 @@ export default function WorkoutPage() {
       fetchData();
     }
   });
+
+  // Today's plan + checklist derived state
+  const todayDow = new Date().getDay();
+  const todayPlanDay =
+    savedPlanDays.find((day) => day.dayOfWeek === todayDow) ?? null;
+  const todaySelectedCount = todayChecklist.filter(
+    (item) => item.selected && item.setsCompleted > 0,
+  ).length;
+
+  const resetTodayChecklist = () => {
+    setTodayChecklist(
+      todayPlanDay ? todayPlanDay.exercises.map(toCompletionEditor) : [],
+    );
+  };
+
+  const updateTodayExercise = (
+    index: number,
+    patch: Partial<CompletionExerciseEditor>,
+  ) => {
+    setTodayChecklist((prev) =>
+      prev.map((item, itemIndex) =>
+        itemIndex === index ? { ...item, ...patch } : item,
+      ),
+    );
+  };
+
+  const handleSaveTodayWorkout = async () => {
+    if (!todayPlanDay?._id) return;
+    const completed = todayChecklist.filter(
+      (item) => item.selected && item.setsCompleted > 0,
+    );
+    if (completed.length === 0) {
+      toast.error(t("workout.today.selectAtLeastOne"));
+      return;
+    }
+    try {
+      setSavingToday(true);
+      await saveDayCompletion(todayPlanDay._id, completed);
+      toast.success(t("workout.today.saved"));
+      notifyDataUpdated("workout");
+      await fetchData();
+    } catch {
+      toast.error(t("workout.toast.dayCompleteFailed"));
+    } finally {
+      setSavingToday(false);
+    }
+  };
+
+  const handleCancelEditPlan = () => {
+    setPlanDays(
+      savedPlanDays.length > 0
+        ? savedPlanDays.map(toPlanDayEditor)
+        : [createPlanDay(new Date().getDay())],
+    );
+    setPlanEditing(false);
+  };
 
   const handleAddSet = (exerciseIndex: number) => {
     const updated = [...exercises];
@@ -459,6 +703,7 @@ export default function WorkoutPage() {
       toast.success(t("workout.toast.planSaved"));
       notifyDataUpdated("workout");
       await fetchData();
+      setPlanEditing(false);
     } catch {
       toast.error(t("workout.toast.planSaveFailed"));
     } finally {
@@ -468,18 +713,19 @@ export default function WorkoutPage() {
 
   const openCompletionDialog = (day: IWorkoutPlanDay) => {
     setCompletionDay(day);
-    setCompletionExercises(
-      day.exercises.map((exercise) => ({
-        exerciseName: exercise.exerciseName,
-        trackingMode: exercise.trackingMode || "reps",
-        sets: exercise.sets,
-        reps: exercise.reps,
-        seconds: exercise.seconds || 0,
-        selected: true,
-        setsCompleted: exercise.sets,
-      })),
-    );
+    setCompletionExercises(day.exercises.map(toCompletionEditor));
     setCompletionOpen(true);
+  };
+
+  const updateCompletionExercise = (
+    index: number,
+    patch: Partial<CompletionExerciseEditor>,
+  ) => {
+    setCompletionExercises((prev) =>
+      prev.map((item, itemIndex) =>
+        itemIndex === index ? { ...item, ...patch } : item,
+      ),
+    );
   };
 
   const handleCompleteSavedDay = async () => {
@@ -487,18 +733,11 @@ export default function WorkoutPage() {
 
     try {
       setCompletingDayId(completionDay._id);
-      await completeWorkoutPlanDay(
-        getLocalDateString(),
+      await saveDayCompletion(
         completionDay._id,
-        completionExercises
-          .filter((exercise) => exercise.selected && exercise.setsCompleted > 0)
-          .map((exercise) => ({
-            exerciseName: exercise.exerciseName,
-            trackingMode: exercise.trackingMode,
-            setsCompleted: exercise.setsCompleted,
-            reps: exercise.trackingMode === "time" ? 0 : exercise.reps,
-            seconds: exercise.trackingMode === "time" ? exercise.seconds : 0,
-          })),
+        completionExercises.filter(
+          (exercise) => exercise.selected && exercise.setsCompleted > 0,
+        ),
       );
       toast.success(
         t("workout.toast.dayCompleted", { title: completionDay.title }),
@@ -585,6 +824,105 @@ export default function WorkoutPage() {
         }
       />
 
+      {/* Today's Workout — inline checklist */}
+      <section className="glass-card rounded-3xl border border-primary/20 p-5 sm:p-6 space-y-5 bg-gradient-to-br from-primary/5 via-background to-emerald-500/5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-1.5">
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-primary">
+              <Calendar className="h-3.5 w-3.5" />
+              {t("workout.today.badge")} · {t(`workout.weekday.${todayDow}`)}
+            </div>
+            <h2 className="text-xl font-black tracking-tight">
+              {todayPlanDay ? todayPlanDay.title : t("workout.today.restTitle")}
+            </h2>
+            <p className="max-w-xl text-xs text-muted-foreground">
+              {todayPlanDay
+                ? t("workout.today.subtitle")
+                : t("workout.today.restDescription")}
+            </p>
+          </div>
+
+          {todayPlanDay && (
+            <div className="flex flex-col items-start gap-2 sm:items-end">
+              <div className="flex flex-wrap gap-2">
+                <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-card/70 px-2.5 py-1 text-[10px] font-bold text-muted-foreground">
+                  <Clock className="h-3 w-3" />
+                  {todayPlanDay.estimatedDurationMinutes} min
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-card/70 px-2.5 py-1 text-[10px] font-bold text-muted-foreground">
+                  <Flame className="h-3 w-3 text-amber-500" />
+                  {todayPlanDay.estimatedCaloriesBurned} kcal
+                </span>
+              </div>
+              <span className="text-xs font-bold text-primary">
+                {t("workout.today.progress", {
+                  done: todaySelectedCount,
+                  total: todayChecklist.length,
+                })}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {todayPlanDay ? (
+          <>
+            <div className="space-y-2.5">
+              {todayChecklist.map((exercise, index) => (
+                <ExerciseChecklistItem
+                  key={`${exercise.exerciseName}-${index}`}
+                  exercise={exercise}
+                  t={t}
+                  onChange={(patch) => updateTodayExercise(index, patch)}
+                />
+              ))}
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button
+                type="button"
+                onClick={handleSaveTodayWorkout}
+                disabled={savingToday || todaySelectedCount === 0}
+                className="flex-1 rounded-xl font-bold gap-2"
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                {savingToday
+                  ? t("workout.actions.savingDots")
+                  : t("workout.today.save")}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={resetTodayChecklist}
+                disabled={savingToday}
+                className="rounded-xl font-bold gap-2 text-muted-foreground"
+              >
+                <RotateCcw className="h-4 w-4" />
+                {t("workout.today.reset")}
+              </Button>
+            </div>
+          </>
+        ) : (
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button
+              type="button"
+              onClick={() => setPlanEditing(true)}
+              className="rounded-xl font-bold gap-2"
+            >
+              <Pencil className="h-4 w-4" />
+              {t("workout.today.createPlan")}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setModalOpen(true)}
+              className="rounded-xl font-bold gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              {t("workout.actions.quickAdd")}
+            </Button>
+          </div>
+        )}
+      </section>
+
       {/* PR Highlights & Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard
@@ -622,36 +960,63 @@ export default function WorkoutPage() {
             </div>
             <div>
               <h2 className="text-xl font-black tracking-tight">
-                {t("workout.builder.heading")}
+                {planEditing
+                  ? t("workout.builder.heading")
+                  : t("workout.plan.heading")}
               </h2>
               <p className="text-xs text-muted-foreground max-w-2xl">
-                {t("workout.builder.description")}
+                {planEditing
+                  ? t("workout.builder.description")
+                  : t("workout.plan.description")}
               </p>
             </div>
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleAddPlanDay}
-              disabled={planDays.length >= 7}
-              className="rounded-xl text-xs font-bold gap-1"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              {t("workout.actions.addDay")}
-            </Button>
-            <Button
-              type="button"
-              onClick={handleSaveWorkoutPlan}
-              disabled={planSaving || planDays.length === 0}
-              className="rounded-xl text-xs font-bold gap-1 bg-primary hover:bg-primary/90"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              {planSaving
-                ? t("workout.actions.estimating")
-                : t("workout.actions.savePlan")}
-            </Button>
+            {planEditing ? (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleAddPlanDay}
+                  disabled={planDays.length >= 7}
+                  className="rounded-xl text-xs font-bold gap-1"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  {t("workout.actions.addDay")}
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleSaveWorkoutPlan}
+                  disabled={planSaving || planDays.length === 0}
+                  className="rounded-xl text-xs font-bold gap-1 bg-primary hover:bg-primary/90"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  {planSaving
+                    ? t("workout.actions.estimating")
+                    : t("workout.actions.savePlan")}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={handleCancelEditPlan}
+                  disabled={planSaving}
+                  className="rounded-xl text-xs font-bold gap-1 text-muted-foreground"
+                >
+                  {t("workout.actions.cancelEdit")}
+                </Button>
+              </>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setPlanEditing(true)}
+                className="rounded-xl text-xs font-bold gap-1 border-primary/30 text-primary hover:bg-primary/10"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+                {t("workout.actions.editPlan")}
+              </Button>
+            )}
           </div>
         </div>
 
@@ -694,197 +1059,261 @@ export default function WorkoutPage() {
           })}
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          {workoutTemplates.map((template) => (
-            <Button
-              key={template.nameKey}
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                setPlanDays(
-                  template.days.map((day) => ({
-                    ...day,
-                    exercises: day.exercises.map((exercise) => ({
-                      ...exercise,
-                    })),
-                  })),
-                )
-              }
-              className="rounded-xl text-xs font-bold gap-1 border-primary/30 text-primary hover:bg-primary/10"
-            >
-              <Calendar className="w-3.5 h-3.5" />
-              {t(template.nameKey)}
-            </Button>
-          ))}
-        </div>
-
-        <div className="space-y-4">
-          {planDays.map((day, dayIndex) => (
-            <div
-              key={`${day.dayOfWeek}-${dayIndex}`}
-              className="rounded-2xl border border-border/60 bg-card p-4 space-y-4"
-            >
-              <div className="grid grid-cols-1 md:grid-cols-[160px_1fr_auto] gap-3">
-                <div className="space-y-1">
-                  <Label className="text-xs">
-                    {t("workout.form.trainingDay")}
-                  </Label>
-                  <Select
-                    value={String(day.dayOfWeek)}
-                    onValueChange={(value) =>
-                      handlePlanDayChange(dayIndex, {
-                        dayOfWeek: Number(value),
-                      })
-                    }
-                  >
-                    <SelectTrigger className="rounded-xl">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {weekDays.map((item) => (
-                        <SelectItem key={item.value} value={String(item.value)}>
-                          {t(`workout.weekday.${item.value}`)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-1">
-                  <Label className="text-xs">
-                    {t("workout.form.workoutName")}
-                  </Label>
-                  <Input
-                    value={day.title}
-                    onChange={(e) =>
-                      handlePlanDayChange(dayIndex, { title: e.target.value })
-                    }
-                    placeholder={t("workout.form.workoutNamePlaceholder")}
-                    className="rounded-xl font-bold"
-                  />
-                </div>
-
+        {planEditing ? (
+          <>
+            <div className="flex flex-wrap gap-2">
+              {workoutTemplates.map((template) => (
                 <Button
+                  key={template.nameKey}
                   type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleRemovePlanDay(dayIndex)}
-                  disabled={planDays.length <= 1}
-                  className="rounded-xl self-end text-muted-foreground hover:text-red-500"
-                  title={t("workout.actions.removeDay")}
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setPlanDays(
+                      template.days.map((day) => ({
+                        ...day,
+                        exercises: day.exercises.map((exercise) => ({
+                          ...exercise,
+                        })),
+                      })),
+                    )
+                  }
+                  className="rounded-xl text-xs font-bold gap-1 border-primary/30 text-primary hover:bg-primary/10"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Calendar className="w-3.5 h-3.5" />
+                  {t(template.nameKey)}
                 </Button>
-              </div>
+              ))}
+            </div>
 
-              <div className="space-y-2">
-                {day.exercises.map((exercise, exerciseIndex) => (
-                  <div
-                    key={`${exercise.exerciseName}-${exerciseIndex}`}
-                    className="grid grid-cols-1 sm:grid-cols-[1fr_112px_86px_96px_36px] gap-2"
-                  >
-                    <Input
-                      value={exercise.exerciseName}
-                      onChange={(e) =>
-                        handlePlanExerciseChange(dayIndex, exerciseIndex, {
-                          exerciseName: e.target.value,
-                        })
-                      }
-                      placeholder={t("workout.form.planExercisePlaceholder")}
-                      className="rounded-xl bg-background"
-                    />
-                    <Select
-                      value={exercise.trackingMode}
-                      onValueChange={(value) =>
-                        handlePlanExerciseChange(dayIndex, exerciseIndex, {
-                          trackingMode: value as "reps" | "time",
-                          reps: value === "time" ? 0 : exercise.reps || 10,
-                          seconds:
-                            value === "time" ? exercise.seconds || 30 : 0,
-                        })
-                      }
-                    >
-                      <SelectTrigger className="rounded-xl bg-background">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="reps">
-                          {t("workout.form.reps")}
-                        </SelectItem>
-                        <SelectItem value="time">
-                          {t("workout.form.time")}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Input
-                      type="number"
-                      min={1}
-                      value={exercise.sets}
-                      onChange={(e) =>
-                        handlePlanExerciseChange(dayIndex, exerciseIndex, {
-                          sets: Number(e.target.value),
-                        })
-                      }
-                      placeholder={t("workout.form.sets")}
-                      className="rounded-xl bg-background"
-                    />
-                    <Input
-                      type="number"
-                      min={1}
-                      value={
-                        exercise.trackingMode === "time"
-                          ? exercise.seconds
-                          : exercise.reps
-                      }
-                      onChange={(e) => {
-                        if (exercise.trackingMode === "time") {
-                          handlePlanExerciseChange(dayIndex, exerciseIndex, {
-                            seconds: Number(e.target.value),
-                          });
-                        } else {
-                          handlePlanExerciseChange(dayIndex, exerciseIndex, {
-                            reps: Number(e.target.value),
-                          });
+            <div className="space-y-4">
+              {planDays.map((day, dayIndex) => (
+                <div
+                  key={`${day.dayOfWeek}-${dayIndex}`}
+                  className="rounded-2xl border border-border/60 bg-card p-4 space-y-4"
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-[160px_1fr_auto] gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs">
+                        {t("workout.form.trainingDay")}
+                      </Label>
+                      <Select
+                        value={String(day.dayOfWeek)}
+                        onValueChange={(value) =>
+                          handlePlanDayChange(dayIndex, {
+                            dayOfWeek: Number(value),
+                          })
                         }
-                      }}
-                      placeholder={
-                        exercise.trackingMode === "time"
-                          ? t("workout.form.seconds")
-                          : t("workout.form.reps")
-                      }
-                      className="rounded-xl bg-background"
-                    />
+                      >
+                        <SelectTrigger className="rounded-xl">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {weekDays.map((item) => (
+                            <SelectItem
+                              key={item.value}
+                              value={String(item.value)}
+                            >
+                              {t(`workout.weekday.${item.value}`)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label className="text-xs">
+                        {t("workout.form.workoutName")}
+                      </Label>
+                      <Input
+                        value={day.title}
+                        onChange={(e) =>
+                          handlePlanDayChange(dayIndex, {
+                            title: e.target.value,
+                          })
+                        }
+                        placeholder={t("workout.form.workoutNamePlaceholder")}
+                        className="rounded-xl font-bold"
+                      />
+                    </div>
+
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
-                      onClick={() =>
-                        handleRemovePlanExercise(dayIndex, exerciseIndex)
-                      }
-                      disabled={day.exercises.length <= 1}
-                      className="rounded-xl text-muted-foreground hover:text-red-500"
-                      title={t("workout.actions.removeExercise")}
+                      onClick={() => handleRemovePlanDay(dayIndex)}
+                      disabled={planDays.length <= 1}
+                      className="rounded-xl self-end text-muted-foreground hover:text-red-500"
+                      title={t("workout.actions.removeDay")}
                     >
-                      <X className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
-                ))}
-              </div>
 
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => handleAddPlanExercise(dayIndex)}
-                className="rounded-xl text-xs font-bold gap-1"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                {t("workout.actions.addExercise")}
-              </Button>
+                  <div className="space-y-2">
+                    {day.exercises.map((exercise, exerciseIndex) => (
+                      <div
+                        key={`${exercise.exerciseName}-${exerciseIndex}`}
+                        className="grid grid-cols-1 sm:grid-cols-[1fr_112px_86px_96px_36px] gap-2"
+                      >
+                        <Input
+                          value={exercise.exerciseName}
+                          onChange={(e) =>
+                            handlePlanExerciseChange(dayIndex, exerciseIndex, {
+                              exerciseName: e.target.value,
+                            })
+                          }
+                          placeholder={t("workout.form.planExercisePlaceholder")}
+                          className="rounded-xl bg-background"
+                        />
+                        <Select
+                          value={exercise.trackingMode}
+                          onValueChange={(value) =>
+                            handlePlanExerciseChange(dayIndex, exerciseIndex, {
+                              trackingMode: value as "reps" | "time",
+                              reps: value === "time" ? 0 : exercise.reps || 10,
+                              seconds:
+                                value === "time" ? exercise.seconds || 30 : 0,
+                            })
+                          }
+                        >
+                          <SelectTrigger className="rounded-xl bg-background">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="reps">
+                              {t("workout.form.reps")}
+                            </SelectItem>
+                            <SelectItem value="time">
+                              {t("workout.form.time")}
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Input
+                          type="number"
+                          min={1}
+                          value={exercise.sets}
+                          onChange={(e) =>
+                            handlePlanExerciseChange(dayIndex, exerciseIndex, {
+                              sets: Number(e.target.value),
+                            })
+                          }
+                          placeholder={t("workout.form.sets")}
+                          className="rounded-xl bg-background"
+                        />
+                        <Input
+                          type="number"
+                          min={1}
+                          value={
+                            exercise.trackingMode === "time"
+                              ? exercise.seconds
+                              : exercise.reps
+                          }
+                          onChange={(e) => {
+                            if (exercise.trackingMode === "time") {
+                              handlePlanExerciseChange(
+                                dayIndex,
+                                exerciseIndex,
+                                {
+                                  seconds: Number(e.target.value),
+                                },
+                              );
+                            } else {
+                              handlePlanExerciseChange(
+                                dayIndex,
+                                exerciseIndex,
+                                {
+                                  reps: Number(e.target.value),
+                                },
+                              );
+                            }
+                          }}
+                          placeholder={
+                            exercise.trackingMode === "time"
+                              ? t("workout.form.seconds")
+                              : t("workout.form.reps")
+                          }
+                          className="rounded-xl bg-background"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() =>
+                            handleRemovePlanExercise(dayIndex, exerciseIndex)
+                          }
+                          disabled={day.exercises.length <= 1}
+                          className="rounded-xl text-muted-foreground hover:text-red-500"
+                          title={t("workout.actions.removeExercise")}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleAddPlanExercise(dayIndex)}
+                    className="rounded-xl text-xs font-bold gap-1"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    {t("workout.actions.addExercise")}
+                  </Button>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </>
+        ) : (
+          <div className="space-y-3">
+            {savedPlanDays.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-border/60 bg-muted/20 p-6 text-center space-y-1">
+                <p className="text-sm font-bold">{t("workout.plan.empty")}</p>
+                <p className="text-xs text-muted-foreground">
+                  {t("workout.plan.emptyHint")}
+                </p>
+              </div>
+            ) : (
+              [...savedPlanDays]
+                .sort((a, b) => a.dayOfWeek - b.dayOfWeek)
+                .map((day) => (
+                  <div
+                    key={day._id ?? day.dayOfWeek}
+                    className="rounded-2xl border border-border/60 bg-card/70 p-4 space-y-3"
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-primary">
+                        {t(`workout.weekdayShort.${day.dayOfWeek}`)}
+                      </span>
+                      <p className="text-sm font-bold">{day.title}</p>
+                      <span className="ml-auto inline-flex items-center gap-1 text-[10px] font-bold text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        {day.estimatedDurationMinutes} min
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {day.exercises.map((exercise, exerciseIndex) => (
+                        <span
+                          key={`${exercise.exerciseName}-${exerciseIndex}`}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 bg-background px-2.5 py-1 text-[11px] font-semibold"
+                        >
+                          {exercise.exerciseName}
+                          <span className="text-muted-foreground">
+                            {exercise.sets}×
+                            {exercise.trackingMode === "time"
+                              ? `${exercise.seconds}s`
+                              : exercise.reps}
+                          </span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))
+            )}
+          </div>
+        )}
       </div>
 
       {/* PR Cards Carousel / Grid */}
@@ -1023,103 +1452,12 @@ export default function WorkoutPage() {
             </div>
 
             {completionExercises.map((exercise, index) => (
-              <div
+              <ExerciseChecklistItem
                 key={`${exercise.exerciseName}-${index}`}
-                className="rounded-2xl border border-border/60 bg-card p-3 space-y-3"
-              >
-                <div className="flex items-start gap-3">
-                  <Checkbox
-                    checked={exercise.selected}
-                    onCheckedChange={(checked) =>
-                      setCompletionExercises(
-                        completionExercises.map((item, itemIndex) =>
-                          itemIndex === index
-                            ? { ...item, selected: Boolean(checked) }
-                            : item,
-                        ),
-                      )
-                    }
-                    className="mt-1"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-bold truncate">
-                      {exercise.exerciseName}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {t("workout.completion.plannedSets", {
-                        sets: exercise.sets,
-                        detail:
-                          exercise.trackingMode === "time"
-                            ? `${exercise.seconds}s`
-                            : `${exercise.reps} reps`,
-                      })}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <Label className="text-[11px]">
-                      {t("workout.form.setsDone")}
-                    </Label>
-                    <Input
-                      type="number"
-                      min={0}
-                      max={exercise.sets}
-                      value={exercise.setsCompleted}
-                      disabled={!exercise.selected}
-                      onChange={(e) =>
-                        setCompletionExercises(
-                          completionExercises.map((item, itemIndex) =>
-                            itemIndex === index
-                              ? {
-                                  ...item,
-                                  setsCompleted: Math.min(
-                                    item.sets,
-                                    Number(e.target.value) || 0,
-                                  ),
-                                }
-                              : item,
-                          ),
-                        )
-                      }
-                      className="rounded-xl bg-background"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <Label className="text-[11px]">
-                      {exercise.trackingMode === "time"
-                        ? t("workout.form.secondsPerSet")
-                        : t("workout.form.repsPerSet")}
-                    </Label>
-                    <Input
-                      type="number"
-                      min={0}
-                      value={
-                        exercise.trackingMode === "time"
-                          ? exercise.seconds
-                          : exercise.reps
-                      }
-                      disabled={!exercise.selected}
-                      onChange={(e) =>
-                        setCompletionExercises(
-                          completionExercises.map((item, itemIndex) => {
-                            if (itemIndex !== index) return item;
-                            return item.trackingMode === "time"
-                              ? {
-                                  ...item,
-                                  seconds: Number(e.target.value) || 0,
-                                }
-                              : { ...item, reps: Number(e.target.value) || 0 };
-                          }),
-                        )
-                      }
-                      className="rounded-xl bg-background"
-                    />
-                  </div>
-                </div>
-              </div>
+                exercise={exercise}
+                t={t}
+                onChange={(patch) => updateCompletionExercise(index, patch)}
+              />
             ))}
 
             <Button

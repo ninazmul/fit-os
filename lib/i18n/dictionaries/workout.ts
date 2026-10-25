@@ -26,6 +26,28 @@ export const workoutEn: Record<string, string> = {
   "workout.actions.addSet": "Add Set",
   "workout.actions.saveCompleted": "Save Completed Workout",
   "workout.actions.saveSession": "Save Workout Session 🎉",
+  "workout.actions.editPlan": "Edit Plan",
+  "workout.actions.cancelEdit": "Cancel",
+  // Today's workout
+  "workout.today.badge": "Today's Workout",
+  "workout.today.subtitle":
+    "Check off what you did and adjust sets or reps. Unchecked exercises are skipped.",
+  "workout.today.restTitle": "Rest Day",
+  "workout.today.restDescription":
+    "No workout is planned for today. Create a weekly plan to get a ready-made checklist here.",
+  "workout.today.progress": "{done}/{total} done",
+  "workout.today.save": "Save Today's Workout",
+  "workout.today.reset": "Reset",
+  "workout.today.createPlan": "Create Weekly Plan",
+  "workout.today.selectAtLeastOne": "Select at least one completed exercise",
+  "workout.today.saved": "Today's workout saved 💪",
+  // Plan view
+  "workout.plan.heading": "Your Weekly Workout Plan",
+  "workout.plan.description":
+    "Your weekly training split. Tap Edit Plan to change days, exercises, sets, or reps.",
+  "workout.plan.empty": "No weekly plan yet",
+  "workout.plan.emptyHint":
+    "Tap Edit Plan to build your weekly split in a minute.",
   // Weekly builder
   "workout.builder.badge": "Weekly Workout Builder",
   "workout.builder.heading": "Create your daily workout templates",
@@ -138,6 +160,29 @@ export const workoutBn: Record<string, string> = {
   "workout.actions.addSet": "সেট যোগ করুন",
   "workout.actions.saveCompleted": "সম্পন্ন ওয়ার্কআউট সংরক্ষণ করুন",
   "workout.actions.saveSession": "ওয়ার্কআউট সেশন সংরক্ষণ করুন 🎉",
+  "workout.actions.editPlan": "প্ল্যান সম্পাদনা",
+  "workout.actions.cancelEdit": "বাতিল",
+  // Today's workout
+  "workout.today.badge": "আজকের ওয়ার্কআউট",
+  "workout.today.subtitle":
+    "আপনি যা করেছেন তা টিক দিন এবং সেট বা রেপ ঠিক করুন। টিক না দেওয়া ব্যায়াম বাদ যাবে।",
+  "workout.today.restTitle": "বিশ্রামের দিন",
+  "workout.today.restDescription":
+    "আজকের জন্য কোনো ওয়ার্কআউট পরিকল্পনা নেই। এখানে রেডিমেড চেকলিস্ট পেতে একটি সাপ্তাহিক প্ল্যান তৈরি করুন।",
+  "workout.today.progress": "{done}/{total} সম্পন্ন",
+  "workout.today.save": "আজকের ওয়ার্কআউট সংরক্ষণ করুন",
+  "workout.today.reset": "রিসেট",
+  "workout.today.createPlan": "সাপ্তাহিক প্ল্যান তৈরি করুন",
+  "workout.today.selectAtLeastOne":
+    "কমপক্ষে একটি সম্পন্ন ব্যায়াম নির্বাচন করুন",
+  "workout.today.saved": "আজকের ওয়ার্কআউট সংরক্ষিত হয়েছে 💪",
+  // Plan view
+  "workout.plan.heading": "আপনার সাপ্তাহিক ওয়ার্কআউট প্ল্যান",
+  "workout.plan.description":
+    "আপনার সাপ্তাহিক ট্রেনিং স্প্লিট। দিন, ব্যায়াম, সেট বা রেপ পরিবর্তন করতে প্ল্যান সম্পাদনা চাপুন।",
+  "workout.plan.empty": "এখনো কোনো সাপ্তাহিক প্ল্যান নেই",
+  "workout.plan.emptyHint":
+    "এক মিনিটে আপনার সাপ্তাহিক স্প্লিট তৈরি করতে প্ল্যান সম্পাদনা চাপুন।",
   // Weekly builder
   "workout.builder.badge": "সাপ্তাহিক ওয়ার্কআউট বিল্ডার",
   "workout.builder.heading": "আপনার দৈনিক ওয়ার্কআউট টেমপ্লেট তৈরি করুন",
