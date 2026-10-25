@@ -7,15 +7,20 @@ import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
 import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
-import { isNavItemActive, navGroups } from "@/components/navigation/DesktopSidebar";
+import {
+  isNavItemActive,
+  navGroups,
+} from "@/components/navigation/DesktopSidebar";
+import { useI18n } from "@/components/shared/I18nProvider";
 
 const QuickAddSheet = dynamic(
   () => import("@/components/shared/QuickAddSheet"),
-  { ssr: false }
+  { ssr: false },
 );
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const { t } = useI18n();
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const mobileNavItems = navGroups.flatMap((group) => group.items).slice(0, 4);
   const leadingItems = mobileNavItems.slice(0, 2);
@@ -50,7 +55,7 @@ export default function BottomNav() {
                   />
                 )}
                 <Icon className="w-5 h-5" />
-                <span className="text-[10px]">{item.label}</span>
+                <span className="text-[10px]">{t(item.labelKey)}</span>
               </Link>
             );
           })}
@@ -61,7 +66,7 @@ export default function BottomNav() {
               type="button"
               onClick={() => setQuickAddOpen(true)}
               className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all fab-pulse"
-              aria-label="Quick Add Log"
+              aria-label={t("a11y.quickAdd")}
             >
               <Plus className="w-6 h-6 stroke-[3]" />
             </button>
@@ -90,7 +95,7 @@ export default function BottomNav() {
                   />
                 )}
                 <Icon className="w-5 h-5" />
-                <span className="text-[10px]">{item.label}</span>
+                <span className="text-[10px]">{t(item.labelKey)}</span>
               </Link>
             );
           })}

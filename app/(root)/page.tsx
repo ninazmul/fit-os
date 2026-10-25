@@ -13,6 +13,7 @@ import PageHeader from "@/components/shared/PageHeader";
 import NutritionSummary from "@/components/shared/NutritionSummary";
 import EmptyState from "@/components/shared/EmptyState";
 import { DashboardSkeleton } from "@/components/shared/SkeletonLoaders";
+import { useI18n } from "@/components/shared/I18nProvider";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -73,43 +74,43 @@ const BarcodeScanner = dynamic(
 
 const MEAL_SLOTS: {
   type: MealType;
-  label: string;
+  labelKey: string;
   icon: typeof Sun;
   color: string;
 }[] = [
   {
     type: "breakfast",
-    label: "Breakfast",
+    labelKey: "dashboard.meal.breakfast",
     icon: Sun,
     color: "text-amber-600 bg-amber-500/10 border-amber-500/20",
   },
   {
     type: "lunch",
-    label: "Lunch",
+    labelKey: "dashboard.meal.lunch",
     icon: UtensilsCrossed,
     color: "text-emerald-600 bg-emerald-500/10 border-emerald-500/20",
   },
   {
     type: "dinner",
-    label: "Dinner",
+    labelKey: "dashboard.meal.dinner",
     icon: Moon,
     color: "text-indigo-600 bg-indigo-500/10 border-indigo-500/20",
   },
   {
     type: "snack",
-    label: "Snacks",
+    labelKey: "dashboard.meal.snacks",
     icon: Apple,
     color: "text-purple-600 bg-purple-500/10 border-purple-500/20",
   },
 ];
 
 export default function DashboardPage() {
+  const { t } = useI18n();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedDateStr, setSelectedDateStr] = useState<string>(
-    getLocalDateString(),
-  );
+  const [selectedDateStr, setSelectedDateStr] =
+    useState<string>(getLocalDateString());
 
   // Modal state
   const [quickLogOpen, setQuickLogOpen] = useState(false);
@@ -183,11 +184,11 @@ export default function DashboardPage() {
     try {
       setItemDeletingKey(key);
       await removeMealItem(mealId, itemIdx);
-      toast.success("Item removed");
+      toast.success(t("dashboard.toast.itemRemoved"));
       notifyDataUpdated("meal");
       await fetchDashboard(false);
     } catch {
-      toast.error("Failed to remove item");
+      toast.error(t("dashboard.toast.removeItemFailed"));
     } finally {
       setItemDeletingKey(null);
     }
@@ -237,12 +238,16 @@ export default function DashboardPage() {
             seconds: exercise.trackingMode === "time" ? exercise.seconds : 0,
           })),
       );
-      toast.success(`${todayWorkoutPlan.title} completed`);
+      toast.success(
+        t("dashboard.toast.workoutPlanCompleted", {
+          title: todayWorkoutPlan.title,
+        }),
+      );
       notifyDataUpdated("workout");
       setPlanCompletionOpen(false);
       await fetchDashboard(false);
     } catch {
-      toast.error("Failed to complete workout plan");
+      toast.error(t("dashboard.toast.completeWorkoutFailed"));
     } finally {
       setPlanCompleting(false);
     }
@@ -259,22 +264,29 @@ export default function DashboardPage() {
           open={onboardingOpen}
           onOpenChange={setOnboardingOpen}
         />
-        <h2 className="text-xl font-bold">Welcome to {APP_NAME}</h2>
+        <h2 className="text-xl font-bold">
+          {t("dashboard.onboarding.welcome", { app: APP_NAME })}
+        </h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Please complete your profile onboarding to access your dashboard.
+          {t("dashboard.onboarding.description")}
         </p>
         <Button
           onClick={() => setOnboardingOpen(true)}
           className="mt-4 rounded-xl font-bold"
         >
-          Start Onboarding
+          {t("dashboard.onboarding.start")}
         </Button>
       </div>
     );
   }
 
-  const { profile, today, meals: todayMeals, todaysMission, todayWorkoutPlan } =
-    data;
+  const {
+    profile,
+    today,
+    meals: todayMeals,
+    todaysMission,
+    todayWorkoutPlan,
+  } = data;
 
   const waterGoalMl = profile.waterGoalMl || 2500;
   const waterPct = Math.min(
@@ -288,8 +300,10 @@ export default function DashboardPage() {
   const currentHour = new Date().getHours();
   let currentSuggestedSlot: MealType = "lunch";
   if (currentHour >= 5 && currentHour < 11) currentSuggestedSlot = "breakfast";
-  else if (currentHour >= 11 && currentHour < 16) currentSuggestedSlot = "lunch";
-  else if (currentHour >= 16 && currentHour < 22) currentSuggestedSlot = "dinner";
+  else if (currentHour >= 11 && currentHour < 16)
+    currentSuggestedSlot = "lunch";
+  else if (currentHour >= 16 && currentHour < 22)
+    currentSuggestedSlot = "dinner";
   else currentSuggestedSlot = "snack";
 
   const dayLabel = new Date(`${selectedDateStr}T12:00:00`).toLocaleDateString(
@@ -314,24 +328,24 @@ export default function DashboardPage() {
   const habitTiles = [
     {
       key: "water",
-      label: "Water",
+      label: t("dashboard.habit.water"),
       icon: Droplet,
       value: `${waterLitres} / ${waterGoalLitres} L`,
       pct: waterPct,
       barClass: "bg-sky-500",
       iconClass: "text-sky-600 dark:text-sky-400 bg-sky-500/10",
       onClick: () => openQuickLog("water"),
-      actionLabel: "Log water",
+      actionLabel: t("dashboard.habit.logWater"),
     },
     {
       key: "workout",
-      label: "Workout",
+      label: t("dashboard.habit.workout"),
       icon: Dumbbell,
       value: today.workoutDone
-        ? `${today.workoutCount} logged`
+        ? t("dashboard.habit.workoutCountLogged", { n: today.workoutCount })
         : todayWorkoutPlan
-          ? "Planned"
-          : "Not logged",
+          ? t("dashboard.habit.planned")
+          : t("dashboard.habit.notLogged"),
       pct: today.workoutDone ? 100 : 0,
       barClass: "bg-amber-500",
       iconClass: "text-amber-600 dark:text-amber-400 bg-amber-500/10",
@@ -339,13 +353,19 @@ export default function DashboardPage() {
         todayWorkoutPlan && !today.workoutDone
           ? openPlanCompletionDialog()
           : setQuickWorkoutOpen(true),
-      actionLabel: todayWorkoutPlan && !today.workoutDone ? "Complete" : "Log workout",
+      actionLabel:
+        todayWorkoutPlan && !today.workoutDone
+          ? t("dashboard.habit.complete")
+          : t("dashboard.habit.logWorkout"),
     },
     {
       key: "sleep",
-      label: "Sleep",
+      label: t("dashboard.habit.sleep"),
       icon: Moon,
-      value: today.sleepHours !== null ? `${today.sleepHours} h` : "Not logged",
+      value:
+        today.sleepHours !== null
+          ? `${today.sleepHours} h`
+          : t("dashboard.habit.notLogged"),
       pct:
         today.sleepHours !== null
           ? Math.min(100, Math.round((today.sleepHours / 8) * 100))
@@ -353,7 +373,7 @@ export default function DashboardPage() {
       barClass: "bg-indigo-500",
       iconClass: "text-indigo-600 dark:text-indigo-400 bg-indigo-500/10",
       onClick: () => openQuickLog("sleep"),
-      actionLabel: "Log sleep",
+      actionLabel: t("dashboard.habit.logSleep"),
     },
   ];
 
@@ -399,10 +419,10 @@ export default function DashboardPage() {
         <DialogContent className="sm:max-w-lg rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold">
-              Complete Workout Plan
+              {t("dashboard.planDialog.title")}
             </DialogTitle>
             <DialogDescription className="text-xs">
-              Select the exercises and set counts you finished today.
+              {t("dashboard.planDialog.description")}
             </DialogDescription>
           </DialogHeader>
 
@@ -410,9 +430,10 @@ export default function DashboardPage() {
             <div className="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-3">
               <p className="text-sm font-black">{todayWorkoutPlan?.title}</p>
               <p className="text-xs text-muted-foreground">
-                {todayWorkoutPlan?.estimatedDurationMinutes || 0} min planned
-                &middot; {todayWorkoutPlan?.estimatedCaloriesBurned || 0} kcal
-                planned
+                {t("dashboard.planDialog.plannedSummary", {
+                  min: todayWorkoutPlan?.estimatedDurationMinutes || 0,
+                  kcal: todayWorkoutPlan?.estimatedCaloriesBurned || 0,
+                })}
               </p>
             </div>
 
@@ -440,17 +461,24 @@ export default function DashboardPage() {
                       {exercise.exerciseName}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Planned: {exercise.sets} sets &times;{" "}
                       {exercise.trackingMode === "time"
-                        ? `${exercise.seconds}s`
-                        : `${exercise.reps} reps`}
+                        ? t("dashboard.planDialog.plannedTime", {
+                            sets: exercise.sets,
+                            time: exercise.seconds,
+                          })
+                        : t("dashboard.planDialog.plannedReps", {
+                            sets: exercise.sets,
+                            reps: exercise.reps,
+                          })}
                     </p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
-                    <Label className="text-[11px]">Sets done</Label>
+                    <Label className="text-[11px]">
+                      {t("dashboard.planDialog.setsDone")}
+                    </Label>
                     <Input
                       type="number"
                       min={0}
@@ -478,8 +506,8 @@ export default function DashboardPage() {
                   <div className="space-y-1">
                     <Label className="text-[11px]">
                       {exercise.trackingMode === "time"
-                        ? "Seconds/set"
-                        : "Reps/set"}
+                        ? t("dashboard.planDialog.secondsPerSet")
+                        : t("dashboard.planDialog.repsPerSet")}
                     </Label>
                     <Input
                       type="number"
@@ -495,7 +523,10 @@ export default function DashboardPage() {
                           planCompletionExercises.map((item, itemIndex) => {
                             if (itemIndex !== index) return item;
                             return item.trackingMode === "time"
-                              ? { ...item, seconds: Number(e.target.value) || 0 }
+                              ? {
+                                  ...item,
+                                  seconds: Number(e.target.value) || 0,
+                                }
                               : { ...item, reps: Number(e.target.value) || 0 };
                           }),
                         )
@@ -513,7 +544,9 @@ export default function DashboardPage() {
               disabled={planCompleting}
               className="w-full rounded-xl bg-primary hover:bg-primary/90 font-bold"
             >
-              {planCompleting ? "Saving..." : "Save Completed Workout"}
+              {planCompleting
+                ? t("dashboard.planDialog.saving")
+                : t("dashboard.planDialog.save")}
             </Button>
           </div>
         </DialogContent>
@@ -522,7 +555,11 @@ export default function DashboardPage() {
       {/* ─────────────── Section A — Compact page header ─────────────── */}
       <PageHeader
         icon={CalendarCheck}
-        title={isToday ? "Today's Nutrition" : `Nutrition · ${dayLabel}`}
+        title={
+          isToday
+            ? t("dashboard.header.titleToday")
+            : t("dashboard.header.titleOther", { day: dayLabel })
+        }
         subtitle={`${todaysMission.greetingTime}, ${profile.name}`}
       >
         <div className="flex items-center justify-between gap-2 rounded-2xl border border-border/50 bg-background/60 p-1.5">
@@ -531,7 +568,7 @@ export default function DashboardPage() {
             size="icon"
             onClick={handlePrevDay}
             className="h-8 w-8 rounded-xl"
-            aria-label="Previous day"
+            aria-label={t("dashboard.header.prevDay")}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
@@ -540,14 +577,14 @@ export default function DashboardPage() {
             onClick={handleToday}
             className="flex-1 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
           >
-            {isToday ? "Today" : dayLabel}
+            {isToday ? t("dashboard.header.today") : dayLabel}
           </button>
           <Button
             variant="ghost"
             size="icon"
             onClick={handleNextDay}
             className="h-8 w-8 rounded-xl"
-            aria-label="Next day"
+            aria-label={t("dashboard.header.nextDay")}
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
@@ -559,7 +596,7 @@ export default function DashboardPage() {
         <NutritionSummary
           calories={{
             key: "calories",
-            label: "Calories",
+            label: t("dashboard.nutrition.calories"),
             consumed: today.calories,
             target: profile.dailyCaloriesGoal,
             unit: "kcal",
@@ -567,28 +604,28 @@ export default function DashboardPage() {
           macros={[
             {
               key: "protein",
-              label: "Protein",
+              label: t("dashboard.nutrition.protein"),
               consumed: today.protein,
               target: profile.dailyProteinGoal,
               unit: "g",
             },
             {
               key: "carbs",
-              label: "Carbs",
+              label: t("dashboard.nutrition.carbs"),
               consumed: today.carbs,
               target: profile.dailyCarbGoal,
               unit: "g",
             },
             {
               key: "fat",
-              label: "Fat",
+              label: t("dashboard.nutrition.fat"),
               consumed: today.fat,
               target: profile.dailyFatGoal,
               unit: "g",
             },
             {
               key: "fiber",
-              label: "Fiber",
+              label: t("dashboard.nutrition.fiber"),
               consumed: today.fiber,
               target: profile.dailyFiberGoal,
               unit: "g",
@@ -600,23 +637,26 @@ export default function DashboardPage() {
           icon={UtensilsCrossed}
           title={
             isToday
-              ? "You haven't logged any food today"
-              : "No food logged on this day"
+              ? t("dashboard.empty.noFoodToday")
+              : t("dashboard.empty.noFoodDay")
           }
-          description="Start tracking your meals to understand your daily nutrition."
-          actionText="+ Add Your First Food"
+          description={t("dashboard.empty.description")}
+          actionText={t("dashboard.empty.addFirstFood")}
           onAction={() => openAddFood()}
         />
       )}
 
       {/* ─────────────── Section C — Quick actions ─────────────── */}
-      <section aria-label="Quick actions" className="space-y-2.5">
+      <section
+        aria-label={t("dashboard.quickActions.aria")}
+        className="space-y-2.5"
+      >
         <Button
           onClick={() => openAddFood()}
           className="h-12 w-full gap-2 rounded-2xl text-sm font-bold"
         >
           <Plus className="h-4 w-4" />
-          Add Food
+          {t("dashboard.quickActions.addFood")}
         </Button>
 
         <div className="grid grid-cols-3 gap-2.5">
@@ -626,7 +666,7 @@ export default function DashboardPage() {
             className="h-11 gap-1.5 rounded-2xl border-border/60 text-xs font-semibold"
           >
             <Droplet className="h-4 w-4 text-sky-500" />
-            Add Water
+            {t("dashboard.quickActions.addWater")}
           </Button>
           <Button
             variant="outline"
@@ -634,7 +674,7 @@ export default function DashboardPage() {
             className="h-11 gap-1.5 rounded-2xl border-border/60 text-xs font-semibold"
           >
             <Dumbbell className="h-4 w-4 text-amber-500" />
-            Workout
+            {t("dashboard.quickActions.workout")}
           </Button>
           <Button
             asChild
@@ -643,7 +683,7 @@ export default function DashboardPage() {
           >
             <Link href="/diet">
               <UtensilsCrossed className="h-4 w-4 text-emerald-500" />
-              Food Diary
+              {t("dashboard.quickActions.foodDiary")}
             </Link>
           </Button>
         </div>
@@ -652,13 +692,15 @@ export default function DashboardPage() {
       {/* ─────────────── Section D — Today's meals ─────────────── */}
       {hasFoodLogged && (
         <section
-          aria-label="Today's meals"
+          aria-label={t("dashboard.meals.aria")}
           className="glass-card space-y-2 rounded-3xl border border-border/50 p-5 sm:p-6"
         >
           <div className="flex items-center justify-between gap-2">
             <h2 className="font-heading flex items-center gap-2 text-base font-black sm:text-lg">
               <UtensilsCrossed className="h-4 w-4 text-primary" />
-              {isToday ? "Today's Meals" : "Meals"}
+              {isToday
+                ? t("dashboard.meals.titleToday")
+                : t("dashboard.meals.title")}
             </h2>
             <Button
               variant="ghost"
@@ -667,7 +709,7 @@ export default function DashboardPage() {
               className="h-8 gap-1 rounded-xl text-xs font-semibold"
             >
               <Plus className="h-3.5 w-3.5" />
-              Add
+              {t("dashboard.meals.add")}
             </Button>
           </div>
 
@@ -692,7 +734,7 @@ export default function DashboardPage() {
                         <Icon className="h-3.5 w-3.5" />
                       </span>
                       <span className="truncate text-sm font-bold">
-                        {slot.label}
+                        {t(slot.labelKey)}
                       </span>
                     </div>
 
@@ -705,7 +747,9 @@ export default function DashboardPage() {
                         size="icon"
                         onClick={() => openAddFood(slot.type)}
                         className="h-7 w-7 rounded-lg"
-                        aria-label={`Add food to ${slot.label}`}
+                        aria-label={t("dashboard.meals.addFoodTo", {
+                          slot: t(slot.labelKey),
+                        })}
                       >
                         <Plus className="h-4 w-4" />
                       </Button>
@@ -714,7 +758,7 @@ export default function DashboardPage() {
 
                   {meal.items.length === 0 ? (
                     <p className="ml-9 mt-1.5 text-xs text-muted-foreground">
-                      Nothing logged yet.
+                      {t("dashboard.meals.nothingLogged")}
                     </p>
                   ) : (
                     <ul className="ml-9 mt-2 space-y-1.5">
@@ -738,13 +782,18 @@ export default function DashboardPage() {
                             <div className="min-w-0">
                               <p className="truncate text-sm">{item.name}</p>
                               <p className="text-[11px] text-muted-foreground">
-                                {item.serving || "1 serving"}
+                                {item.serving ||
+                                  t("dashboard.meals.defaultServing")}
                                 {item.quantity && item.quantity !== 1
                                   ? ` × ${item.quantity}`
                                   : ""}{" "}
                                 &middot; {Math.round(item.calories || 0)} kcal
-                                &middot; P{item.protein}g C{item.carbs}g F
-                                {item.fat}g
+                                &middot;{" "}
+                                {t("dashboard.meals.macroInline", {
+                                  protein: item.protein,
+                                  carbs: item.carbs,
+                                  fat: item.fat,
+                                })}
                               </p>
                             </div>
                             <Button
@@ -758,7 +807,9 @@ export default function DashboardPage() {
                                 itemDeletingKey === `${meal._id}_${idx}`
                               }
                               className="h-7 w-7 shrink-0 rounded-lg text-muted-foreground hover:text-destructive"
-                              aria-label={`Remove ${item.name}`}
+                              aria-label={t("dashboard.meals.removeItem", {
+                                name: item.name,
+                              })}
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                             </Button>
@@ -775,7 +826,10 @@ export default function DashboardPage() {
       )}
 
       {/* ─────────────── Section E — Compact daily habits (water/workout/sleep) ─────────────── */}
-      <section aria-label="Daily habits" className="grid grid-cols-3 gap-2.5">
+      <section
+        aria-label={t("dashboard.habits.aria")}
+        className="grid grid-cols-3 gap-2.5"
+      >
         {habitTiles.map((tile) => {
           const Icon = tile.icon;
           return (
@@ -802,7 +856,10 @@ export default function DashboardPage() {
               </p>
               <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-muted">
                 <div
-                  className={cn("h-full rounded-full transition-all", tile.barClass)}
+                  className={cn(
+                    "h-full rounded-full transition-all",
+                    tile.barClass,
+                  )}
                   style={{ width: `${tile.pct}%` }}
                 />
               </div>

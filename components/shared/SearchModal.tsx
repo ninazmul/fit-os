@@ -9,7 +9,14 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Utensils, Sparkles, ScanBarcode, Plus, Check } from "lucide-react";
+import {
+  Search,
+  Utensils,
+  Sparkles,
+  ScanBarcode,
+  Plus,
+  Check,
+} from "lucide-react";
 import { getFoods } from "@/lib/actions/food.actions";
 import { appendMealItem } from "@/lib/actions/meal.actions";
 import { notifyDataUpdated } from "@/lib/events";
@@ -18,6 +25,7 @@ import type { IFood, FoodDisplayCategory, MealType } from "@/types/fitness";
 import { foods as defaultFoods } from "@/public/foods";
 import toast from "react-hot-toast";
 import dynamic from "next/dynamic";
+import { useI18n } from "@/components/shared/I18nProvider";
 
 const BarcodeScanner = dynamic(
   () => import("@/components/shared/BarcodeScanner"),
@@ -34,17 +42,29 @@ interface SearchModalProps {
 
 const displayCategories: {
   id: FoodDisplayCategory;
-  label: string;
+  labelKey: string;
   emoji: string;
 }[] = [
-  { id: "all", label: "All Foods", emoji: "🌐" },
-  { id: "home_cooking", label: "Home Cooking", emoji: "🏠" },
-  { id: "street_food", label: "Street Food", emoji: "🛒" },
-  { id: "drinks", label: "Drinks", emoji: "🥤" },
-  { id: "fast_food", label: "Fast Food", emoji: "🍔" },
-  { id: "traditional", label: "Traditional", emoji: "🎭" },
-  { id: "fruits", label: "Fruits & Veg", emoji: "🍎" },
-  { id: "restaurant", label: "Restaurant", emoji: "🍽️" },
+  { id: "all", labelKey: "shared.foodCategory.all", emoji: "🌐" },
+  {
+    id: "home_cooking",
+    labelKey: "shared.foodCategory.homeCooking",
+    emoji: "🏠",
+  },
+  {
+    id: "street_food",
+    labelKey: "shared.foodCategory.streetFood",
+    emoji: "🛒",
+  },
+  { id: "drinks", labelKey: "shared.foodCategory.drinks", emoji: "🥤" },
+  { id: "fast_food", labelKey: "shared.foodCategory.fastFood", emoji: "🍔" },
+  {
+    id: "traditional",
+    labelKey: "shared.foodCategory.traditional",
+    emoji: "🎭",
+  },
+  { id: "fruits", labelKey: "shared.foodCategory.fruits", emoji: "🍎" },
+  { id: "restaurant", labelKey: "shared.foodCategory.restaurant", emoji: "🍽️" },
 ];
 
 export default function SearchModal({
@@ -65,6 +85,7 @@ export default function SearchModal({
   );
   const [addingId, setAddingId] = useState<string | null>(null);
   const [loggedIds, setLoggedIds] = useState<Set<string>>(new Set());
+  const { t } = useI18n();
 
   const activeDate = dateStr || getLocalDateString();
 
@@ -128,12 +149,16 @@ export default function SearchModal({
 
       setLoggedIds((prev) => new Set(prev).add(foodKey));
       toast.success(
-        `Logged ${food.name} (${food.calories} kcal) to ${mealSlot}! 🍲`,
+        t("shared.toast.foodLogged", {
+          name: food.name,
+          calories: food.calories,
+          meal: t(`shared.mealSlot.${mealSlot}`),
+        }),
       );
       notifyDataUpdated("meal");
       await onCompleted?.();
     } catch {
-      toast.error("Failed to log food");
+      toast.error(t("shared.toast.logFoodFailed"));
     } finally {
       setAddingId(null);
     }
@@ -158,14 +183,15 @@ export default function SearchModal({
             <DialogTitle className="text-base font-bold flex items-center justify-between">
               <span className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-primary" />
-                Bangladeshi & Global Foods
+                {t("shared.search.title")}
               </span>
               <button
                 type="button"
                 onClick={() => setBarcodeOpen(true)}
                 className="text-xs font-semibold text-primary flex items-center gap-1 hover:underline"
               >
-                <ScanBarcode className="w-3.5 h-3.5" /> Barcode
+                <ScanBarcode className="w-3.5 h-3.5" />{" "}
+                {t("shared.search.barcode")}
               </button>
             </DialogTitle>
           </DialogHeader>
@@ -174,10 +200,10 @@ export default function SearchModal({
           <div className="flex items-center justify-between gap-2 p-1 bg-muted/60 rounded-2xl text-xs font-semibold">
             {(
               [
-                { id: "breakfast", label: "Breakfast" },
-                { id: "lunch", label: "Lunch" },
-                { id: "dinner", label: "Dinner" },
-                { id: "snack", label: "Snack" },
+                { id: "breakfast", labelKey: "shared.mealSlot.breakfast" },
+                { id: "lunch", labelKey: "shared.mealSlot.lunch" },
+                { id: "dinner", labelKey: "shared.mealSlot.dinner" },
+                { id: "snack", labelKey: "shared.mealSlot.snack" },
               ] as const
             ).map((slot) => (
               <button
@@ -190,7 +216,7 @@ export default function SearchModal({
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {slot.label}
+                {t(slot.labelKey)}
               </button>
             ))}
           </div>
@@ -198,7 +224,7 @@ export default function SearchModal({
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search (e.g. Polao, Kacchi, Fuchka, Borhani, Eggs)..."
+              placeholder={t("shared.search.placeholder")}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="pl-9 rounded-2xl text-sm bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-primary"
@@ -222,7 +248,7 @@ export default function SearchModal({
                   }`}
                 >
                   <span>{cat.emoji}</span>
-                  <span>{cat.label}</span>
+                  <span>{t(cat.labelKey)}</span>
                 </button>
               );
             })}

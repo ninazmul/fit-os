@@ -38,6 +38,8 @@ import {
 } from "lucide-react";
 import type { AIInsight } from "@/types/fitness";
 import Link from "next/link";
+import { useI18n } from "@/components/shared/I18nProvider";
+import { useDynamicTranslation } from "@/lib/i18n/use-dynamic-translation";
 
 const AdUnit = dynamic(() => import("@/components/shared/AdUnit"), {
   ssr: false,
@@ -53,13 +55,13 @@ const CATEGORY_FILTERS = [
 ] as const;
 type CategoryFilter = (typeof CATEGORY_FILTERS)[number];
 
-const PROMPT_PILLS = [
-  "Why is my weight plateauing?",
-  "Best high-protein meals for my goal?",
-  "How can I improve my sleep quality?",
-  "Optimal workout split for my fitness level?",
-  "How to break a fat loss plateau?",
-  "What should I eat pre and post workout?",
+const PROMPT_PILL_KEYS = [
+  "analytics.pill.weightPlateau",
+  "analytics.pill.highProteinMeals",
+  "analytics.pill.sleepQuality",
+  "analytics.pill.workoutSplit",
+  "analytics.pill.fatLossPlateau",
+  "analytics.pill.prePostWorkout",
 ];
 
 const categoryIcons: Record<string, React.ElementType> = {
@@ -155,6 +157,9 @@ interface ChatMessage {
 }
 
 export default function AnalyticsPage() {
+  const { t } = useI18n();
+  const promptPills = PROMPT_PILL_KEYS.map((key) => t(key));
+
   const [insights, setInsights] = useState<AIInsight[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [profile, setProfile] = useState<any>(null);
@@ -168,14 +173,20 @@ export default function AnalyticsPage() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
       role: "ai",
-      content:
-        "👋 Hi! I'm your NutriBD AI Coach. Ask me anything about your nutrition, training, recovery, or goals — I'll give you personalised, data-backed answers.",
-      pills: PROMPT_PILLS.slice(0, 3),
+      content: t("analytics.coachWelcome"),
+      pills: promptPills.slice(0, 3),
     },
   ]);
   const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // AI-generated report + coach answers are translated on the fly.
+  const localizedAI = useDynamicTranslation(aiData);
+  const localizedChatContents = useDynamicTranslation(
+    chatMessages.map((msg) => (msg.role === "ai" ? msg.content : "")),
+  );
+  const localizedLegacyInsights = useDynamicTranslation(insights);
 
   useEffect(() => {
     const fetch = async () => {
@@ -211,9 +222,9 @@ export default function AnalyticsPage() {
       ]);
       setAiData(deepAI);
       setInsights(legacyInsights);
-      toast.success("AI analysis refreshed!");
+      toast.success(t("analytics.refreshed"));
     } catch {
-      toast.error("Failed to refresh AI analysis.");
+      toast.error(t("analytics.refreshFailed"));
     } finally {
       setAiLoading(false);
     }
@@ -236,8 +247,7 @@ export default function AnalyticsPage() {
         ...prev,
         {
           role: "ai",
-          content:
-            "Sorry, I couldn't process that right now. Please try again!",
+          content: t("analytics.coachError"),
         },
       ]);
     } finally {
@@ -264,8 +274,8 @@ export default function AnalyticsPage() {
       {/* Header */}
       <PageHeader
         icon={Brain}
-        title="AI Health Intelligence"
-        subtitle="Personalised health analysis powered by Gemini AI · Updated from your real activity data"
+        title={t("analytics.title")}
+        subtitle={t("analytics.subtitle")}
         actions={
           <>
             <Button
@@ -275,7 +285,7 @@ export default function AnalyticsPage() {
               className="rounded-xl gap-1.5 text-xs font-bold border-primary/40 text-primary hover:bg-primary/10"
             >
               <MessageSquare className="w-3.5 h-3.5" />
-              Ask AI Coach
+              {t("analytics.askAiCoach")}
             </Button>
             <Button
               onClick={refreshAI}
@@ -286,13 +296,13 @@ export default function AnalyticsPage() {
               <RefreshCw
                 className={`w-3.5 h-3.5 ${aiLoading ? "animate-spin" : ""}`}
               />
-              {aiLoading ? "Analysing…" : "Refresh"}
+              {aiLoading ? t("analytics.analysing") : t("analytics.refresh")}
             </Button>
           </>
         }
       />
 
-      <AdUnit size="auto" label="Sponsored" maxWidth="970px" />
+      <AdUnit size="auto" label={t("analytics.sponsored")} maxWidth="970px" />
 
       {/* Health Score Banner */}
       {loading ? (
@@ -339,7 +349,7 @@ export default function AnalyticsPage() {
                       {aiData.healthScore}
                     </span>
                     <span className="text-[9px] text-muted-foreground font-semibold tracking-wide">
-                      SCORE
+                      {t("analytics.score")}
                     </span>
                   </div>
                 </div>
@@ -348,7 +358,7 @@ export default function AnalyticsPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-lg font-black">
-                    {aiData.healthGrade}
+                    {localizedAI?.healthGrade ?? aiData.healthGrade}
                   </span>
                   {aiData.isAIGenerated && (
                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/20 text-primary font-bold flex items-center gap-1">
@@ -357,7 +367,7 @@ export default function AnalyticsPage() {
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">
-                  {aiData.executiveSummary}
+                  {localizedAI?.executiveSummary ?? aiData.executiveSummary}
                 </p>
               </div>
 
@@ -365,22 +375,22 @@ export default function AnalyticsPage() {
               <div className="flex gap-4 flex-wrap">
                 <ScoreRing
                   score={aiData.scoreBreakdown.nutrition}
-                  label="Nutrition"
+                  label={t("analytics.nutrition")}
                   color="#10b981"
                 />
                 <ScoreRing
                   score={aiData.scoreBreakdown.workouts}
-                  label="Workouts"
+                  label={t("analytics.workouts")}
                   color="#6366f1"
                 />
                 <ScoreRing
                   score={aiData.scoreBreakdown.recovery}
-                  label="Recovery"
+                  label={t("analytics.recovery")}
                   color="#8b5cf6"
                 />
                 <ScoreRing
                   score={aiData.scoreBreakdown.hydration}
-                  label="Hydration"
+                  label={t("analytics.hydration")}
                   color="#3b82f6"
                 />
               </div>
@@ -394,9 +404,11 @@ export default function AnalyticsPage() {
         <div className="glass-card rounded-3xl border border-primary/20 overflow-hidden">
           <div className="bg-gradient-to-r from-primary/10 to-purple-500/10 px-5 py-3 border-b border-border/40 flex items-center gap-2">
             <Brain className="w-4 h-4 text-primary" />
-            <span className="font-bold text-sm">NutriBD AI Coach</span>
+            <span className="font-bold text-sm">
+              {t("analytics.coachTitle")}
+            </span>
             <span className="text-[10px] text-muted-foreground ml-auto">
-              Context-aware · Personalised
+              {t("analytics.coachContext")}
             </span>
           </div>
 
@@ -413,7 +425,9 @@ export default function AnalyticsPage() {
                       : "bg-muted/60 border border-border/40 rounded-bl-sm"
                   }`}
                 >
-                  <p className="whitespace-pre-line">{msg.content}</p>
+                  <p className="whitespace-pre-line">
+                    {localizedChatContents[idx] || msg.content}
+                  </p>
                   {msg.pills && msg.pills.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mt-2.5">
                       {msg.pills.map((pill, pi) => (
@@ -454,7 +468,7 @@ export default function AnalyticsPage() {
           <div className="px-4 py-3 border-t border-border/40 space-y-2">
             {/* Quick Pills */}
             <div className="flex flex-wrap gap-1.5">
-              {PROMPT_PILLS.slice(0, 3).map((pill, i) => (
+              {promptPills.slice(0, 3).map((pill, i) => (
                 <button
                   key={i}
                   onClick={() => sendMessage(pill)}
@@ -467,7 +481,7 @@ export default function AnalyticsPage() {
             <div className="flex gap-2">
               <input
                 className="flex-1 text-xs bg-muted/40 border border-border/40 rounded-xl px-3 py-2 outline-none focus:border-primary/50 transition-colors placeholder:text-muted-foreground"
-                placeholder="Ask your AI Coach anything…"
+                placeholder={t("analytics.coachPlaceholder")}
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && sendMessage()}
@@ -492,34 +506,39 @@ export default function AnalyticsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="glass-card p-5 rounded-3xl border border-emerald-500/20 space-y-3">
               <h3 className="font-bold text-sm flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
-                <ShieldCheck className="w-4 h-4" /> Key Strengths
+                <ShieldCheck className="w-4 h-4" />{" "}
+                {t("analytics.keyStrengths")}
               </h3>
               <ul className="space-y-2">
-                {aiData.keyStrengths.map((s, i) => (
-                  <li
-                    key={i}
-                    className="flex items-start gap-2 text-xs leading-relaxed"
-                  >
-                    <Star className="w-3 h-3 text-emerald-500 flex-shrink-0 mt-0.5" />
-                    {s}
-                  </li>
-                ))}
+                {(localizedAI?.keyStrengths ?? aiData.keyStrengths).map(
+                  (s, i) => (
+                    <li
+                      key={i}
+                      className="flex items-start gap-2 text-xs leading-relaxed"
+                    >
+                      <Star className="w-3 h-3 text-emerald-500 flex-shrink-0 mt-0.5" />
+                      {s}
+                    </li>
+                  ),
+                )}
               </ul>
             </div>
             <div className="glass-card p-5 rounded-3xl border border-amber-500/20 space-y-3">
               <h3 className="font-bold text-sm flex items-center gap-2 text-amber-700 dark:text-amber-400">
-                <TrendingUp className="w-4 h-4" /> Growth Areas
+                <TrendingUp className="w-4 h-4" /> {t("analytics.growthAreas")}
               </h3>
               <ul className="space-y-2">
-                {aiData.growthAreas.map((g, i) => (
-                  <li
-                    key={i}
-                    className="flex items-start gap-2 text-xs leading-relaxed"
-                  >
-                    <ChevronRight className="w-3 h-3 text-amber-500 flex-shrink-0 mt-0.5" />
-                    {g}
-                  </li>
-                ))}
+                {(localizedAI?.growthAreas ?? aiData.growthAreas).map(
+                  (g, i) => (
+                    <li
+                      key={i}
+                      className="flex items-start gap-2 text-xs leading-relaxed"
+                    >
+                      <ChevronRight className="w-3 h-3 text-amber-500 flex-shrink-0 mt-0.5" />
+                      {g}
+                    </li>
+                  ),
+                )}
               </ul>
             </div>
           </div>
@@ -530,36 +549,40 @@ export default function AnalyticsPage() {
         <div className="glass-card p-5 rounded-3xl border border-border/50 space-y-4">
           <h2 className="font-bold text-base flex items-center gap-2">
             <Target className="w-5 h-5 text-primary" />
-            Your 7-Day AI Gameplan
+            {t("analytics.actionPlanTitle")}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {aiData.actionPlan.map((step) => (
-              <div
-                key={step.step}
-                className="p-4 rounded-2xl bg-muted/40 border border-border/30 space-y-2"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-black text-muted-foreground">
-                    STEP {step.step}
-                  </span>
-                  <span
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                      step.impact === "High"
-                        ? "bg-primary/15 text-primary"
-                        : step.impact === "Quick Win"
-                          ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-                          : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
-                    }`}
-                  >
-                    {step.impact}
-                  </span>
+            {aiData.actionPlan.map((step, idx) => {
+              const localizedStep =
+                (localizedAI?.actionPlan ?? aiData.actionPlan)[idx] ?? step;
+              return (
+                <div
+                  key={step.step}
+                  className="p-4 rounded-2xl bg-muted/40 border border-border/30 space-y-2"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black text-muted-foreground">
+                      {t("analytics.step", { step: step.step })}
+                    </span>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        step.impact === "High"
+                          ? "bg-primary/15 text-primary"
+                          : step.impact === "Quick Win"
+                            ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                            : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                      }`}
+                    >
+                      {step.impact}
+                    </span>
+                  </div>
+                  <p className="text-xs font-bold">{localizedStep.title}</p>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    {localizedStep.description}
+                  </p>
                 </div>
-                <p className="text-xs font-bold">{step.title}</p>
-                <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  {step.description}
-                </p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -569,7 +592,7 @@ export default function AnalyticsPage() {
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-base font-bold flex items-center gap-2">
             <BarChart2 className="w-5 h-5 text-primary" />
-            Health Insights
+            {t("analytics.healthInsights")}
           </h2>
         </div>
 
@@ -587,7 +610,7 @@ export default function AnalyticsPage() {
                 }`}
               >
                 <Icon className="w-3 h-3" />
-                {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                {t(`analytics.filter.${filter}`)}
               </button>
             );
           })}
@@ -595,18 +618,25 @@ export default function AnalyticsPage() {
 
         {filteredInsights.length === 0 && !loading && (
           <div className="glass-card p-8 text-center rounded-3xl border border-border/50 text-xs text-muted-foreground">
-            No insights in this category yet. Keep logging daily meals,
-            workouts, and weight to generate personalised AI advice!
+            {t("analytics.emptyInsights")}
           </div>
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* AI Categorized Insights */}
           {(aiData?.categorizedInsights || [])
+            .map((item, idx) => ({
+              item,
+              localized:
+                (localizedAI?.categorizedInsights ??
+                  aiData?.categorizedInsights ??
+                  [])[idx] ?? item,
+            }))
             .filter(
-              (i) => activeFilter === "all" || i.category === activeFilter,
+              ({ item }) =>
+                activeFilter === "all" || item.category === activeFilter,
             )
-            .map((item) => {
+            .map(({ item, localized }) => {
               const Icon = insightTypeIcons[item.type] || Info;
               const style = insightTypeStyles[item.type];
               return (
@@ -620,19 +650,19 @@ export default function AnalyticsPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
-                        <h3 className="font-bold text-sm">{item.title}</h3>
+                        <h3 className="font-bold text-sm">{localized.title}</h3>
                         {item.metric && (
                           <span className="text-[10px] font-black bg-background/60 px-2 py-0.5 rounded-full flex-shrink-0">
-                            {item.metric}
+                            {localized.metric}
                           </span>
                         )}
                       </div>
                       <p className="text-xs mt-1 leading-relaxed opacity-90">
-                        {item.description}
+                        {localized.description}
                       </p>
                       {item.recommendation && (
                         <p className="text-[11px] mt-1.5 opacity-75 italic leading-relaxed">
-                          💡 {item.recommendation}
+                          💡 {localized.recommendation}
                         </p>
                       )}
                     </div>
@@ -643,9 +673,10 @@ export default function AnalyticsPage() {
 
           {/* Legacy Rule-Based Insights (shown only in "all" tab) */}
           {activeFilter === "all" &&
-            insights.map((item) => {
+            insights.map((item, idx) => {
               const Icon = insightTypeIcons[item.type] || Info;
               const style = insightTypeStyles[item.type];
+              const localized = localizedLegacyInsights[idx] ?? item;
               return (
                 <div
                   key={item.id}
@@ -656,9 +687,9 @@ export default function AnalyticsPage() {
                       <Icon className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-sm">{item.title}</h3>
+                      <h3 className="font-bold text-sm">{localized.title}</h3>
                       <p className="text-xs mt-1 leading-relaxed opacity-90">
-                        {item.description}
+                        {localized.description}
                       </p>
                       {item.actionableText && (
                         <Link href="/diet">
@@ -667,7 +698,7 @@ export default function AnalyticsPage() {
                             variant="ghost"
                             className="mt-3 text-xs font-bold gap-1 px-0 hover:bg-transparent"
                           >
-                            {item.actionableText}{" "}
+                            {localized.actionableText}{" "}
                             <ArrowRight className="w-3.5 h-3.5" />
                           </Button>
                         </Link>
@@ -685,63 +716,71 @@ export default function AnalyticsPage() {
         <div className="glass-card p-5 rounded-3xl border border-border/50 space-y-4">
           <h2 className="font-bold text-base flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-purple-500" />
-            AI-Detected Correlations
+            {t("analytics.correlations")}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {aiData.correlations.map((cor, i) => (
-              <div
-                key={i}
-                className="p-4 rounded-2xl bg-purple-500/5 border border-purple-500/20 space-y-1.5"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs text-purple-700 dark:text-purple-300">
-                    {cor.title}
-                  </span>
-                  <span
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                      cor.confidence === "High"
-                        ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-                        : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
-                    }`}
-                  >
-                    {cor.confidence} Confidence
-                  </span>
+            {aiData.correlations.map((cor, i) => {
+              const localizedCor =
+                (localizedAI?.correlations ?? aiData.correlations)[i] ?? cor;
+              return (
+                <div
+                  key={i}
+                  className="p-4 rounded-2xl bg-purple-500/5 border border-purple-500/20 space-y-1.5"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-xs text-purple-700 dark:text-purple-300">
+                      {localizedCor.title}
+                    </span>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        cor.confidence === "High"
+                          ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                          : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                      }`}
+                    >
+                      {t("analytics.confidence", { level: cor.confidence })}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    {localizedCor.observation}
+                  </p>
                 </div>
-                <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  {cor.observation}
-                </p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
 
       {/* Daily Targets Overview */}
       <div className="glass-card p-6 rounded-3xl border border-border/50 space-y-4">
-        <h2 className="text-base font-bold">Active Daily Targets</h2>
+        <h2 className="text-base font-bold">{t("analytics.dailyTargets")}</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
           <div className="p-3 rounded-2xl bg-muted/40 border border-border/30">
-            <p className="text-muted-foreground">Calorie Goal</p>
+            <p className="text-muted-foreground">{t("analytics.calorieGoal")}</p>
             <p className="text-lg font-bold text-amber-600 dark:text-amber-400">
               {profile?.dailyCaloriesGoal || 2000} kcal
             </p>
           </div>
           <div className="p-3 rounded-2xl bg-muted/40 border border-border/30">
-            <p className="text-muted-foreground">Protein Goal</p>
+            <p className="text-muted-foreground">{t("analytics.proteinGoal")}</p>
             <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
               {profile?.dailyProteinGoal || 150} g
             </p>
           </div>
           <div className="p-3 rounded-2xl bg-muted/40 border border-border/30">
-            <p className="text-muted-foreground">Water Goal</p>
+            <p className="text-muted-foreground">{t("analytics.waterGoal")}</p>
             <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
               {profile?.waterGoalMl || 3000} ml
             </p>
           </div>
           <div className="p-3 rounded-2xl bg-muted/40 border border-border/30">
-            <p className="text-muted-foreground">Workout Frequency</p>
+            <p className="text-muted-foreground">
+              {t("analytics.workoutFrequency")}
+            </p>
             <p className="text-lg font-bold text-purple-600 dark:text-purple-400">
-              {profile?.workoutDaysPerWeek || 4} days/wk
+              {t("analytics.daysPerWeek", {
+                days: profile?.workoutDaysPerWeek || 4,
+              })}
             </p>
           </div>
         </div>

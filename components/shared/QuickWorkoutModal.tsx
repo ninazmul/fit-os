@@ -23,6 +23,7 @@ import { notifyDataUpdated } from "@/lib/events";
 import { getLocalDateString } from "@/lib/utils";
 import type { WorkoutType } from "@/types/fitness";
 import toast from "react-hot-toast";
+import { useI18n } from "@/components/shared/I18nProvider";
 
 interface QuickWorkoutModalProps {
   open: boolean;
@@ -34,6 +35,7 @@ interface QuickWorkoutModalProps {
 const PRESETS = [
   {
     title: "Push Day",
+    labelKey: "shared.workoutType.push",
     type: "push" as WorkoutType,
     duration: 45,
     calories: 320,
@@ -41,6 +43,7 @@ const PRESETS = [
   },
   {
     title: "Pull Day",
+    labelKey: "shared.workoutType.pull",
     type: "pull" as WorkoutType,
     duration: 45,
     calories: 310,
@@ -48,6 +51,7 @@ const PRESETS = [
   },
   {
     title: "Leg Day",
+    labelKey: "shared.workoutType.legs",
     type: "legs" as WorkoutType,
     duration: 50,
     calories: 380,
@@ -55,6 +59,7 @@ const PRESETS = [
   },
   {
     title: "Cardio & Run",
+    labelKey: "shared.preset.cardioRun",
     type: "cardio" as WorkoutType,
     duration: 30,
     calories: 280,
@@ -62,6 +67,7 @@ const PRESETS = [
   },
   {
     title: "Full Body",
+    labelKey: "shared.workoutType.fullBody",
     type: "full_body" as WorkoutType,
     duration: 50,
     calories: 350,
@@ -81,6 +87,7 @@ export default function QuickWorkoutModal({
   const [caloriesBurned, setCaloriesBurned] = useState<number>(320);
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
+  const { t } = useI18n();
 
   const handleSelectPreset = (preset: (typeof PRESETS)[0]) => {
     setTitle(preset.title);
@@ -104,12 +111,17 @@ export default function QuickWorkoutModal({
         notes,
       });
 
-      toast.success(`Logged ${title} (${caloriesBurned} kcal burned)! 🔥`);
+      toast.success(
+        t("shared.quickWorkout.toast.logged", {
+          title,
+          calories: caloriesBurned,
+        }),
+      );
       notifyDataUpdated("workout");
       onOpenChange(false);
       await onCompleted?.();
     } catch {
-      toast.error("Failed to log workout");
+      toast.error(t("shared.toast.logWorkoutFailed"));
     } finally {
       setLoading(false);
     }
@@ -122,10 +134,10 @@ export default function QuickWorkoutModal({
           <DialogTitle className="text-lg font-bold flex items-center justify-between">
             <span className="flex items-center gap-2">
               <Dumbbell className="w-5 h-5 text-amber-500" />
-              Quick Log Workout
+              {t("shared.quickWorkout.title")}
             </span>
             <span className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full">
-              Burn Calories
+              {t("shared.quickWorkout.badge")}
             </span>
           </DialogTitle>
         </DialogHeader>
@@ -134,7 +146,7 @@ export default function QuickWorkoutModal({
         <div className="space-y-1.5">
           <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
             <Sparkles className="w-3.5 h-3.5 text-primary" />
-            Quick Presets
+            {t("shared.quickWorkout.presets")}
           </p>
           <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
             {PRESETS.map((p) => {
@@ -152,7 +164,7 @@ export default function QuickWorkoutModal({
                 >
                   <span className="text-base">{p.icon}</span>
                   <span className="text-[11px] font-bold leading-tight">
-                    {p.title}
+                    {t(p.labelKey)}
                   </span>
                   <span className="text-[9px] text-muted-foreground">
                     {p.duration}m &middot; {p.calories}k
@@ -166,13 +178,13 @@ export default function QuickWorkoutModal({
         <form onSubmit={handleSubmit} className="space-y-3 pt-2">
           <div className="space-y-1">
             <Label htmlFor="workout-title" className="text-xs">
-              Workout Name
+              {t("shared.quickWorkout.name")}
             </Label>
             <Input
               id="workout-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Push Workout / Morning Run"
+              placeholder={t("shared.quickWorkout.namePlaceholder")}
               className="rounded-xl font-medium"
               required
             />
@@ -180,30 +192,48 @@ export default function QuickWorkoutModal({
 
           <div className="grid grid-cols-2 gap-2.5">
             <div className="space-y-1">
-              <Label className="text-xs">Type</Label>
+              <Label className="text-xs">{t("shared.quickWorkout.type")}</Label>
               <Select
                 value={workoutType}
                 onValueChange={(val) => setWorkoutType(val as WorkoutType)}
               >
                 <SelectTrigger className="rounded-xl">
-                  <SelectValue placeholder="Workout Type" />
+                  <SelectValue
+                    placeholder={t("shared.quickWorkout.typePlaceholder")}
+                  />
                 </SelectTrigger>
                 <SelectContent className="rounded-2xl">
-                  <SelectItem value="push">Push Day</SelectItem>
-                  <SelectItem value="pull">Pull Day</SelectItem>
-                  <SelectItem value="legs">Leg Day</SelectItem>
-                  <SelectItem value="upper">Upper Body</SelectItem>
-                  <SelectItem value="lower">Lower Body</SelectItem>
-                  <SelectItem value="full_body">Full Body</SelectItem>
-                  <SelectItem value="cardio">Cardio / Run</SelectItem>
-                  <SelectItem value="custom">Custom Routine</SelectItem>
+                  <SelectItem value="push">
+                    {t("shared.workoutType.push")}
+                  </SelectItem>
+                  <SelectItem value="pull">
+                    {t("shared.workoutType.pull")}
+                  </SelectItem>
+                  <SelectItem value="legs">
+                    {t("shared.workoutType.legs")}
+                  </SelectItem>
+                  <SelectItem value="upper">
+                    {t("shared.workoutType.upper")}
+                  </SelectItem>
+                  <SelectItem value="lower">
+                    {t("shared.workoutType.lower")}
+                  </SelectItem>
+                  <SelectItem value="full_body">
+                    {t("shared.workoutType.fullBody")}
+                  </SelectItem>
+                  <SelectItem value="cardio">
+                    {t("shared.workoutType.cardio")}
+                  </SelectItem>
+                  <SelectItem value="custom">
+                    {t("shared.workoutType.customRoutine")}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-1">
               <Label htmlFor="workout-duration" className="text-xs">
-                Duration (min)
+                {t("shared.quickWorkout.duration")}
               </Label>
               <div className="relative">
                 <Clock className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -223,7 +253,7 @@ export default function QuickWorkoutModal({
 
           <div className="space-y-1">
             <Label htmlFor="workout-calories" className="text-xs">
-              Estimated Calories Burned (kcal)
+              {t("shared.quickWorkout.calories")}
             </Label>
             <div className="relative">
               <Flame className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-amber-500" />
@@ -241,13 +271,13 @@ export default function QuickWorkoutModal({
 
           <div className="space-y-1">
             <Label htmlFor="workout-notes" className="text-xs">
-              Notes (optional)
+              {t("shared.notesOptional")}
             </Label>
             <Input
               id="workout-notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="e.g. Heavy squats, 4 sets bench press"
+              placeholder={t("shared.quickWorkout.notesPlaceholder")}
               className="rounded-xl text-xs"
             />
           </div>
@@ -257,7 +287,7 @@ export default function QuickWorkoutModal({
             disabled={loading}
             className="w-full rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold h-11 shadow-sm mt-2"
           >
-            {loading ? "Saving..." : "Log Workout Now"}
+            {loading ? t("shared.saving") : t("shared.quickWorkout.submit")}
           </Button>
         </form>
       </DialogContent>

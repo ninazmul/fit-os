@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/components/shared/I18nProvider";
 
 export interface NutritionMetric {
   /** Stable key used to pick a consistent colour across the app. */
@@ -71,13 +72,14 @@ export default function NutritionSummary({
   macros,
   className,
 }: NutritionSummaryProps) {
+  const { t } = useI18n();
   const remaining = calories.target - calories.consumed;
   const over = remaining < 0;
   const caloriePct = percent(calories.consumed, calories.target);
 
   return (
     <section
-      aria-label="Today's nutrition"
+      aria-label={t("nutrition.summaryAria")}
       className={cn(
         "glass-card space-y-4 rounded-3xl border border-border/50 p-5 sm:p-6",
         className,
@@ -86,9 +88,11 @@ export default function NutritionSummary({
       {/* Calories — primary metric */}
       <div>
         <div className="flex items-baseline justify-between gap-3">
-          <p className="text-sm font-semibold text-muted-foreground">Calories</p>
+          <p className="text-sm font-semibold text-muted-foreground">
+            {calories.label}
+          </p>
           <p className="text-xs font-medium text-muted-foreground">
-            {caloriePct}% of target
+            {t("nutrition.percentOfTarget", { pct: caloriePct })}
           </p>
         </div>
 
@@ -108,8 +112,14 @@ export default function NutritionSummary({
           )}
         >
           {over
-            ? `${format(Math.abs(remaining))} ${calories.unit} over target`
-            : `${format(remaining)} ${calories.unit} remaining`}
+            ? t("nutrition.overTarget", {
+                amount: format(Math.abs(remaining)),
+                unit: calories.unit,
+              })
+            : t("nutrition.remainingAmount", {
+                amount: format(remaining),
+                unit: calories.unit,
+              })}
         </p>
 
         <div
@@ -118,7 +128,10 @@ export default function NutritionSummary({
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={caloriePct}
-          aria-label={`Calories ${caloriePct}% of target`}
+          aria-label={t("nutrition.progressAria", {
+            label: calories.label,
+            pct: caloriePct,
+          })}
         >
           <div
             className={cn(
@@ -160,7 +173,10 @@ export default function NutritionSummary({
                 aria-valuemin={0}
                 aria-valuemax={100}
                 aria-valuenow={pct}
-                aria-label={`${macro.label} ${pct}% of target`}
+                aria-label={t("nutrition.progressAria", {
+                  label: macro.label,
+                  pct,
+                })}
               >
                 <div
                   className={cn("h-full rounded-full transition-all duration-500", style.bar)}

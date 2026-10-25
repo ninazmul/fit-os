@@ -11,6 +11,7 @@ import type { Gender, ActivityLevel, PrimaryGoal } from "@/types/fitness";
 import { APP_NAME } from "@/lib/constants";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { useI18n } from "@/components/shared/I18nProvider";
 
 interface OnboardingModalProps {
   open: boolean;
@@ -47,6 +48,7 @@ export default function OnboardingModal({
 
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { t } = useI18n();
 
   useEffect(() => {
     if (!open || !initialData) return;
@@ -71,7 +73,7 @@ export default function OnboardingModal({
 
   const handleNextToTargets = async () => {
     if (!name.trim()) {
-      toast.error("Please enter your name");
+      toast.error(t("shared.onboarding.nameRequired"));
       return;
     }
 
@@ -116,12 +118,14 @@ export default function OnboardingModal({
         unitSystem: "metric",
       });
 
-      toast.success(`Profile saved! Welcome to ${APP_NAME} 💪`);
+      toast.success(
+        t("shared.onboarding.profileSaved", { appName: APP_NAME }),
+      );
       onOpenChange(false);
       await onCompleted?.();
       router.refresh();
     } catch {
-      toast.error("Failed to save profile");
+      toast.error(t("shared.onboarding.profileSaveFailed"));
     } finally {
       setLoading(false);
     }
@@ -132,21 +136,23 @@ export default function OnboardingModal({
       <DialogContent className="sm:max-w-lg rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-primary">
-            {step === 1 ? `Welcome to ${APP_NAME}! 👋` : "Your Recommended Goals 🎯"}
+            {step === 1
+              ? t("shared.onboarding.welcome", { appName: APP_NAME })
+              : t("shared.onboarding.goalsTitle")}
           </DialogTitle>
           <DialogDescription className="text-xs">
             {step === 1
-              ? "Tell us about yourself so we can calculate your ideal nutrition & fitness targets."
-              : "We calculated these recommended daily targets based on your profile. You can manually adjust them below."}
+              ? t("shared.onboarding.aboutYou")
+              : t("shared.onboarding.goalsDescription")}
           </DialogDescription>
         </DialogHeader>
 
         {step === 1 && (
           <div className="space-y-4 py-2">
             <div className="space-y-1">
-              <Label className="text-xs">Full Name</Label>
+              <Label className="text-xs">{t("shared.onboarding.name")}</Label>
               <Input
-                placeholder="e.g. Alex Vance"
+                placeholder={t("shared.onboarding.namePlaceholder")}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="rounded-xl"
@@ -155,21 +161,21 @@ export default function OnboardingModal({
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label className="text-xs">Gender</Label>
+                <Label className="text-xs">{t("shared.onboarding.gender")}</Label>
                 <Select value={gender} onValueChange={(v) => setGender(v as Gender)}>
                   <SelectTrigger className="rounded-xl">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="male">Male</SelectItem>
-                    <SelectItem value="female">Female</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
+                    <SelectItem value="male">{t("shared.onboarding.male")}</SelectItem>
+                    <SelectItem value="female">{t("shared.onboarding.female")}</SelectItem>
+                    <SelectItem value="other">{t("shared.onboarding.other")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-1">
-                <Label className="text-xs">Age</Label>
+                <Label className="text-xs">{t("shared.onboarding.age")}</Label>
                 <Input
                   type="number"
                   value={age}
@@ -181,7 +187,7 @@ export default function OnboardingModal({
 
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1">
-                <Label className="text-xs">Height (cm)</Label>
+                <Label className="text-xs">{t("shared.onboarding.height")}</Label>
                 <Input
                   type="number"
                   value={height}
@@ -191,7 +197,7 @@ export default function OnboardingModal({
               </div>
 
               <div className="space-y-1">
-                <Label className="text-xs">Current (kg)</Label>
+                <Label className="text-xs">{t("shared.onboarding.currentWeight")}</Label>
                 <Input
                   type="number"
                   step="0.5"
@@ -202,7 +208,7 @@ export default function OnboardingModal({
               </div>
 
               <div className="space-y-1">
-                <Label className="text-xs">Target (kg)</Label>
+                <Label className="text-xs">{t("shared.onboarding.targetWeight")}</Label>
                 <Input
                   type="number"
                   step="0.5"
@@ -215,38 +221,60 @@ export default function OnboardingModal({
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label className="text-xs">Primary Goal</Label>
+                <Label className="text-xs">
+                  {t("shared.onboarding.primaryGoal")}
+                </Label>
                 <Select value={goal} onValueChange={(v) => setGoal(v as PrimaryGoal)}>
                   <SelectTrigger className="rounded-xl">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="lose_weight">Lose Weight 🔥</SelectItem>
-                    <SelectItem value="gain_muscle">Gain Muscle 💪</SelectItem>
-                    <SelectItem value="maintain">Maintain Weight ⚖️</SelectItem>
+                    <SelectItem value="lose_weight">
+                      {t("shared.onboarding.loseWeight")}
+                    </SelectItem>
+                    <SelectItem value="gain_muscle">
+                      {t("shared.onboarding.gainMuscle")}
+                    </SelectItem>
+                    <SelectItem value="maintain">
+                      {t("shared.onboarding.maintainWeight")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-1">
-                <Label className="text-xs">Activity Level</Label>
+                <Label className="text-xs">
+                  {t("shared.onboarding.activityLevel")}
+                </Label>
                 <Select value={activityLevel} onValueChange={(v) => setActivityLevel(v as ActivityLevel)}>
                   <SelectTrigger className="rounded-xl">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="sedentary">Sedentary (Office/Desk)</SelectItem>
-                    <SelectItem value="light">Light (1-3 days/wk)</SelectItem>
-                    <SelectItem value="moderate">Moderate (3-5 days/wk)</SelectItem>
-                    <SelectItem value="active">Active (6-7 days/wk)</SelectItem>
-                    <SelectItem value="very_active">Very Active (Athlete/Physical Job)</SelectItem>
+                    <SelectItem value="sedentary">
+                      {t("shared.onboarding.sedentary")}
+                    </SelectItem>
+                    <SelectItem value="light">
+                      {t("shared.onboarding.light")}
+                    </SelectItem>
+                    <SelectItem value="moderate">
+                      {t("shared.onboarding.moderate")}
+                    </SelectItem>
+                    <SelectItem value="active">
+                      {t("shared.onboarding.active")}
+                    </SelectItem>
+                    <SelectItem value="very_active">
+                      {t("shared.onboarding.veryActive")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
             <div className="space-y-1">
-              <Label className="text-xs">Planned Workout Days per Week</Label>
+              <Label className="text-xs">
+                {t("shared.onboarding.workoutDays")}
+              </Label>
               <Input
                 type="number"
                 min="0"
@@ -258,7 +286,7 @@ export default function OnboardingModal({
             </div>
 
             <Button onClick={handleNextToTargets} className="w-full rounded-xl mt-2 bg-primary hover:bg-primary/90">
-              Calculate Recommended Goals &rarr;
+              {t("shared.onboarding.calculate")}
             </Button>
           </div>
         )}
@@ -267,7 +295,9 @@ export default function OnboardingModal({
           <div className="space-y-4 py-2">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label className="text-xs font-semibold">Daily Calories Goal</Label>
+                <Label className="text-xs font-semibold">
+                  {t("shared.onboarding.dailyCalories")}
+                </Label>
                 <Input
                   type="number"
                   value={dailyCaloriesGoal}
@@ -277,7 +307,9 @@ export default function OnboardingModal({
               </div>
 
               <div className="space-y-1">
-                <Label className="text-xs font-semibold">Daily Water Goal (ml)</Label>
+                <Label className="text-xs font-semibold">
+                  {t("shared.onboarding.dailyWater")}
+                </Label>
                 <Input
                   type="number"
                   step="100"
@@ -288,10 +320,12 @@ export default function OnboardingModal({
               </div>
             </div>
 
-            <p className="text-xs font-semibold text-muted-foreground pt-1">Macronutrient Targets (grams)</p>
+            <p className="text-xs font-semibold text-muted-foreground pt-1">
+              {t("shared.onboarding.macroTargets")}
+            </p>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label className="text-xs">Protein (g)</Label>
+                <Label className="text-xs">{t("shared.onboarding.protein")}</Label>
                 <Input
                   type="number"
                   value={dailyProteinGoal}
@@ -301,7 +335,7 @@ export default function OnboardingModal({
               </div>
 
               <div className="space-y-1">
-                <Label className="text-xs">Carbs (g)</Label>
+                <Label className="text-xs">{t("shared.onboarding.carbs")}</Label>
                 <Input
                   type="number"
                   value={dailyCarbGoal}
@@ -311,7 +345,7 @@ export default function OnboardingModal({
               </div>
 
               <div className="space-y-1">
-                <Label className="text-xs">Fat (g)</Label>
+                <Label className="text-xs">{t("shared.onboarding.fat")}</Label>
                 <Input
                   type="number"
                   value={dailyFatGoal}
@@ -321,7 +355,7 @@ export default function OnboardingModal({
               </div>
 
               <div className="space-y-1">
-                <Label className="text-xs">Fiber (g)</Label>
+                <Label className="text-xs">{t("shared.onboarding.fiber")}</Label>
                 <Input
                   type="number"
                   value={dailyFiberGoal}
@@ -337,14 +371,16 @@ export default function OnboardingModal({
                 onClick={() => setStep(1)}
                 className="rounded-xl border-border"
               >
-                &larr; Back
+                &larr; {t("common.back")}
               </Button>
               <Button
                 disabled={loading}
                 onClick={handleSaveProfile}
                 className="flex-1 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
               >
-                {loading ? "Saving Profile..." : "Complete Setup & Finish 🎉"}
+                {loading
+                  ? t("shared.onboarding.savingProfile")
+                  : t("shared.onboarding.finish")}
               </Button>
             </div>
           </div>

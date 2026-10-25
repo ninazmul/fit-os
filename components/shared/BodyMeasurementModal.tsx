@@ -17,6 +17,7 @@ import type { IBodyMeasurement } from "@/types/fitness";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { Ruler, Plus } from "lucide-react";
+import { useI18n } from "@/components/shared/I18nProvider";
 
 interface BodyMeasurementModalProps {
   open: boolean;
@@ -27,65 +28,55 @@ interface BodyMeasurementModalProps {
 
 interface MeasurementField {
   key: keyof Omit<IBodyMeasurement, "_id" | "clerkId" | "date">;
-  label: string;
-  placeholder: string;
-  description: string;
+  labelKey: string;
+  descriptionKey: string;
 }
 
 const MEASUREMENT_FIELDS: MeasurementField[] = [
   {
     key: "chest",
-    label: "Chest",
-    placeholder: "e.g. 100",
-    description: "Measure around the fullest part of your chest",
+    labelKey: "shared.measurement.chest",
+    descriptionKey: "shared.measurement.chestHelp",
   },
   {
     key: "waist",
-    label: "Waist",
-    placeholder: "e.g. 80",
-    description: "Measure around your natural waistline (belly button level)",
+    labelKey: "shared.measurement.waist",
+    descriptionKey: "shared.measurement.waistHelp",
   },
   {
     key: "hip",
-    label: "Hip",
-    placeholder: "e.g. 95",
-    description: "Measure around the widest part of your hips/buttocks",
+    labelKey: "shared.measurement.hip",
+    descriptionKey: "shared.measurement.hipHelp",
   },
   {
     key: "shoulder",
-    label: "Shoulders",
-    placeholder: "e.g. 120",
-    description: "Measure across the widest part of your shoulders (back)",
+    labelKey: "shared.measurement.shoulder",
+    descriptionKey: "shared.measurement.shoulderHelp",
   },
   {
     key: "neck",
-    label: "Neck",
-    placeholder: "e.g. 38",
-    description: "Measure around the base of your neck (below Adam's apple)",
+    labelKey: "shared.measurement.neck",
+    descriptionKey: "shared.measurement.neckHelp",
   },
   {
     key: "arm",
-    label: "Arm (Bicep)",
-    placeholder: "e.g. 35",
-    description: "Measure around the flexed bicep at its thickest point",
+    labelKey: "shared.measurement.arm",
+    descriptionKey: "shared.measurement.armHelp",
   },
   {
     key: "forearm",
-    label: "Forearm",
-    placeholder: "e.g. 28",
-    description: "Measure around the thickest part of your forearm",
+    labelKey: "shared.measurement.forearm",
+    descriptionKey: "shared.measurement.forearmHelp",
   },
   {
     key: "thigh",
-    label: "Thigh",
-    placeholder: "e.g. 58",
-    description: "Measure around the thickest part of your thigh (flexed)",
+    labelKey: "shared.measurement.thigh",
+    descriptionKey: "shared.measurement.thighHelp",
   },
   {
     key: "calf",
-    label: "Calf",
-    placeholder: "e.g. 38",
-    description: "Measure around the thickest part of your calf (flexed)",
+    labelKey: "shared.measurement.calf",
+    descriptionKey: "shared.measurement.calfHelp",
   },
 ];
 
@@ -99,6 +90,7 @@ export default function BodyMeasurementModal({
   const [measurements, setMeasurements] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { t } = useI18n();
 
   useEffect(() => {
     if (!open) return;
@@ -130,7 +122,7 @@ export default function BodyMeasurementModal({
       (v) => v !== "" && v !== undefined && v !== null
     );
     if (!hasValues) {
-      toast.error("Please enter at least one measurement");
+      toast.error(t("shared.measurement.emptyError"));
       return;
     }
 
@@ -148,13 +140,13 @@ export default function BodyMeasurementModal({
       });
 
       await logBodyMeasurement(payload as never);
-      toast.success("Body measurements saved successfully! 📏");
+      toast.success(t("shared.measurement.saved"));
       onSuccess?.();
       onOpenChange(false);
       router.refresh();
     } catch (err) {
       console.error(err);
-      toast.error("Failed to save measurements");
+      toast.error(t("shared.measurement.saveFailed"));
     } finally {
       setLoading(false);
     }
@@ -168,22 +160,25 @@ export default function BodyMeasurementModal({
         <DialogHeader>
           <DialogTitle className="text-xl font-bold flex items-center gap-2">
             <Ruler className="w-5 h-5 text-primary" />
-            Log Body Measurements
+            {t("shared.measurement.title")}
           </DialogTitle>
           <DialogDescription className="text-xs">
-            Track your body transformation over time. All measurements are in
-            centimeters (cm).
+            {t("shared.measurement.description")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
           <div className="space-y-1.5 p-3 rounded-2xl bg-muted/20 border border-border/40">
             <div className="flex items-center justify-between">
-              <Label className="text-xs font-semibold">Measurement Date</Label>
+              <Label className="text-xs font-semibold">
+                {t("shared.measurement.date")}
+              </Label>
               <div className="flex items-center gap-2">
                 {initialData?.date && (
                   <span className="text-[10px] text-muted-foreground">
-                    Previous: {initialData.date}
+                    {t("shared.measurement.previous", {
+                      date: initialData.date,
+                    })}
                   </span>
                 )}
                 {!isToday && (
@@ -192,7 +187,7 @@ export default function BodyMeasurementModal({
                     onClick={() => setDate(getLocalDateString())}
                     className="text-[10px] font-bold text-primary hover:underline"
                   >
-                    Set to Today
+                    {t("shared.measurement.setToday")}
                   </button>
                 )}
               </div>
@@ -214,20 +209,20 @@ export default function BodyMeasurementModal({
                 <div className="flex items-center justify-between">
                   <Label className="text-xs font-semibold flex items-center gap-1">
                     <Plus className="w-3 h-3 text-primary" />
-                    {field.label} (cm)
+                    {t(field.labelKey)} (cm)
                   </Label>
                 </div>
                 <Input
                   type="number"
                   step="0.1"
                   min="0"
-                  placeholder={field.placeholder}
+                  placeholder={t("shared.measurement.numberPlaceholder")}
                   value={measurements[field.key] ?? ""}
                   onChange={(e) => handleChange(field.key, e.target.value)}
                   className="rounded-xl font-medium"
                 />
                 <p className="text-[10px] text-muted-foreground leading-tight mt-1">
-                  {field.description}
+                  {t(field.descriptionKey)}
                 </p>
               </div>
             ))}
@@ -239,14 +234,16 @@ export default function BodyMeasurementModal({
               onClick={() => onOpenChange(false)}
               className="rounded-xl border-border"
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               disabled={loading}
               onClick={handleSave}
               className="flex-1 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
             >
-              {loading ? "Saving..." : "Save Measurements 📏"}
+              {loading
+                ? t("shared.saving")
+                : t("shared.measurement.save")}
             </Button>
           </div>
         </div>

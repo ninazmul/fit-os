@@ -18,6 +18,8 @@ import {
   BookOpen,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { LanguageToggle } from "@/components/shared/LanguageToggle";
+import { useI18n } from "@/components/shared/I18nProvider";
 import {
   APP_NAME,
   APP_VERSION,
@@ -34,26 +36,26 @@ const DietUserGuideModal = dynamic(
 
 export const navGroups = [
   {
-    label: "Main",
+    labelKey: "nav.group.main",
     items: [
-      { href: "/", label: "Dashboard", icon: LayoutDashboard },
-      { href: "/diet", label: "Diet", icon: UtensilsCrossed },
-      { href: "/workout", label: "Workout", icon: Dumbbell },
+      { href: "/", labelKey: "nav.dashboard", icon: LayoutDashboard },
+      { href: "/diet", labelKey: "nav.diet", icon: UtensilsCrossed },
+      { href: "/workout", labelKey: "nav.workout", icon: Dumbbell },
     ],
   },
   {
-    label: "Tracking",
+    labelKey: "nav.group.tracking",
     items: [
-      { href: "/progress", label: "Progress", icon: TrendingUp },
-      { href: "/analytics", label: "Analytics", icon: BarChart3 },
+      { href: "/progress", labelKey: "nav.progress", icon: TrendingUp },
+      { href: "/analytics", labelKey: "nav.analytics", icon: BarChart3 },
     ],
   },
   {
-    label: "Platform",
+    labelKey: "nav.group.platform",
     items: [
-      { href: "/profile", label: "Profile", icon: User },
-      { href: "/settings", label: "Settings", icon: Settings },
-      { href: "/about", label: "About & Donate", icon: Heart },
+      { href: "/profile", labelKey: "nav.profile", icon: User },
+      { href: "/settings", labelKey: "nav.settings", icon: Settings },
+      { href: "/about", labelKey: "nav.about", icon: Heart },
     ],
   },
 ];
@@ -64,6 +66,7 @@ export function isNavItemActive(pathname: string, href: string) {
 
 export default function DesktopSidebar() {
   const pathname = usePathname();
+  const { t } = useI18n();
   const [guideOpen, setGuideOpen] = useState(false);
 
   return (
@@ -93,7 +96,7 @@ export default function DesktopSidebar() {
               </span>
             </div>
             <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">
-              AI Health & Fitness
+              {t("brand.subtitle")}
             </p>
           </div>
         </div>
@@ -102,9 +105,9 @@ export default function DesktopSidebar() {
         <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-6">
           <AnimatePresence>
             {navGroups.map((group) => (
-              <div key={group.label}>
+              <div key={group.labelKey}>
                 <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest px-3 mb-2">
-                  {group.label}
+                  {t(group.labelKey)}
                 </p>
                 <div className="space-y-1">
                   {group.items.map((item) => {
@@ -139,7 +142,7 @@ export default function DesktopSidebar() {
                             isActive && "text-primary",
                           )}
                         />
-                        <span>{item.label}</span>
+                        <span>{t(item.labelKey)}</span>
                       </Link>
                     );
                   })}
@@ -151,6 +154,10 @@ export default function DesktopSidebar() {
 
         {/* Footer */}
         <div className="p-4 border-t border-border space-y-3">
+          <div className="flex justify-center">
+            <LanguageToggle className="w-full justify-center" />
+          </div>
+
           <button
             type="button"
             onClick={() => setGuideOpen(true)}
@@ -160,14 +167,20 @@ export default function DesktopSidebar() {
               <BookOpen className="w-3.5 h-3.5" />
             </div>
             <div className="flex flex-col items-start min-w-0 flex-1">
-              <span className="font-semibold text-foreground text-xs leading-tight truncate">User Guide</span>
-              <span className="text-[10px] text-muted-foreground leading-tight truncate">Features & AI Tips</span>
+              <span className="font-semibold text-foreground text-xs leading-tight truncate">
+                {t("brand.userGuide")}
+              </span>
+              <span className="text-[10px] text-muted-foreground leading-tight truncate">
+                {t("brand.userGuideDesc")}
+              </span>
             </div>
-            <span className="text-[10px] bg-primary/10 text-primary font-semibold px-1.5 py-0.5 rounded-full">Help</span>
+            <span className="text-[10px] bg-primary/10 text-primary font-semibold px-1.5 py-0.5 rounded-full">
+              {t("brand.help")}
+            </span>
           </button>
 
           <p className="text-[11px] text-muted-foreground text-center">
-            {APP_NAME} {APP_VERSION} &middot; By{" "}
+            {APP_NAME} {APP_VERSION} &middot; {t("brand.by")}{" "}
             <a
               href={APP_AUTHOR_URL}
               target="_blank"

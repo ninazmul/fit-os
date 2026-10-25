@@ -26,6 +26,7 @@ import type { IMealItem, MealType } from "@/types/fitness";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
+import { useI18n } from "@/components/shared/I18nProvider";
 
 const BarcodeScanner = dynamic(
   () => import("@/components/shared/BarcodeScanner"),
@@ -50,6 +51,7 @@ export default function QuickAddSheet({
   );
   const [barcodeOpen, setBarcodeOpen] = useState(false);
   const router = useRouter();
+  const { t } = useI18n();
 
   const todayStr = getLocalDateString();
 
@@ -67,6 +69,8 @@ export default function QuickAddSheet({
   else if (currentHour >= 16 && currentHour < 22) defaultMealType = "dinner";
   else defaultMealType = "snack";
 
+  const mealLabel = t(`shared.mealSlot.${defaultMealType}`);
+
   const handleQuickAddFood = async (item: IMealItem, index: number) => {
     try {
       setAddingFoodIndex(index);
@@ -83,12 +87,16 @@ export default function QuickAddSheet({
       });
       setLoggedFoodNames((prev) => new Set(prev).add(item.name));
       toast.success(
-        `Logged ${item.name} (${item.calories} kcal) to ${defaultMealType}! 🍲`,
+        t("shared.toast.foodLogged", {
+          name: item.name,
+          calories: item.calories,
+          meal: mealLabel,
+        }),
       );
       notifyDataUpdated("meal");
       await onCompleted?.();
     } catch {
-      toast.error("Failed to log food");
+      toast.error(t("shared.toast.logFoodFailed"));
     } finally {
       setAddingFoodIndex(null);
     }
@@ -98,13 +106,15 @@ export default function QuickAddSheet({
     try {
       await addWater(amountMl, todayStr);
       toast.success(
-        `Added ${amountMl >= 1000 ? `${amountMl / 1000}L` : `${amountMl}ml`} water! 💧`,
+        t("shared.toast.waterAdded", {
+          amount: amountMl >= 1000 ? `${amountMl / 1000}L` : `${amountMl}ml`,
+        }),
       );
       notifyDataUpdated("water");
       await onCompleted?.();
       onOpenChange(false);
     } catch {
-      toast.error("Failed to log water");
+      toast.error(t("shared.toast.logWaterFailed"));
     }
   };
 
@@ -127,10 +137,10 @@ export default function QuickAddSheet({
             <DialogTitle className="text-lg font-bold flex items-center justify-between">
               <span className="flex items-center gap-2">
                 <Zap className="w-5 h-5 text-primary fill-primary" />
-                Quick Add
+                {t("shared.quickAdd.title")}
               </span>
               <span className="text-xs text-muted-foreground font-medium capitalize bg-muted px-2.5 py-1 rounded-full">
-                {defaultMealType} Time
+                {t("shared.quickAdd.mealTime", { meal: mealLabel })}
               </span>
             </DialogTitle>
           </DialogHeader>
@@ -139,7 +149,7 @@ export default function QuickAddSheet({
           <div className="space-y-2">
             <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
               <Clock className="w-3.5 h-3.5" />
-              Recent Foods (One-Tap Log)
+              {t("shared.quickAdd.recentFoods")}
             </p>
 
             {recentFoods.length > 0 ? (
@@ -181,11 +191,13 @@ export default function QuickAddSheet({
                           "..."
                         ) : isDone ? (
                           <span className="flex items-center gap-1">
-                            <Check className="w-3.5 h-3.5" /> Added
+                            <Check className="w-3.5 h-3.5" />{" "}
+                            {t("shared.log.added")}
                           </span>
                         ) : (
                           <span className="flex items-center gap-1">
-                            <Plus className="w-3.5 h-3.5" /> Log
+                            <Plus className="w-3.5 h-3.5" />{" "}
+                            {t("shared.log.log")}
                           </span>
                         )}
                       </Button>
@@ -196,7 +208,7 @@ export default function QuickAddSheet({
             ) : (
               <div className="p-4 rounded-2xl bg-muted/30 border border-dashed border-border/60 text-center">
                 <p className="text-xs text-muted-foreground">
-                  No recent foods logged yet. Go to Diet to search foods!
+                  {t("shared.quickAdd.emptyRecent")}
                 </p>
                 <Button
                   variant="link"
@@ -207,7 +219,7 @@ export default function QuickAddSheet({
                   }}
                   className="text-xs text-primary font-bold p-0 mt-1"
                 >
-                  Open Food Search &rarr;
+                  {t("shared.quickAdd.openSearch")}
                 </Button>
               </div>
             )}
@@ -217,13 +229,13 @@ export default function QuickAddSheet({
           <div className="space-y-2 pt-2 border-t border-border/40">
             <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
               <Droplet className="w-3.5 h-3.5 text-blue-500" />
-              Instant Hydration
+              {t("shared.quickAdd.instantHydration")}
             </p>
             <div className="grid grid-cols-3 gap-2">
               {[
-                { label: "+250ml", ml: 250, desc: "Glass" },
-                { label: "+500ml", ml: 500, desc: "Bottle" },
-                { label: "+1000ml", ml: 1000, desc: "1L Jug" },
+                { label: "+250ml", ml: 250, descKey: "shared.water.glass" },
+                { label: "+500ml", ml: 500, descKey: "shared.water.bottle" },
+                { label: "+1000ml", ml: 1000, descKey: "shared.water.jug" },
               ].map((w) => (
                 <Button
                   key={w.ml}
@@ -233,7 +245,7 @@ export default function QuickAddSheet({
                 >
                   <span className="text-xs font-bold">{w.label}</span>
                   <span className="text-[10px] text-muted-foreground">
-                    {w.desc}
+                    {t(w.descKey)}
                   </span>
                 </Button>
               ))}
@@ -251,7 +263,7 @@ export default function QuickAddSheet({
               className="w-full rounded-2xl gap-2 text-xs font-semibold border-border/60 py-5"
             >
               <ScanBarcode className="w-4 h-4 text-primary" />
-              Scan Packaged Food Barcode
+              {t("shared.quickAdd.scanBarcode")}
             </Button>
           </div>
         </DialogContent>

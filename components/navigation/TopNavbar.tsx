@@ -2,30 +2,26 @@
 
 import { SignedIn, UserButton } from "@clerk/nextjs";
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
+import { LanguageToggle } from "@/components/shared/LanguageToggle";
+import { useI18n } from "@/components/shared/I18nProvider";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
+import { bn as bnLocale } from "date-fns/locale";
 import { Menu } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import NavigationSheet from "@/components/navigation/NavigationSheet";
-import {
-  APP_NAME,
-  APP_VERSION,
-  APP_LOGO,
-  APP_LOGO_ALT,
-} from "@/lib/constants";
+import { APP_NAME, APP_VERSION, APP_LOGO, APP_LOGO_ALT } from "@/lib/constants";
 
 export default function TopNavbar() {
   const router = useRouter();
+  const { t, locale } = useI18n();
   const [navigationOpen, setNavigationOpen] = useState(false);
 
   return (
     <>
-      <NavigationSheet
-        open={navigationOpen}
-        onOpenChange={setNavigationOpen}
-      />
+      <NavigationSheet open={navigationOpen} onOpenChange={setNavigationOpen} />
 
       <header className="sticky top-0 z-40 w-full bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70 border-b border-border/50 shadow-xs">
         <div className="grid h-14 grid-cols-[1fr_auto_1fr] items-center px-4 md:flex md:justify-between md:px-6">
@@ -37,7 +33,7 @@ export default function TopNavbar() {
               size="icon"
               className="h-10 w-10 rounded-full"
               onClick={() => setNavigationOpen(true)}
-              aria-label="Open navigation"
+              aria-label={t("a11y.openNavigation")}
             >
               <Menu className="h-5 w-5" />
             </Button>
@@ -48,7 +44,7 @@ export default function TopNavbar() {
             type="button"
             onClick={() => router.push("/")}
             className="flex items-center gap-2 justify-self-center rounded-xl px-2 py-1 transition-colors hover:bg-accent md:hidden"
-            aria-label="Go to dashboard"
+            aria-label={t("a11y.goToDashboard")}
           >
             <div className="relative h-8 w-8 overflow-hidden rounded-lg border border-border/60 bg-white shadow-sm">
               <Image
@@ -75,12 +71,15 @@ export default function TopNavbar() {
           {/* Desktop greeting */}
           <div className="hidden md:block">
             <p className="text-sm text-muted-foreground">
-              {format(new Date(), "EEEE, MMMM d, yyyy")}
+              {format(new Date(), "EEEE, MMMM d, yyyy", {
+                locale: locale === "bn" ? bnLocale : undefined,
+              })}
             </p>
           </div>
 
           {/* Right side actions */}
           <div className="flex items-center justify-end gap-2">
+            <LanguageToggle />
             <ThemeToggle />
             <SignedIn>
               <UserButton

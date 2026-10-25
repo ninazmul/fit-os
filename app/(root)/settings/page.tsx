@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import PageHeader from "@/components/shared/PageHeader";
+import { useI18n } from "@/components/shared/I18nProvider";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { exportUserData } from "@/lib/actions/export.actions";
@@ -43,6 +44,7 @@ const AdUnit = dynamic(() => import("@/components/shared/AdUnit"), {
 });
 
 export default function SettingsPage() {
+  const { t } = useI18n();
   const { theme, setTheme } = useTheme();
   const [exporting, setExporting] = useState(false);
 
@@ -59,10 +61,10 @@ export default function SettingsPage() {
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-      toast.success("Your data export is ready! 📦");
+      toast.success(t("settings.export.toastSuccess"));
     } catch (err) {
       console.error("Export data error:", err);
-      toast.error("Failed to export your data. Please try again.");
+      toast.error(t("settings.export.toastError"));
     } finally {
       setExporting(false);
     }
@@ -72,15 +74,15 @@ export default function SettingsPage() {
     <div className="space-y-6 max-w-3xl">
       <PageHeader
         icon={Settings}
-        title="App Settings"
-        subtitle="Customize preferences, theme, units, and export your data"
+        title={t("settings.title")}
+        subtitle={t("settings.subtitle")}
       />
 
       {/* Theme Preferences */}
       <div className="glass-card p-6 rounded-3xl border border-border/50 space-y-4">
         <h2 className="text-base font-bold flex items-center gap-2">
           <Sun className="w-5 h-5 text-amber-500" />
-          Appearance & Theme
+          {t("settings.theme.heading")}
         </h2>
 
         <div className="grid grid-cols-3 gap-3 text-xs">
@@ -93,7 +95,7 @@ export default function SettingsPage() {
             }`}
           >
             <Sun className="w-6 h-6 text-amber-500" />
-            Light Mode
+            {t("settings.theme.light")}
           </button>
 
           <button
@@ -105,7 +107,7 @@ export default function SettingsPage() {
             }`}
           >
             <Moon className="w-6 h-6 text-purple-500" />
-            Dark Mode
+            {t("settings.theme.dark")}
           </button>
 
           <button
@@ -117,33 +119,33 @@ export default function SettingsPage() {
             }`}
           >
             <Laptop className="w-6 h-6 text-blue-500" />
-            System Auto
+            {t("settings.theme.system")}
           </button>
         </div>
       </div>
 
       {/* Ad between sections */}
-      <AdUnit size="auto" label="Sponsored" maxWidth="728px" />
+      <AdUnit size="auto" label={t("settings.ad.sponsored")} maxWidth="728px" />
 
       {/* Unit Preferences */}
       <div className="glass-card p-6 rounded-3xl border border-border/50 space-y-4">
         <h2 className="text-base font-bold flex items-center gap-2">
           <Settings className="w-5 h-5 text-primary" />
-          Units System
+          {t("settings.units.heading")}
         </h2>
 
         <div className="space-y-1 text-xs">
-          <Label>Preferred Measurement Units</Label>
+          <Label>{t("settings.units.label")}</Label>
           <Select defaultValue="metric">
             <SelectTrigger className="rounded-xl">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="metric">
-                Metric (Kilograms, Centimeters, Milliliters)
+                {t("settings.units.metric")}
               </SelectItem>
               <SelectItem value="imperial">
-                Imperial (Pounds, Inches, Fluid Ounces)
+                {t("settings.units.imperial")}
               </SelectItem>
             </SelectContent>
           </Select>
@@ -154,15 +156,16 @@ export default function SettingsPage() {
       <div className="glass-card p-6 rounded-3xl border border-border/50 space-y-4">
         <h2 className="text-base font-bold flex items-center gap-2">
           <Download className="w-5 h-5 text-blue-500" />
-          Export & Privacy
+          {t("settings.export.heading")}
         </h2>
 
         <div className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-muted/40 text-xs">
           <div>
-            <p className="font-bold text-sm">Download My Data (JSON)</p>
+            <p className="font-bold text-sm">
+              {t("settings.export.itemTitle")}
+            </p>
             <p className="text-muted-foreground text-[11px]">
-              Export your profile, meals, workouts, weights, measurements,
-              sleep, water &amp; saved meals
+              {t("settings.export.itemDesc")}
             </p>
           </div>
           <Button
@@ -173,10 +176,10 @@ export default function SettingsPage() {
             {exporting ? (
               <>
                 <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                Exporting...
+                {t("settings.export.exporting")}
               </>
             ) : (
-              "Export Data"
+              t("settings.export.button")
             )}
           </Button>
         </div>
@@ -186,7 +189,7 @@ export default function SettingsPage() {
       <div className="glass-card p-6 rounded-3xl border border-border/50 space-y-4">
         <h2 className="text-base font-bold flex items-center gap-2">
           <Info className="w-5 h-5 text-emerald-500" />
-          About {APP_NAME}
+          {t("settings.about.heading", { appName: APP_NAME })}
         </h2>
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-2xl bg-muted/40">
@@ -220,7 +223,7 @@ export default function SettingsPage() {
                 className="rounded-xl text-xs font-bold gap-1.5 bg-pink-600 hover:bg-pink-700 text-white shadow-sm"
               >
                 <Heart className="w-3.5 h-3.5 fill-current" />
-                About Us & Donate
+                {t("settings.about.donate")}
               </Button>
             </Link>
 
@@ -230,7 +233,9 @@ export default function SettingsPage() {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground font-medium transition-colors px-3 py-2"
             >
-              <span>Crafted by {APP_AUTHOR}</span>
+              <span>
+                {t("settings.about.craftedBy", { author: APP_AUTHOR })}
+              </span>
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
           </div>

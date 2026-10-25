@@ -20,6 +20,7 @@ import {
 import StatCard from "@/components/shared/StatCard";
 import BodyMeasurementModal from "@/components/shared/BodyMeasurementModal";
 import PageHeader from "@/components/shared/PageHeader";
+import { useI18n } from "@/components/shared/I18nProvider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
@@ -89,6 +90,7 @@ type SleepLogItem = Partial<{
 };
 
 export default function ProgressPage() {
+  const { t } = useI18n();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [weightHistory, setWeightHistory] = useState<any[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -184,13 +186,13 @@ export default function ProgressPage() {
         weight: Number(weightVal),
         notes: weightNotes,
       });
-      toast.success("Weight logged!");
+      toast.success(t("progress.toast.weightLogged"));
       setWeightModalOpen(false);
       setWeightVal("");
       setWeightNotes("");
       fetchData();
     } catch {
-      toast.error("Failed to log weight");
+      toast.error(t("progress.toast.weightLogFailed"));
     }
   };
 
@@ -207,12 +209,12 @@ export default function ProgressPage() {
         quality,
         notes: sleepNotes,
       });
-      toast.success("Sleep session logged! 🌙");
+      toast.success(t("progress.toast.sleepLogged"));
       setSleepModalOpen(false);
       setSleepNotes("");
       fetchData();
     } catch {
-      toast.error("Failed to save sleep session");
+      toast.error(t("progress.toast.sleepSaveFailed"));
     }
   };
 
@@ -223,10 +225,10 @@ export default function ProgressPage() {
     try {
       setSleepRemoving(`${date}-${sessionIndex}`);
       await removeSleepSession(sessionIndex, date);
-      toast.success("Sleep session removed");
+      toast.success(t("progress.toast.sessionRemoved"));
       fetchData();
     } catch {
-      toast.error("Failed to remove session");
+      toast.error(t("progress.toast.sessionRemoveFailed"));
     } finally {
       setSleepRemoving(null);
     }
@@ -252,8 +254,8 @@ export default function ProgressPage() {
       {/* Title */}
       <PageHeader
         icon={Activity}
-        title="Progress & Body Analytics"
-        subtitle="AI-powered weight trajectory, body recomposition, and sleep recovery analysis"
+        title={t("progress.title")}
+        subtitle={t("progress.subtitle")}
         actions={
           <Button
             onClick={refreshAIProgress}
@@ -264,7 +266,9 @@ export default function ProgressPage() {
             <RefreshCw
               className={`w-3.5 h-3.5 ${aiProgressLoading ? "animate-spin" : ""}`}
             />
-            {aiProgressLoading ? "Analysing…" : "✨ Refresh AI Audit"}
+            {aiProgressLoading
+              ? t("progress.actions.analysing")
+              : t("progress.actions.refreshAudit")}
           </Button>
         }
       />
@@ -276,7 +280,8 @@ export default function ProgressPage() {
           <div className="glass-card p-5 rounded-3xl border border-primary/20 space-y-3 md:col-span-1">
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-sm flex items-center gap-2">
-                <Target className="w-4 h-4 text-primary" /> Goal Trajectory
+                <Target className="w-4 h-4 text-primary" />{" "}
+                {t("progress.trajectory.title")}
               </h3>
               <span
                 className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
@@ -287,7 +292,9 @@ export default function ProgressPage() {
                       : "bg-red-500/15 text-red-600 dark:text-red-400"
                 }`}
               >
-                {aiProgressData.trajectory.plateauRisk} Plateau Risk
+                {t("progress.trajectory.plateauRisk", {
+                  risk: aiProgressData.trajectory.plateauRisk,
+                })}
               </span>
             </div>
             <div className="space-y-1">
@@ -297,14 +304,15 @@ export default function ProgressPage() {
                   {aiProgressData.trajectory.weeklyVelocityKg} kg
                 </span>
                 <span className="text-xs text-muted-foreground pb-0.5">
-                  /week
+                  {t("progress.trajectory.perWeek")}
                 </span>
               </div>
               {aiProgressData.trajectory.daysToGoal && (
                 <p className="text-[11px] text-muted-foreground">
-                  Est. goal in{" "}
+                  {t("progress.trajectory.estimatedGoal")}{" "}
                   <span className="font-bold text-primary">
-                    {aiProgressData.trajectory.daysToGoal} days
+                    {aiProgressData.trajectory.daysToGoal}{" "}
+                    {t("progress.trajectory.daysUnit")}
                   </span>
                   {aiProgressData.trajectory.predictedGoalDate &&
                     ` (${aiProgressData.trajectory.predictedGoalDate})`}
@@ -319,8 +327,10 @@ export default function ProgressPage() {
             </div>
             {aiProgressData.isAIGenerated && (
               <span className="text-[10px] flex items-center gap-1 text-primary/70">
-                <Sparkles className="w-2.5 h-2.5" /> Gemini AI ·{" "}
-                {aiProgressData.trajectory.confidencePct}% confidence
+                <Sparkles className="w-2.5 h-2.5" />{" "}
+                {t("progress.trajectory.confidence", {
+                  pct: aiProgressData.trajectory.confidencePct,
+                })}
               </span>
             )}
           </div>
@@ -328,8 +338,8 @@ export default function ProgressPage() {
           {/* Recomposition Card */}
           <div className="glass-card p-5 rounded-3xl border border-purple-500/20 space-y-3">
             <h3 className="font-bold text-sm flex items-center gap-2">
-              <Dumbbell className="w-4 h-4 text-purple-500" /> Body
-              Recomposition
+              <Dumbbell className="w-4 h-4 text-purple-500" />{" "}
+              {t("progress.recomposition.title")}
             </h3>
             <div className="flex items-center gap-2">
               <span
@@ -346,7 +356,9 @@ export default function ProgressPage() {
             </div>
             <div className="grid grid-cols-3 gap-2 text-xs">
               <div className="p-2 rounded-xl bg-muted/40 text-center">
-                <p className="text-muted-foreground text-[10px]">Waist</p>
+                <p className="text-muted-foreground text-[10px]">
+                  {t("progress.recomposition.waist")}
+                </p>
                 <p
                   className={`font-bold ${aiProgressData.recomposition.waistTrendCm < 0 ? "text-emerald-500" : aiProgressData.recomposition.waistTrendCm > 0 ? "text-red-400" : "text-muted-foreground"}`}
                 >
@@ -355,7 +367,9 @@ export default function ProgressPage() {
                 </p>
               </div>
               <div className="p-2 rounded-xl bg-muted/40 text-center">
-                <p className="text-muted-foreground text-[10px]">Chest</p>
+                <p className="text-muted-foreground text-[10px]">
+                  {t("progress.recomposition.chest")}
+                </p>
                 <p
                   className={`font-bold ${aiProgressData.recomposition.chestTrendCm > 0 ? "text-emerald-500" : "text-muted-foreground"}`}
                 >
@@ -364,7 +378,9 @@ export default function ProgressPage() {
                 </p>
               </div>
               <div className="p-2 rounded-xl bg-muted/40 text-center">
-                <p className="text-muted-foreground text-[10px]">Hip</p>
+                <p className="text-muted-foreground text-[10px]">
+                  {t("progress.recomposition.hip")}
+                </p>
                 <p className="font-bold">
                   {aiProgressData.recomposition.hipTrendCm > 0 ? "+" : ""}
                   {aiProgressData.recomposition.hipTrendCm} cm
@@ -377,7 +393,7 @@ export default function ProgressPage() {
             <div className="space-y-1">
               <div className="flex items-center justify-between text-[10px]">
                 <span className="text-muted-foreground">
-                  Muscle Retention Score
+                  {t("progress.recomposition.muscleRetention")}
                 </span>
                 <span className="font-bold">
                   {aiProgressData.recomposition.muscleRetentionScore}/100
@@ -397,7 +413,8 @@ export default function ProgressPage() {
           {/* Recovery Index Card */}
           <div className="glass-card p-5 rounded-3xl border border-blue-500/20 space-y-3">
             <h3 className="font-bold text-sm flex items-center gap-2">
-              <Moon className="w-4 h-4 text-blue-500" /> Recovery Index
+              <Moon className="w-4 h-4 text-blue-500" />{" "}
+              {t("progress.recovery.title")}
             </h3>
             <div className="flex items-center gap-3">
               <div className="relative w-16 h-16">
@@ -452,7 +469,7 @@ export default function ProgressPage() {
                   {aiProgressData.recoveryIndex.readiness}
                 </p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">
-                  Recovery Score
+                  {t("progress.recovery.scoreLabel")}
                 </p>
               </div>
             </div>
@@ -470,7 +487,8 @@ export default function ProgressPage() {
       {aiProgressData && aiProgressData.milestones.length > 0 && (
         <div className="glass-card p-5 rounded-3xl border border-border/50 space-y-4">
           <h2 className="font-bold text-sm flex items-center gap-2">
-            <Star className="w-4 h-4 text-amber-500" /> Goal Milestones
+            <Star className="w-4 h-4 text-amber-500" />{" "}
+            {t("progress.milestones.title")}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {aiProgressData.milestones.map(
@@ -500,12 +518,16 @@ export default function ProgressPage() {
                     />
                   </div>
                   <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                    <span>Now: {m.current}</span>
+                    <span>
+                      {t("progress.milestones.now", { value: m.current })}
+                    </span>
                     <ChevronRight className="w-3 h-3" />
-                    <span>Target: {m.target}</span>
+                    <span>
+                      {t("progress.milestones.target", { value: m.target })}
+                    </span>
                   </div>
                   <p className="text-[10px] text-muted-foreground">
-                    Est: {m.projectedDate}
+                    {t("progress.milestones.est", { value: m.projectedDate })}
                   </p>
                 </div>
               ),
@@ -517,30 +539,32 @@ export default function ProgressPage() {
       {/* Top Stats Row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         <StatCard
-          title="Current Weight"
+          title={t("progress.stats.currentWeight")}
           value={weightStats?.todayWeight || profile?.currentWeight || "--"}
           unit="kg"
-          subtitle={`Goal: ${profile?.targetWeight || "--"} kg`}
+          subtitle={t("progress.stats.goal", {
+            weight: profile?.targetWeight || "--",
+          })}
           icon={Scale}
           variant="purple"
         />
 
         <StatCard
-          title="BMI"
+          title={t("progress.stats.bmi")}
           value={weightStats?.bmi || "--"}
           subtitle={
             weightStats?.bmi < 18.5
-              ? "Underweight"
+              ? t("progress.bmi.underweight")
               : weightStats?.bmi < 25
-                ? "Normal Weight ✅"
-                : "Overweight"
+                ? t("progress.bmi.normal")
+                : t("progress.bmi.overweight")
           }
           icon={Award}
           variant="green"
         />
 
         <StatCard
-          title="Weekly Change"
+          title={t("progress.stats.weeklyChange")}
           value={
             weightStats?.weeklyChange !== null &&
             weightStats?.weeklyChange !== undefined
@@ -548,13 +572,13 @@ export default function ProgressPage() {
               : "--"
           }
           unit="kg"
-          subtitle="Past 7 days"
+          subtitle={t("progress.stats.past7")}
           icon={TrendingUp}
           variant="blue"
         />
 
         <StatCard
-          title="Monthly Change"
+          title={t("progress.stats.monthlyChange")}
           value={
             weightStats?.monthlyChange !== null &&
             weightStats?.monthlyChange !== undefined
@@ -562,14 +586,14 @@ export default function ProgressPage() {
               : "--"
           }
           unit="kg"
-          subtitle="Past 30 days"
+          subtitle={t("progress.stats.past30")}
           icon={Calendar}
           variant="orange"
         />
       </div>
 
       {/* Mid-page Ad */}
-      <AdUnit size="auto" label="Sponsored" maxWidth="970px" />
+      <AdUnit size="auto" label={t("progress.ad.sponsored")} maxWidth="970px" />
 
       {/* Tabs */}
       <Tabs defaultValue="weight" className="space-y-4">
@@ -578,19 +602,19 @@ export default function ProgressPage() {
             value="weight"
             className="rounded-xl text-xs font-semibold"
           >
-            Weight Trend
+            {t("progress.tabs.weight")}
           </TabsTrigger>
           <TabsTrigger
             value="body"
             className="rounded-xl text-xs font-semibold"
           >
-            Body Measurements
+            {t("progress.tabs.body")}
           </TabsTrigger>
           <TabsTrigger
             value="sleep"
             className="rounded-xl text-xs font-semibold"
           >
-            Sleep Log
+            {t("progress.tabs.sleep")}
           </TabsTrigger>
         </TabsList>
 
@@ -598,13 +622,15 @@ export default function ProgressPage() {
         <TabsContent value="weight" className="space-y-5">
           {/* Header */}
           <div className="flex flex-wrap items-center justify-between gap-1.5">
-            <h2 className="text-lg font-bold">Weight Journey</h2>
+            <h2 className="text-lg font-bold">
+              {t("progress.weight.journeyTitle")}
+            </h2>
             <Button
               onClick={() => setWeightModalOpen(true)}
               className="rounded-xl gap-2 text-xs bg-primary hover:bg-primary/90 font-bold ml-auto"
             >
               <Plus className="w-4 h-4" />
-              Log Weight
+              {t("progress.actions.logWeight")}
             </Button>
           </div>
 
@@ -646,7 +672,7 @@ export default function ProgressPage() {
                 <div className="flex items-center justify-between">
                   <h3 className="font-bold text-sm flex items-center gap-2">
                     <TrendingUp className="w-4 h-4 text-primary" />
-                    Progress to Goal
+                    {t("progress.goal.progressTitle")}
                   </h3>
                   <span
                     className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${
@@ -659,7 +685,9 @@ export default function ProgressPage() {
                             : "bg-muted text-muted-foreground"
                     }`}
                   >
-                    {atGoal ? "🎉 Goal Reached!" : `${pct}% complete`}
+                    {atGoal
+                      ? t("progress.goal.reached")
+                      : t("progress.goal.complete", { pct })}
                   </span>
                 </div>
 
@@ -667,21 +695,21 @@ export default function ProgressPage() {
                 <div className="relative">
                   <div className="flex items-center justify-between text-[11px] font-semibold mb-2">
                     <span className="text-muted-foreground">
-                      Start
+                      {t("progress.goal.start")}
                       <br />
                       <span className="text-base font-black text-foreground">
                         {startW} kg
                       </span>
                     </span>
                     <span className="text-center text-primary">
-                      Now
+                      {t("progress.goal.now")}
                       <br />
                       <span className="text-base font-black">
                         {currentW} kg
                       </span>
                     </span>
                     <span className="text-right text-muted-foreground">
-                      Target
+                      {t("progress.goal.target")}
                       <br />
                       <span className="text-base font-black text-foreground">
                         {targetW} kg
@@ -702,11 +730,18 @@ export default function ProgressPage() {
                   <div className="flex items-center justify-between text-[10px] text-muted-foreground mt-2">
                     <span>
                       {isLoss
-                        ? `Lost ${Math.abs(achieved).toFixed(1)} kg`
-                        : `Gained ${Math.abs(achieved).toFixed(1)} kg`}
+                        ? t("progress.goal.lost", {
+                            value: Math.abs(achieved).toFixed(1),
+                          })
+                        : t("progress.goal.gained", {
+                            value: Math.abs(achieved).toFixed(1),
+                          })}
                     </span>
                     <span>
-                      {remaining.toFixed(1)} kg {isLoss ? "to lose" : "to gain"}
+                      {remaining.toFixed(1)} kg{" "}
+                      {isLoss
+                        ? t("progress.goal.toLose")
+                        : t("progress.goal.toGain")}
                     </span>
                   </div>
                 </div>
@@ -722,7 +757,8 @@ export default function ProgressPage() {
                           : "bg-muted/30 border-border/30 text-muted-foreground"
                       }`}
                     >
-                      {pct >= milestone ? "✓" : ""} {milestone}% milestone
+                      {pct >= milestone ? "✓" : ""}{" "}
+                      {t("progress.goal.milestone", { pct: milestone })}
                     </span>
                   ))}
                 </div>
@@ -734,12 +770,14 @@ export default function ProgressPage() {
           <div className="glass-card p-6 rounded-3xl border border-border/50 space-y-3">
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold text-muted-foreground">
-                Weight over time (kg)
+                {t("progress.weight.chartTitle")}
               </p>
               {profile?.targetWeight && (
                 <span className="text-[10px] flex items-center gap-1 text-muted-foreground">
                   <span className="inline-block w-4 border-t-2 border-dashed border-amber-400" />{" "}
-                  Target {profile.targetWeight} kg
+                  {t("progress.weight.chartTarget", {
+                    weight: profile.targetWeight,
+                  })}
                 </span>
               )}
             </div>
@@ -796,7 +834,10 @@ export default function ProgressPage() {
                       borderRadius: "12px",
                       fontSize: "12px",
                     }}
-                    formatter={(value) => [`${value} kg`, "Weight"]}
+                    formatter={(value) => [
+                      `${value} kg`,
+                      t("progress.weight.chartSeriesLabel"),
+                    ]}
                   />
                   {profile?.targetWeight && (
                     <ReferenceLine
@@ -805,7 +846,9 @@ export default function ProgressPage() {
                       strokeDasharray="5 5"
                       strokeWidth={2}
                       label={{
-                        value: `Target ${profile.targetWeight} kg`,
+                        value: t("progress.weight.chartTarget", {
+                          weight: profile.targetWeight,
+                        }),
                         position: "insideTopRight",
                         fontSize: 10,
                         fill: "#f59e0b",
@@ -819,7 +862,7 @@ export default function ProgressPage() {
                     strokeWidth={2.5}
                     fillOpacity={1}
                     fill="url(#weightAreaGrad)"
-                    name="Weight (kg)"
+                    name={t("progress.weight.areaName")}
                     dot={{ fill: "#22a065", r: 3, strokeWidth: 0 }}
                     activeDot={{ r: 5, fill: "#22a065" }}
                   />
@@ -832,9 +875,13 @@ export default function ProgressPage() {
           {weightHistory.length > 0 && (
             <div className="glass-card p-5 rounded-3xl border border-border/50 space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold">Log History</h3>
+                <h3 className="text-sm font-bold">
+                  {t("progress.weight.historyTitle")}
+                </h3>
                 <span className="text-[10px] text-muted-foreground">
-                  {weightHistory.length} entries
+                  {t("progress.weight.entries", {
+                    count: weightHistory.length,
+                  })}
                 </span>
               </div>
               <div className="overflow-x-auto">
@@ -842,19 +889,19 @@ export default function ProgressPage() {
                   <thead>
                     <tr className="border-b border-border/40">
                       <th className="text-left text-muted-foreground font-semibold pb-2.5 pr-3">
-                        Date
+                        {t("progress.table.date")}
                       </th>
                       <th className="text-left text-muted-foreground font-semibold pb-2.5 pr-3">
-                        Weight
+                        {t("progress.table.weight")}
                       </th>
                       <th className="text-left text-muted-foreground font-semibold pb-2.5 pr-3">
-                        Change
+                        {t("progress.table.change")}
                       </th>
                       <th className="text-left text-muted-foreground font-semibold pb-2.5 pr-3">
-                        vs Target
+                        {t("progress.table.vsTarget")}
                       </th>
                       <th className="text-left text-muted-foreground font-semibold pb-2.5">
-                        Notes
+                        {t("progress.table.notes")}
                       </th>
                     </tr>
                   </thead>
@@ -901,11 +948,11 @@ export default function ProgressPage() {
                                 {delta < 0 ? "▼" : delta > 0 ? "▲" : "—"}
                                 {delta !== 0
                                   ? ` ${Math.abs(delta).toFixed(1)} kg`
-                                  : " same"}
+                                  : ` ${t("progress.table.same")}`}
                               </span>
                             ) : (
                               <span className="text-[10px] text-muted-foreground italic">
-                                start
+                                {t("progress.table.start")}
                               </span>
                             )}
                           </td>
@@ -919,7 +966,7 @@ export default function ProgressPage() {
                                 }`}
                               >
                                 {vsTarget === 0
-                                  ? "✓ On target"
+                                  ? t("progress.table.onTarget")
                                   : `${vsTarget > 0 ? "+" : ""}${vsTarget.toFixed(1)} kg`}
                               </span>
                             ) : (
@@ -942,13 +989,13 @@ export default function ProgressPage() {
         {/* Tab 2: Body Measurements */}
         <TabsContent value="body" className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold">Body Circumferences</h2>
+            <h2 className="text-lg font-bold">{t("progress.body.title")}</h2>
             <Button
               onClick={() => setBodyModalOpen(true)}
               className="rounded-xl gap-2 text-xs bg-primary hover:bg-primary/90 font-bold"
             >
               <Plus className="w-4 h-4" />
-              Log Measurements
+              {t("progress.actions.logMeasurements")}
             </Button>
           </div>
 
@@ -967,31 +1014,41 @@ export default function ProgressPage() {
                 <div className="grid grid-cols-3 gap-2 text-xs">
                   {m.waist && (
                     <div className="p-2 rounded-xl bg-muted/40">
-                      <p className="text-muted-foreground text-[10px]">Waist</p>
+                      <p className="text-muted-foreground text-[10px]">
+                        {t("progress.measure.waist")}
+                      </p>
                       <p className="font-bold text-sm">{m.waist} cm</p>
                     </div>
                   )}
                   {m.chest && (
                     <div className="p-2 rounded-xl bg-muted/40">
-                      <p className="text-muted-foreground text-[10px]">Chest</p>
+                      <p className="text-muted-foreground text-[10px]">
+                        {t("progress.measure.chest")}
+                      </p>
                       <p className="font-bold text-sm">{m.chest} cm</p>
                     </div>
                   )}
                   {m.hip && (
                     <div className="p-2 rounded-xl bg-muted/40">
-                      <p className="text-muted-foreground text-[10px]">Hip</p>
+                      <p className="text-muted-foreground text-[10px]">
+                        {t("progress.measure.hip")}
+                      </p>
                       <p className="font-bold text-sm">{m.hip} cm</p>
                     </div>
                   )}
                   {m.arm && (
                     <div className="p-2 rounded-xl bg-muted/40">
-                      <p className="text-muted-foreground text-[10px]">Arm</p>
+                      <p className="text-muted-foreground text-[10px]">
+                        {t("progress.measure.arm")}
+                      </p>
                       <p className="font-bold text-sm">{m.arm} cm</p>
                     </div>
                   )}
                   {m.thigh && (
                     <div className="p-2 rounded-xl bg-muted/40">
-                      <p className="text-muted-foreground text-[10px]">Thigh</p>
+                      <p className="text-muted-foreground text-[10px]">
+                        {t("progress.measure.thigh")}
+                      </p>
                       <p className="font-bold text-sm">{m.thigh} cm</p>
                     </div>
                   )}
@@ -1004,13 +1061,13 @@ export default function ProgressPage() {
         {/* Tab 3: Sleep Log */}
         <TabsContent value="sleep" className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold">Sleep Tracker History</h2>
+            <h2 className="text-lg font-bold">{t("progress.sleep.title")}</h2>
             <Button
               onClick={() => setSleepModalOpen(true)}
               className="rounded-xl gap-2 text-xs bg-purple-600 hover:bg-purple-700 text-white font-bold"
             >
               <Plus className="w-4 h-4" />
-              Add Sleep Session
+              {t("progress.actions.addSleep")}
             </Button>
           </div>
 
@@ -1049,7 +1106,7 @@ export default function ProgressPage() {
                     dataKey="totalHours"
                     fill="#8b5cf6"
                     radius={[6, 6, 0, 0]}
-                    name="Sleep (hours)"
+                    name={t("progress.sleep.barName")}
                   />
                 </BarChart>
               </ResponsiveContainer>
@@ -1060,7 +1117,7 @@ export default function ProgressPage() {
           <div className="space-y-3">
             {sleepLogs.length === 0 && (
               <div className="glass-card p-8 rounded-3xl border border-border/50 text-center text-xs text-muted-foreground italic">
-                No sleep logs yet. Add a sleep session to start tracking! 🌙
+                {t("progress.sleep.empty")}
               </div>
             )}
             {sleepLogs
@@ -1097,13 +1154,22 @@ export default function ProgressPage() {
                       </div>
                       <div className="text-right text-xs">
                         <p className="font-bold text-purple-600 dark:text-purple-400">
-                          {Number(log.totalHours) || 0}h total
+                          {t("progress.sleep.totalHours", {
+                            hours: Number(log.totalHours) || 0,
+                          })}
                         </p>
                         <p className="text-muted-foreground text-[11px]">
-                          {displaySessions.length} session
-                          {displaySessions.length !== 1 ? "s" : ""}
+                          {displaySessions.length !== 1
+                            ? t("progress.sleep.sessionsPlural", {
+                                count: displaySessions.length,
+                              })
+                            : t("progress.sleep.sessionsSingular", {
+                                count: displaySessions.length,
+                              })}
                           {Number(log.avgQuality) > 0 &&
-                            ` · Avg quality ${Number(log.avgQuality)}/5`}
+                            ` ${t("progress.sleep.avgQuality", {
+                              value: Number(log.avgQuality),
+                            })}`}
                         </p>
                       </div>
                     </div>
@@ -1163,7 +1229,7 @@ export default function ProgressPage() {
                                   sleepRemoving === `${log.date}-${sIdx}`
                                 }
                                 className="h-7 w-7 text-muted-foreground hover:text-red-500 rounded-lg flex-shrink-0"
-                                title="Remove this session"
+                                title={t("progress.sleep.removeTitle")}
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </Button>
@@ -1184,16 +1250,16 @@ export default function ProgressPage() {
         <DialogContent className="sm:max-w-md rounded-2xl p-6 space-y-4">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold">
-              Log Today&apos;s Weight ⚖️
+              {t("progress.weightDialog.title")}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSaveWeight} className="space-y-3 text-xs">
             <div>
-              <Label>Weight (kg)</Label>
+              <Label>{t("progress.weightDialog.weightLabel")}</Label>
               <Input
                 type="number"
                 step="0.1"
-                placeholder="e.g. 72.5"
+                placeholder={t("progress.weightDialog.weightPlaceholder")}
                 value={weightVal}
                 onChange={(e) => setWeightVal(e.target.value)}
                 required
@@ -1201,9 +1267,9 @@ export default function ProgressPage() {
               />
             </div>
             <div>
-              <Label>Notes (optional)</Label>
+              <Label>{t("progress.notesOptional")}</Label>
               <Input
-                placeholder="e.g. After morning workout"
+                placeholder={t("progress.weightDialog.notesPlaceholder")}
                 value={weightNotes}
                 onChange={(e) => setWeightNotes(e.target.value)}
                 className="rounded-xl mt-1"
@@ -1213,7 +1279,7 @@ export default function ProgressPage() {
               type="submit"
               className="w-full rounded-xl bg-primary hover:bg-primary/90 font-bold"
             >
-              Save Weight
+              {t("progress.weightDialog.save")}
             </Button>
           </form>
         </DialogContent>
@@ -1232,17 +1298,16 @@ export default function ProgressPage() {
         <DialogContent className="sm:max-w-md rounded-2xl p-6 space-y-4">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold">
-              Add Sleep Session 🌙
+              {t("progress.sleepDialog.title")}
             </DialogTitle>
             <p className="text-xs text-muted-foreground">
-              Log overnight sleep, naps, or any rest period. Multiple sessions
-              per day supported.
+              {t("progress.sleepDialog.description")}
             </p>
           </DialogHeader>
           <form onSubmit={handleSaveSleep} className="space-y-3 text-xs">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>Sleep Time</Label>
+                <Label>{t("progress.sleepDialog.sleepTime")}</Label>
                 <Input
                   type="time"
                   value={sleepTime}
@@ -1251,7 +1316,7 @@ export default function ProgressPage() {
                 />
               </div>
               <div>
-                <Label>Wake Time</Label>
+                <Label>{t("progress.sleepDialog.wakeTime")}</Label>
                 <Input
                   type="time"
                   value={wakeTime}
@@ -1262,7 +1327,7 @@ export default function ProgressPage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>Total Hours (auto-calculated)</Label>
+                <Label>{t("progress.sleepDialog.totalHours")}</Label>
                 <Input
                   type="number"
                   step="0.5"
@@ -1272,7 +1337,7 @@ export default function ProgressPage() {
                 />
               </div>
               <div>
-                <Label>Quality Rating (1-5)</Label>
+                <Label>{t("progress.sleepDialog.quality")}</Label>
                 <Input
                   type="number"
                   min="1"
@@ -1284,9 +1349,9 @@ export default function ProgressPage() {
               </div>
             </div>
             <div>
-              <Label>Notes (optional)</Label>
+              <Label>{t("progress.notesOptional")}</Label>
               <Input
-                placeholder="e.g. Nap, deep sleep, woke up tired..."
+                placeholder={t("progress.sleepDialog.notesPlaceholder")}
                 value={sleepNotes}
                 onChange={(e) => setSleepNotes(e.target.value)}
                 className="rounded-xl mt-1"
@@ -1296,7 +1361,7 @@ export default function ProgressPage() {
               type="submit"
               className="w-full rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold mt-2"
             >
-              Save Sleep Session
+              {t("progress.sleepDialog.save")}
             </Button>
           </form>
         </DialogContent>

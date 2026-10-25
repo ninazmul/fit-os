@@ -35,6 +35,7 @@ import { getRecentFoods } from "@/lib/actions/recent-meals.actions";
 import { notifyDataUpdated } from "@/lib/events";
 import type { IMealItem, MealType, WorkoutType } from "@/types/fitness";
 import toast from "react-hot-toast";
+import { useI18n } from "@/components/shared/I18nProvider";
 
 interface QuickActionModalProps {
   open: boolean;
@@ -82,6 +83,7 @@ export default function QuickActionModal({
   const [quickMealProtein, setQuickMealProtein] = useState<number>(20);
 
   const [loading, setLoading] = useState(false);
+  const { t } = useI18n();
 
   const activeDate = dateStr || getLocalDateString();
 
@@ -102,12 +104,12 @@ export default function QuickActionModal({
     try {
       setLoading(true);
       await addWater(amount, activeDate);
-      toast.success(`Logged ${amount}ml of water! 💧`);
+      toast.success(t("shared.toast.waterLogged", { amount }));
       notifyDataUpdated("water");
       onOpenChange(false);
       await onCompleted?.();
     } catch {
-      toast.error("Failed to log water");
+      toast.error(t("shared.toast.logWaterFailed"));
     } finally {
       setLoading(false);
     }
@@ -116,7 +118,7 @@ export default function QuickActionModal({
   const handleLogWeight = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!weightVal || isNaN(Number(weightVal))) {
-      toast.error("Please enter a valid weight");
+      toast.error(t("shared.toast.invalidWeight"));
       return;
     }
 
@@ -127,14 +129,14 @@ export default function QuickActionModal({
         weight: Number(weightVal),
         notes: weightNotes,
       });
-      toast.success(`Logged ${weightVal} kg! ⚖️`);
+      toast.success(t("shared.toast.weightLogged", { weight: weightVal }));
       notifyDataUpdated("weight");
       onOpenChange(false);
       setWeightVal("");
       setWeightNotes("");
       await onCompleted?.();
     } catch {
-      toast.error("Failed to log weight");
+      toast.error(t("shared.toast.logWeightFailed"));
     } finally {
       setLoading(false);
     }
@@ -155,12 +157,12 @@ export default function QuickActionModal({
         quality: sleepQuality,
         notes: sleepNotes,
       });
-      toast.success(`Logged ${hours}h sleep! 🌙`);
+      toast.success(t("shared.toast.sleepLogged", { hours }));
       notifyDataUpdated("sleep");
       onOpenChange(false);
       await onCompleted?.();
     } catch {
-      toast.error("Failed to log sleep");
+      toast.error(t("shared.toast.logSleepFailed"));
     } finally {
       setLoading(false);
     }
@@ -179,12 +181,12 @@ export default function QuickActionModal({
         exercises: [],
         notes: "",
       });
-      toast.success(`Logged ${workoutTitle}! 🔥`);
+      toast.success(t("shared.toast.workoutLogged", { title: workoutTitle }));
       notifyDataUpdated("workout");
       onOpenChange(false);
       await onCompleted?.();
     } catch {
-      toast.error("Failed to log workout");
+      toast.error(t("shared.toast.logWorkoutFailed"));
     } finally {
       setLoading(false);
     }
@@ -195,13 +197,17 @@ export default function QuickActionModal({
       setLoading(true);
       await appendMealItem(activeDate, selectedMealSlot, foodItem);
       toast.success(
-        `Logged ${foodItem.name} (${foodItem.calories} kcal) to ${selectedMealSlot}! 🍲`,
+        t("shared.toast.foodLogged", {
+          name: foodItem.name,
+          calories: foodItem.calories,
+          meal: t(`shared.mealSlot.${selectedMealSlot}`),
+        }),
       );
       notifyDataUpdated("meal");
       onOpenChange(false);
       await onCompleted?.();
     } catch {
-      toast.error("Failed to log food");
+      toast.error(t("shared.toast.logFoodFailed"));
     } finally {
       setLoading(false);
     }
@@ -210,7 +216,7 @@ export default function QuickActionModal({
   const handleCustomMealSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!quickMealName.trim()) {
-      toast.error("Please enter a food name");
+      toast.error(t("shared.toast.enterFoodName"));
       return;
     }
     await handleLogQuickMeal({
@@ -230,7 +236,9 @@ export default function QuickActionModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[95vw] sm:max-w-md rounded-3xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto overflow-x-hidden no-scrollbar">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold">Quick Log</DialogTitle>
+          <DialogTitle className="text-xl font-bold">
+            {t("shared.quickAction.title")}
+          </DialogTitle>
         </DialogHeader>
 
         {/* Tab switcher */}
@@ -245,7 +253,7 @@ export default function QuickActionModal({
             }`}
           >
             <Droplet className="w-4 h-4 mb-0.5 text-blue-500" />
-            Water
+            {t("shared.tab.water")}
           </button>
 
           <button
@@ -258,7 +266,7 @@ export default function QuickActionModal({
             }`}
           >
             <UtensilsCrossed className="w-4 h-4 mb-0.5 text-emerald-500" />
-            Meal
+            {t("shared.tab.meal")}
           </button>
 
           <button
@@ -271,7 +279,7 @@ export default function QuickActionModal({
             }`}
           >
             <Moon className="w-4 h-4 mb-0.5 text-indigo-500" />
-            Sleep
+            {t("shared.tab.sleep")}
           </button>
 
           <button
@@ -284,7 +292,7 @@ export default function QuickActionModal({
             }`}
           >
             <Dumbbell className="w-4 h-4 mb-0.5 text-amber-500" />
-            Workout
+            {t("shared.tab.workout")}
           </button>
 
           <button
@@ -297,7 +305,7 @@ export default function QuickActionModal({
             }`}
           >
             <Scale className="w-4 h-4 mb-0.5 text-purple-500" />
-            Weight
+            {t("shared.tab.weight")}
           </button>
         </div>
 
@@ -305,15 +313,15 @@ export default function QuickActionModal({
         {activeTab === "water" && (
           <div className="space-y-4">
             <p className="text-xs text-muted-foreground text-center">
-              Quickly add water to today&apos;s hydration goal:
+              {t("shared.quickAction.waterHelp")}
             </p>
             <div className="grid grid-cols-2 gap-2">
               {[
-                { amt: 150, label: "Cup (150ml)" },
-                { amt: 250, label: "Glass (250ml)" },
-                { amt: 500, label: "Bottle (500ml)" },
-                { amt: 1000, label: "Large Bottle (1L)" },
-              ].map(({ amt, label }) => (
+                { amt: 150, labelKey: "shared.water.cup150" },
+                { amt: 250, labelKey: "shared.water.glass250" },
+                { amt: 500, labelKey: "shared.water.bottle500" },
+                { amt: 1000, labelKey: "shared.water.largeBottle1L" },
+              ].map(({ amt, labelKey }) => (
                 <Button
                   key={amt}
                   variant="outline"
@@ -325,7 +333,7 @@ export default function QuickActionModal({
                     +{amt >= 1000 ? `${amt / 1000}L` : `${amt}ml`}
                   </span>
                   <span className="text-[10px] text-muted-foreground">
-                    {label}
+                    {t(labelKey)}
                   </span>
                 </Button>
               ))}
@@ -334,12 +342,12 @@ export default function QuickActionModal({
             <div className="flex gap-2 items-end pt-2 border-t border-border/30">
               <div className="flex-1 space-y-1">
                 <Label htmlFor="custom-water" className="text-xs">
-                  Custom Water (ml)
+                  {t("shared.quickAction.customWater")}
                 </Label>
                 <Input
                   id="custom-water"
                   type="number"
-                  placeholder="e.g. 350"
+                  placeholder={t("shared.quickAction.customWaterPlaceholder")}
                   value={waterAmount}
                   onChange={(e) => setWaterAmount(Number(e.target.value))}
                   className="rounded-xl"
@@ -350,7 +358,7 @@ export default function QuickActionModal({
                 onClick={() => handleLogWater(waterAmount)}
                 className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold"
               >
-                Add Water
+                {t("shared.quickAction.addWater")}
               </Button>
             </div>
           </div>
@@ -360,14 +368,16 @@ export default function QuickActionModal({
           <div className="space-y-4">
             {/* Meal Slot Selector */}
             <div className="space-y-1">
-              <Label className="text-xs">Select Meal</Label>
+              <Label className="text-xs">
+                {t("shared.quickAction.selectMeal")}
+              </Label>
               <div className="grid grid-cols-4 gap-1.5 p-1 bg-muted/60 rounded-2xl text-xs font-semibold">
                 {(
                   [
-                    { id: "breakfast", label: "Breakfast" },
-                    { id: "lunch", label: "Lunch" },
-                    { id: "dinner", label: "Dinner" },
-                    { id: "snack", label: "Snack" },
+                    { id: "breakfast", labelKey: "shared.mealSlot.breakfast" },
+                    { id: "lunch", labelKey: "shared.mealSlot.lunch" },
+                    { id: "dinner", labelKey: "shared.mealSlot.dinner" },
+                    { id: "snack", labelKey: "shared.mealSlot.snack" },
                   ] as const
                 ).map((slot) => (
                   <button
@@ -380,7 +390,7 @@ export default function QuickActionModal({
                         : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
-                    {slot.label}
+                    {t(slot.labelKey)}
                   </button>
                 ))}
               </div>
@@ -390,7 +400,8 @@ export default function QuickActionModal({
             {recentFoods.length > 0 && (
               <div className="space-y-1.5">
                 <p className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5" /> Recent Foods (1-Tap Log)
+                  <Clock className="w-3.5 h-3.5" />{" "}
+                  {t("shared.quickAction.recentFoods")}
                 </p>
                 <div className="grid grid-cols-1 gap-1.5 max-h-36 overflow-y-auto pr-1">
                   {recentFoods.map((food, idx) => (
@@ -417,11 +428,11 @@ export default function QuickActionModal({
               className="space-y-2.5 pt-2 border-t border-border/30"
             >
               <p className="text-[11px] font-semibold text-muted-foreground">
-                Or enter a quick custom item:
+                {t("shared.quickAction.customItemHelp")}
               </p>
               <div className="space-y-1">
                 <Input
-                  placeholder="Food name (e.g. 2 Eggs + Toast)"
+                  placeholder={t("shared.quickAction.foodNamePlaceholder")}
                   value={quickMealName}
                   onChange={(e) => setQuickMealName(e.target.value)}
                   className="rounded-xl text-xs"
@@ -430,7 +441,7 @@ export default function QuickActionModal({
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-0.5">
                   <Label className="text-[10px] text-muted-foreground">
-                    Calories (kcal)
+                    {t("shared.quickAction.calories")}
                   </Label>
                   <Input
                     type="number"
@@ -443,7 +454,7 @@ export default function QuickActionModal({
                 </div>
                 <div className="space-y-0.5">
                   <Label className="text-[10px] text-muted-foreground">
-                    Protein (g)
+                    {t("shared.quickAction.protein")}
                   </Label>
                   <Input
                     type="number"
@@ -460,7 +471,11 @@ export default function QuickActionModal({
                 disabled={loading || !quickMealName.trim()}
                 className="w-full rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9"
               >
-                {loading ? "Adding..." : `+ Log to ${selectedMealSlot}`}
+                {loading
+                  ? t("shared.quickAction.adding")
+                  : t("shared.quickAction.logTo", {
+                      meal: t(`shared.mealSlot.${selectedMealSlot}`),
+                    })}
               </Button>
             </form>
           </div>
@@ -469,14 +484,14 @@ export default function QuickActionModal({
         {activeTab === "sleep" && (
           <div className="space-y-4">
             <p className="text-xs text-muted-foreground text-center">
-              Quick presets for last night&apos;s sleep duration:
+              {t("shared.quickAction.sleepHelp")}
             </p>
             <div className="grid grid-cols-4 gap-2">
               {[
-                { hours: 6, sleep: "23:00", wake: "05:00", label: "6 hrs" },
-                { hours: 7, sleep: "23:00", wake: "06:00", label: "7 hrs" },
-                { hours: 7.5, sleep: "23:00", wake: "06:30", label: "7.5 hrs" },
-                { hours: 8, sleep: "23:00", wake: "07:00", label: "8 hrs" },
+                { hours: 6, sleep: "23:00", wake: "05:00" },
+                { hours: 7, sleep: "23:00", wake: "06:00" },
+                { hours: 7.5, sleep: "23:00", wake: "06:30" },
+                { hours: 8, sleep: "23:00", wake: "07:00" },
               ].map((p) => (
                 <Button
                   key={p.hours}
@@ -486,7 +501,7 @@ export default function QuickActionModal({
                   className="rounded-xl py-4 flex flex-col gap-0.5 border-indigo-500/20 hover:bg-indigo-500/10 hover:border-indigo-500/40"
                 >
                   <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
-                    {p.label}
+                    {t("shared.duration.hrs", { hours: p.hours })}
                   </span>
                   <span className="text-[9px] text-muted-foreground">
                     {formatTime12h(p.sleep)} - {formatTime12h(p.wake)}
@@ -515,7 +530,7 @@ export default function QuickActionModal({
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label htmlFor="sleep-time" className="text-xs">
-                    Sleep Time
+                    {t("shared.quickAction.sleepTime")}
                   </Label>
                   <Input
                     id="sleep-time"
@@ -528,7 +543,7 @@ export default function QuickActionModal({
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="wake-time" className="text-xs">
-                    Wake Time
+                    {t("shared.quickAction.wakeTime")}
                   </Label>
                   <Input
                     id="wake-time"
@@ -542,7 +557,9 @@ export default function QuickActionModal({
               </div>
 
               <div className="space-y-1">
-                <Label className="text-xs">Sleep Quality</Label>
+                <Label className="text-xs">
+                  {t("shared.quickAction.sleepQuality")}
+                </Label>
                 <div className="flex items-center justify-between gap-1 p-2 rounded-xl bg-muted/50 border border-border/30">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
@@ -571,7 +588,9 @@ export default function QuickActionModal({
                 disabled={loading}
                 className="w-full rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
               >
-                {loading ? "Saving..." : "Save Sleep Session"}
+                {loading
+                  ? t("shared.saving")
+                  : t("shared.quickAction.saveSleep")}
               </Button>
             </form>
           </div>
@@ -581,13 +600,15 @@ export default function QuickActionModal({
           <form onSubmit={handleLogWorkout} className="space-y-3">
             <div className="space-y-1">
               <Label htmlFor="action-workout-title" className="text-xs">
-                Workout Title
+                {t("shared.quickAction.workoutTitle")}
               </Label>
               <Input
                 id="action-workout-title"
                 value={workoutTitle}
                 onChange={(e) => setWorkoutTitle(e.target.value)}
-                placeholder="e.g. Upper Body / Running"
+                placeholder={t(
+                  "shared.quickAction.workoutTitlePlaceholder",
+                )}
                 className="rounded-xl"
                 required
               />
@@ -595,7 +616,9 @@ export default function QuickActionModal({
 
             <div className="grid grid-cols-2 gap-2.5">
               <div className="space-y-1">
-                <Label className="text-xs">Type</Label>
+                <Label className="text-xs">
+                  {t("shared.quickWorkout.type")}
+                </Label>
                 <Select
                   value={workoutType}
                   onValueChange={(v) => setWorkoutType(v as WorkoutType)}
@@ -604,21 +627,21 @@ export default function QuickActionModal({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl">
-                    <SelectItem value="push">Push Day</SelectItem>
-                    <SelectItem value="pull">Pull Day</SelectItem>
-                    <SelectItem value="legs">Leg Day</SelectItem>
-                    <SelectItem value="upper">Upper Body</SelectItem>
-                    <SelectItem value="lower">Lower Body</SelectItem>
-                    <SelectItem value="full_body">Full Body</SelectItem>
-                    <SelectItem value="cardio">Cardio / Run</SelectItem>
-                    <SelectItem value="custom">Custom</SelectItem>
+                    <SelectItem value="push">{t("shared.workoutType.push")}</SelectItem>
+                    <SelectItem value="pull">{t("shared.workoutType.pull")}</SelectItem>
+                    <SelectItem value="legs">{t("shared.workoutType.legs")}</SelectItem>
+                    <SelectItem value="upper">{t("shared.workoutType.upper")}</SelectItem>
+                    <SelectItem value="lower">{t("shared.workoutType.lower")}</SelectItem>
+                    <SelectItem value="full_body">{t("shared.workoutType.fullBody")}</SelectItem>
+                    <SelectItem value="cardio">{t("shared.workoutType.cardio")}</SelectItem>
+                    <SelectItem value="custom">{t("shared.workoutType.custom")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-1">
                 <Label htmlFor="action-workout-dur" className="text-xs">
-                  Duration (min)
+                  {t("shared.quickWorkout.duration")}
                 </Label>
                 <Input
                   id="action-workout-dur"
@@ -633,7 +656,7 @@ export default function QuickActionModal({
 
             <div className="space-y-1">
               <Label htmlFor="action-workout-cal" className="text-xs">
-                Estimated Calories (kcal)
+                {t("shared.quickAction.estimatedCalories")}
               </Label>
               <Input
                 id="action-workout-cal"
@@ -650,7 +673,9 @@ export default function QuickActionModal({
               disabled={loading}
               className="w-full rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold h-10 mt-1"
             >
-              {loading ? "Saving..." : "Log Workout"}
+              {loading
+                ? t("shared.saving")
+                : t("shared.quickAction.logWorkout")}
             </Button>
           </form>
         )}
@@ -659,13 +684,13 @@ export default function QuickActionModal({
           <form onSubmit={handleLogWeight} className="space-y-4">
             <div className="space-y-1">
               <Label htmlFor="weight-val" className="text-xs">
-                Today&apos;s Weight (kg)
+                {t("shared.quickAction.todayWeight")}
               </Label>
               <Input
                 id="weight-val"
                 type="number"
                 step="0.1"
-                placeholder="e.g. 72.5"
+                placeholder={t("shared.quickAction.weightPlaceholder")}
                 value={weightVal}
                 onChange={(e) => setWeightVal(e.target.value)}
                 required
@@ -675,11 +700,11 @@ export default function QuickActionModal({
 
             <div className="space-y-1">
               <Label htmlFor="weight-notes" className="text-xs">
-                Notes (optional)
+                {t("shared.notesOptional")}
               </Label>
               <Input
                 id="weight-notes"
-                placeholder="e.g. Morning empty stomach"
+                placeholder={t("shared.quickAction.weightNotesPlaceholder")}
                 value={weightNotes}
                 onChange={(e) => setWeightNotes(e.target.value)}
                 className="rounded-xl"
@@ -691,7 +716,9 @@ export default function QuickActionModal({
               disabled={loading}
               className="w-full rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold"
             >
-              {loading ? "Saving..." : "Log Weight"}
+              {loading
+                ? t("shared.saving")
+                : t("shared.quickAction.logWeight")}
             </Button>
           </form>
         )}

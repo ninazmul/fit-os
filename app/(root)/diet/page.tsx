@@ -78,6 +78,7 @@ import toast from "react-hot-toast";
 import { format, addDays, subDays } from "date-fns";
 import PageHeader from "@/components/shared/PageHeader";
 import NutritionSummary from "@/components/shared/NutritionSummary";
+import { useI18n } from "@/components/shared/I18nProvider";
 
 const AdUnit = dynamic(() => import("@/components/shared/AdUnit"), {
   ssr: false,
@@ -91,11 +92,11 @@ const DietUserGuideModal = dynamic(
   { ssr: false },
 );
 
-const mealTypes: { type: MealType; label: string; icon: typeof Sun }[] = [
-  { type: "breakfast", label: "Breakfast", icon: Sun },
-  { type: "lunch", label: "Lunch", icon: UtensilsCrossed },
-  { type: "dinner", label: "Dinner", icon: Moon },
-  { type: "snack", label: "Snacks", icon: Apple },
+const mealTypes: { type: MealType; labelKey: string; icon: typeof Sun }[] = [
+  { type: "breakfast", labelKey: "diet.mealType.breakfast", icon: Sun },
+  { type: "lunch", labelKey: "diet.mealType.lunch", icon: UtensilsCrossed },
+  { type: "dinner", labelKey: "diet.mealType.dinner", icon: Moon },
+  { type: "snack", labelKey: "diet.mealType.snack", icon: Apple },
 ];
 
 const emptyAIForm = (): AIEstimateInput => ({
@@ -107,9 +108,9 @@ const emptyAIForm = (): AIEstimateInput => ({
 });
 
 /** Bangladeshi-focused quick-start templates that populate the guided portion form. */
-const AI_PRESETS: { label: string; form: AIEstimateInput }[] = [
+const AI_PRESETS: { labelKey: string; form: AIEstimateInput }[] = [
   {
-    label: "🍗 Chicken Curry & Rice",
+    labelKey: "diet.preset.chickenCurry",
     form: {
       description:
         "Homemade chicken curry (murgir jhol) with potato, eaten with rice",
@@ -121,7 +122,7 @@ const AI_PRESETS: { label: string; form: AIEstimateInput }[] = [
     },
   },
   {
-    label: "🍚 Dal, Rice & Bhorta",
+    labelKey: "diet.preset.dalRiceBhorta",
     form: {
       description: "Masoor dal with rice and alu bhorta",
       ingredients:
@@ -132,7 +133,7 @@ const AI_PRESETS: { label: string; form: AIEstimateInput }[] = [
     },
   },
   {
-    label: "🐟 Ilish Bhapa & Rice",
+    labelKey: "diet.preset.ilishBhapa",
     form: {
       description: "Steamed hilsa (ilish) with mustard, eaten with rice",
       ingredients:
@@ -143,7 +144,7 @@ const AI_PRESETS: { label: string; form: AIEstimateInput }[] = [
     },
   },
   {
-    label: "🍳 Omelette & Paratha",
+    labelKey: "diet.preset.omeletteParatha",
     form: {
       description: "Two-egg omelette with paratha",
       ingredients: "2 eggs, 1 paratha, 1 tsp oil, onion, green chili",
@@ -153,7 +154,7 @@ const AI_PRESETS: { label: string; form: AIEstimateInput }[] = [
     },
   },
   {
-    label: "🥩 Beef Bhuna",
+    labelKey: "diet.preset.beefBhuna",
     form: {
       description: "Beef bhuna (koshano)",
       ingredients: "600g beef, 2 onions, 3 tbsp oil, spices",
@@ -165,6 +166,7 @@ const AI_PRESETS: { label: string; form: AIEstimateInput }[] = [
 ];
 
 export default function DietPage() {
+  const { t } = useI18n();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [meals, setMeals] = useState<any[]>([]);
@@ -297,7 +299,7 @@ export default function DietPage() {
 
   const handleAddFoodToMeal = async () => {
     if (!selectedFood || !currentPortionBreakdown) {
-      toast.error("Please select a food item");
+      toast.error(t("diet.toast.selectFood"));
       return;
     }
 
@@ -331,7 +333,11 @@ export default function DietPage() {
       });
 
       toast.success(
-        `Added ${selectedFood.name} (${Math.round(selectedFood.calories * finalQuantity)} kcal) to ${activeMealType}! 🥗`,
+        t("diet.toast.foodAdded", {
+          food: selectedFood.name,
+          kcal: Math.round(selectedFood.calories * finalQuantity),
+          meal: t(`diet.mealType.${activeMealType}`),
+        }),
       );
       setAddModalOpen(false);
       setSelectedFood(null);
@@ -340,7 +346,7 @@ export default function DietPage() {
       notifyDataUpdated("meal");
       fetchData();
     } catch {
-      toast.error("Failed to add meal");
+      toast.error(t("diet.toast.addFailed"));
     }
   };
 
@@ -368,7 +374,7 @@ export default function DietPage() {
     e.stopPropagation();
     if (!food._id) return;
     if (food.isCustom && !food.isOwner) {
-      toast.error("You can only edit custom foods you created.");
+      toast.error(t("diet.toast.onlyEditOwn"));
       return;
     }
     setEditingFoodId(food._id);
@@ -391,13 +397,13 @@ export default function DietPage() {
   ) => {
     e.stopPropagation();
     if (food && food.isCustom && !food.isOwner) {
-      toast.error("You can only delete custom foods you created.");
+      toast.error(t("diet.toast.onlyDeleteOwn"));
       return;
     }
-    if (!confirm("Are you sure you want to delete this custom food?")) return;
+    if (!confirm(t("diet.toast.confirmDelete"))) return;
     try {
       await deleteCustomFood(foodId);
-      toast.success("Custom food deleted!");
+      toast.success(t("diet.toast.customDeleted"));
       if (selectedFood?._id === foodId) {
         setSelectedFood(null);
       }
@@ -405,14 +411,14 @@ export default function DietPage() {
       setFoodCatalog(foods);
     } catch (err: unknown) {
       const msg =
-        err instanceof Error ? err.message : "Failed to delete custom food";
+        err instanceof Error ? err.message : t("diet.toast.customDeleteFailed");
       toast.error(msg);
     }
   };
 
   const handleRunAIEstimate = async () => {
     if (!aiForm.description.trim()) {
-      toast.error("Please describe the food or recipe first.");
+      toast.error(t("diet.toast.needDescription"));
       return;
     }
 
@@ -436,10 +442,10 @@ export default function DietPage() {
       setCustomFat(result.fat);
       setCustomFiber(result.fiber);
 
-      toast.success("AI calculated macros & filled the required fields! ✨");
+      toast.success(t("diet.toast.aiSuccess"));
     } catch (err) {
       console.error("AI estimation error:", err);
-      toast.error("Failed to calculate with AI. Please check inputs.");
+      toast.error(t("diet.toast.aiFailed"));
     } finally {
       setAiLoading(false);
     }
@@ -461,10 +467,10 @@ export default function DietPage() {
 
       if (editingFoodId) {
         await updateCustomFood(editingFoodId, payload);
-        toast.success("Custom food updated!");
+        toast.success(t("diet.toast.customUpdated"));
       } else {
         await createCustomFood(payload);
-        toast.success("Custom food created!");
+        toast.success(t("diet.toast.customCreated"));
       }
 
       setCustomFoodModalOpen(false);
@@ -474,7 +480,9 @@ export default function DietPage() {
       setFoodCatalog(foods);
     } catch {
       toast.error(
-        editingFoodId ? "Failed to update food" : "Failed to create food",
+        editingFoodId
+          ? t("diet.toast.updateFailed")
+          : t("diet.toast.createFailed"),
       );
     }
   };
@@ -485,11 +493,15 @@ export default function DietPage() {
   ) => {
     try {
       await logSavedMeal(templateId, dateStr, mealType);
-      toast.success(`Logged saved meal template to ${mealType}! ⚡`);
+      toast.success(
+        t("diet.toast.templateLogged", {
+          meal: t(`diet.mealType.${mealType}`),
+        }),
+      );
       notifyDataUpdated("meal");
       fetchData();
     } catch {
-      toast.error("Failed to log saved meal template");
+      toast.error(t("diet.toast.templateLogFailed"));
     }
   };
 
@@ -498,7 +510,9 @@ export default function DietPage() {
     mealType: MealType,
   ) => {
     setItemsToSave(items);
-    setTemplateName(`${mealType.toUpperCase()} Template`);
+    setTemplateName(
+      t("diet.saveTemplate.defaultName", { meal: mealType.toUpperCase() }),
+    );
     setTemplateCategory(mealType as SavedMealCategory);
     setSaveTemplateModalOpen(true);
   };
@@ -513,43 +527,43 @@ export default function DietPage() {
         category: templateCategory,
         items: itemsToSave,
       });
-      toast.success(`Saved template "${templateName}"! 🔖`);
+      toast.success(t("diet.toast.templateSaved", { name: templateName }));
       setSaveTemplateModalOpen(false);
       fetchData();
     } catch {
-      toast.error("Failed to save meal template");
+      toast.error(t("diet.toast.templateSaveFailed"));
     }
   };
 
   const handleDeleteTemplate = async (id: string) => {
     try {
       await deleteSavedMeal(id);
-      toast.success("Saved meal template removed");
+      toast.success(t("diet.toast.templateRemoved"));
       fetchData();
     } catch {
-      toast.error("Failed to remove template");
+      toast.error(t("diet.toast.templateRemoveFailed"));
     }
   };
 
   const handleDeleteMeal = async (mealId: string) => {
     try {
       await deleteMealLog(mealId);
-      toast.success("Meal cleared");
+      toast.success(t("diet.toast.mealCleared"));
       notifyDataUpdated("meal");
       fetchData();
     } catch {
-      toast.error("Failed to delete meal");
+      toast.error(t("diet.toast.mealDeleteFailed"));
     }
   };
 
   const handleRemoveItem = async (mealId: string, itemIndex: number) => {
     try {
       await removeMealItem(mealId, itemIndex);
-      toast.success("Item removed");
+      toast.success(t("diet.toast.itemRemoved"));
       notifyDataUpdated("meal");
       fetchData();
     } catch {
-      toast.error("Failed to remove item");
+      toast.error(t("diet.toast.itemRemoveFailed"));
     }
   };
 
@@ -602,17 +616,17 @@ export default function DietPage() {
       {/* Date Navigation & Title */}
       <PageHeader
         icon={UtensilsCrossed}
-        title="Diet & Nutrition"
-        subtitle="Log meals, Bangladeshi dishes, saved templates & barcodes"
+        title={t("diet.title")}
+        subtitle={t("diet.subtitle")}
         actions={
           <button
             type="button"
             onClick={() => setUserGuideOpen(true)}
             className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-xs font-semibold border border-primary/20 shrink-0 shadow-2xs min-h-[2rem]"
-            title="Open User Guide"
+            title={t("diet.guide.open")}
           >
             <BookOpen className="w-3 h-3" />
-            <span>Guide</span>
+            <span>{t("diet.guide.button")}</span>
           </button>
         }
       >
@@ -620,7 +634,7 @@ export default function DietPage() {
           <Button
             variant="ghost"
             size="icon"
-            aria-label="Previous day"
+            aria-label={t("diet.date.prev")}
             onClick={() => setSelectedDate((d) => subDays(d, 1))}
             className="h-9 w-9 rounded-xl"
           >
@@ -633,7 +647,7 @@ export default function DietPage() {
           <Button
             variant="ghost"
             size="icon"
-            aria-label="Next day"
+            aria-label={t("diet.date.next")}
             onClick={() => setSelectedDate((d) => addDays(d, 1))}
             className="h-9 w-9 rounded-xl"
           >
@@ -648,10 +662,12 @@ export default function DietPage() {
           <div className="flex items-center justify-between px-1">
             <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
               <Bookmark className="w-3.5 h-3.5 text-primary" />
-              Saved Meal Templates ({savedMeals.length})
+              {t("diet.savedMeals.heading", { count: savedMeals.length })}
             </h3>
             <span className="text-[11px] text-muted-foreground">
-              Tap to log to {format(selectedDate, "MMM d")}
+              {t("diet.savedMeals.tapToLog", {
+                date: format(selectedDate, "MMM d"),
+              })}
             </span>
           </div>
 
@@ -672,7 +688,7 @@ export default function DietPage() {
                         template._id && handleDeleteTemplate(template._id)
                       }
                       className="text-muted-foreground hover:text-red-500 p-0.5"
-                      title="Delete template"
+                      title={t("diet.savedMeals.delete")}
                     >
                       <Trash2 className="w-3 h-3" />
                     </button>
@@ -705,7 +721,7 @@ export default function DietPage() {
                     }
                     className="h-7 text-[10px] rounded-xl font-bold bg-primary hover:bg-primary/90 text-white"
                   >
-                    + Breakfast
+                    {t("diet.savedMeals.logBreakfast")}
                   </Button>
                   <Button
                     size="sm"
@@ -716,7 +732,7 @@ export default function DietPage() {
                     }
                     className="h-7 text-[10px] rounded-xl font-semibold"
                   >
-                    + Lunch
+                    {t("diet.savedMeals.logLunch")}
                   </Button>
                 </div>
               </div>
@@ -729,7 +745,7 @@ export default function DietPage() {
       <NutritionSummary
         calories={{
           key: "calories",
-          label: "Calories",
+          label: t("diet.nutrition.calories"),
           consumed: Math.round(dailyCalories),
           target: calGoal,
           unit: "kcal",
@@ -737,28 +753,28 @@ export default function DietPage() {
         macros={[
           {
             key: "protein",
-            label: "Protein",
+            label: t("diet.nutrition.protein"),
             consumed: Math.round(dailyProtein),
             target: proteinGoal,
             unit: "g",
           },
           {
             key: "carbs",
-            label: "Carbs",
+            label: t("diet.nutrition.carbs"),
             consumed: Math.round(dailyCarbs),
             target: carbGoal,
             unit: "g",
           },
           {
             key: "fat",
-            label: "Fat",
+            label: t("diet.nutrition.fat"),
             consumed: Math.round(dailyFat),
             target: fatGoal,
             unit: "g",
           },
           {
             key: "fiber",
-            label: "Fiber",
+            label: t("diet.nutrition.fiber"),
             consumed: Math.round(dailyFiber),
             target: fiberGoal,
             unit: "g",
@@ -767,7 +783,7 @@ export default function DietPage() {
       />
 
       {/* Mid-page Ad */}
-      <AdUnit size="auto" label="Sponsored" maxWidth="970px" />
+      <AdUnit size="auto" label={t("diet.ad.sponsored")} maxWidth="970px" />
 
       {/* Meal Types Sections */}
       <div className="space-y-4">
@@ -778,7 +794,7 @@ export default function DietPage() {
           className="w-full rounded-2xl border-dashed border-2 border-primary/30 hover:bg-primary/5 text-primary font-bold gap-2"
         >
           <ScanBarcode className="w-4 h-4" />
-          Scan Barcode
+          {t("diet.meal.scanBarcode")}
         </Button>
         {mealTypes.map((mType) => {
           const loggedMeal = meals.find((m) => m.mealType === mType.type);
@@ -795,11 +811,19 @@ export default function DietPage() {
                     <Icon className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-base font-bold">{mType.label}</h3>
+                    <h3 className="text-base font-bold">{t(mType.labelKey)}</h3>
                     <p className="text-xs text-muted-foreground">
                       {loggedMeal
-                        ? `${loggedMeal.items.length} item${loggedMeal.items.length !== 1 ? "s" : ""} · ${loggedMeal.totalCalories} kcal`
-                        : "0 kcal logged"}
+                        ? t("diet.meal.loggedSummary", {
+                            items: t(
+                              loggedMeal.items.length === 1
+                                ? "diet.meal.itemSingular"
+                                : "diet.meal.itemPlural",
+                              { count: loggedMeal.items.length },
+                            ),
+                            kcal: loggedMeal.totalCalories,
+                          })
+                        : t("diet.meal.noneLogged")}
                     </p>
                   </div>
                 </div>
@@ -819,7 +843,7 @@ export default function DietPage() {
                         className="rounded-xl gap-1 text-xs text-primary hover:bg-primary/10 font-bold"
                       >
                         <Bookmark className="w-3.5 h-3.5" />
-                        Save Template
+                        {t("diet.meal.saveTemplate")}
                       </Button>
                       <Button
                         size="sm"
@@ -828,7 +852,7 @@ export default function DietPage() {
                         className="rounded-xl gap-1 text-xs text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
-                        Clear
+                        {t("diet.meal.clear")}
                       </Button>
                     </>
                   )}
@@ -841,7 +865,7 @@ export default function DietPage() {
                     className="rounded-xl gap-1 text-xs bg-primary/10 text-primary hover:bg-primary/20"
                   >
                     <Plus className="w-4 h-4" />
-                    Add Food
+                    {t("diet.meal.addFood")}
                   </Button>
                 </div>
               </div>
@@ -871,8 +895,10 @@ export default function DietPage() {
                           size="icon"
                           onClick={() => handleRemoveItem(loggedMeal._id, idx)}
                           className="h-7 w-7 text-muted-foreground hover:text-red-500 rounded-lg"
-                          title="Remove this item"
-                          aria-label={`Remove ${item.name}`}
+                          title={t("diet.meal.removeItemTitle")}
+                          aria-label={t("diet.meal.removeItemAria", {
+                            name: item.name,
+                          })}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </Button>
@@ -882,7 +908,9 @@ export default function DietPage() {
                 </div>
               ) : (
                 <p className="text-xs text-muted-foreground text-center py-3 italic">
-                  No foods logged for {mType.label.toLowerCase()} yet.
+                  {t("diet.meal.emptyFor", {
+                    meal: t(mType.labelKey).toLowerCase(),
+                  })}
                 </p>
               )}
             </div>
@@ -896,11 +924,14 @@ export default function DietPage() {
           <DialogHeader className="p-4 sm:p-5 pb-3 border-b border-border/40 shrink-0 pr-12">
             <DialogTitle className="text-base sm:text-lg font-bold flex items-center gap-2">
               <UtensilsCrossed className="w-5 h-5 text-primary shrink-0" />
-              <span>Add Food to {activeMealType.toUpperCase()}</span>
+              <span>
+                {t("diet.addModal.title", {
+                  meal: t(`diet.mealType.${activeMealType}`).toUpperCase(),
+                })}
+              </span>
             </DialogTitle>
             <DialogDescription className="text-xs">
-              Search Bangladeshi &amp; global dishes, shared community foods, or
-              create custom food.
+              {t("diet.addModal.description")}
             </DialogDescription>
           </DialogHeader>
 
@@ -910,7 +941,7 @@ export default function DietPage() {
               <div className="relative flex-1 min-w-0">
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Search food (e.g. Polao, Kacchi, Dal)..."
+                  placeholder={t("diet.addModal.searchPlaceholder")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9 rounded-xl text-xs sm:text-sm w-full"
@@ -921,7 +952,7 @@ export default function DietPage() {
                 onClick={handleOpenCreateCustomFood}
                 className="rounded-xl text-xs whitespace-nowrap border-primary text-primary shrink-0"
               >
-                + Custom
+                {t("diet.addModal.customButton")}
               </Button>
             </div>
 
@@ -1011,7 +1042,7 @@ export default function DietPage() {
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-1 text-xs font-semibold text-muted-foreground">
                     <Calculator className="w-3.5 h-3.5 text-primary" />
-                    <span>Portion Calculator</span>
+                    <span>{t("diet.portion.title")}</span>
                   </div>
                   <div className="flex p-0.5 bg-muted rounded-xl text-[11px] font-semibold">
                     <button
@@ -1023,7 +1054,7 @@ export default function DietPage() {
                           : "text-muted-foreground hover:text-foreground"
                       }`}
                     >
-                      🔢 Multiplier
+                      {t("diet.portion.multiplier")}
                     </button>
                     <button
                       type="button"
@@ -1035,7 +1066,7 @@ export default function DietPage() {
                       }`}
                     >
                       <Scale className="w-3 h-3" />
-                      ⚖️ Grams
+                      {t("diet.portion.grams")}
                     </button>
                   </div>
                 </div>
@@ -1045,13 +1076,15 @@ export default function DietPage() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-xs text-muted-foreground truncate">
-                        Base:{" "}
+                        {t("diet.portion.base")}{" "}
                         <strong className="text-foreground">
                           {selectedFood.servingSize}
                         </strong>
                       </span>
                       <div className="flex items-center gap-2 shrink-0">
-                        <Label className="text-xs">Qty:</Label>
+                        <Label className="text-xs">
+                          {t("diet.portion.qty")}
+                        </Label>
                         <Input
                           type="number"
                           step="0.1"
@@ -1093,20 +1126,22 @@ export default function DietPage() {
                         ({selectedFood.calories} kcal)
                       </span>
                       <span className="text-primary font-bold text-[11px]">
-                        {currentPortionBreakdown.calculatedQuantity}x serving
+                        {t("diet.portion.xServing", {
+                          count: currentPortionBreakdown.calculatedQuantity,
+                        })}
                       </span>
                     </div>
                     <div className="space-y-1">
                       <Label className="text-xs font-semibold flex items-center gap-1">
                         <Scale className="w-3 h-3 text-primary" />
-                        Amount I ate (grams / ml):
+                        {t("diet.portion.amountLabel")}
                       </Label>
                       <div className="relative">
                         <Input
                           type="number"
                           step="1"
                           min="1"
-                          placeholder="e.g. 200"
+                          placeholder={t("diet.portion.amountPlaceholder")}
                           value={eatenGrams}
                           onChange={(e) =>
                             setEatenGrams(Math.max(0, Number(e.target.value)))
@@ -1293,7 +1328,7 @@ export default function DietPage() {
                       }
                       className="px-2.5 py-1.5 rounded-xl bg-muted/60 hover:bg-primary/10 hover:text-primary border border-border/40 whitespace-nowrap transition-colors shrink-0 font-medium"
                     >
-                      {preset.label}
+                      {t(preset.labelKey)}
                     </button>
                   ))}
                 </div>
@@ -1331,9 +1366,9 @@ export default function DietPage() {
                   <span className="flex items-center justify-center w-4 h-4 rounded-full bg-primary/15 text-primary text-[10px] font-bold shrink-0">
                     2
                   </span>
-                  Ingredients &amp; Quantities
+                  {t("diet.ai.field2")}
                   <span className="text-[10px] text-muted-foreground font-normal">
-                    (optional)
+                    {t("diet.customFood.optional")}
                   </span>
                 </Label>
                 <textarea
@@ -1342,7 +1377,7 @@ export default function DietPage() {
                   onChange={(e) =>
                     setAiForm((f) => ({ ...f, ingredients: e.target.value }))
                   }
-                  placeholder="e.g. 500g chicken, 2 potatoes, 1 onion, 2 tbsp mustard oil"
+                  placeholder={t("diet.ai.field2Placeholder")}
                   className="w-full min-w-0 rounded-2xl p-3 bg-muted/40 border border-border/50 focus:border-primary focus:ring-1 focus:ring-primary text-xs outline-none transition-all resize-none box-border leading-relaxed"
                 />
               </div>
@@ -1353,9 +1388,9 @@ export default function DietPage() {
                   <span className="flex items-center justify-center w-4 h-4 rounded-full bg-primary/15 text-primary text-[10px] font-bold shrink-0">
                     3
                   </span>
-                  Cooking Method
+                  {t("diet.ai.field3")}
                   <span className="text-[10px] text-muted-foreground font-normal">
-                    (optional)
+                    {t("diet.customFood.optional")}
                   </span>
                 </Label>
                 <Input
@@ -1363,7 +1398,7 @@ export default function DietPage() {
                   onChange={(e) =>
                     setAiForm((f) => ({ ...f, cookingMethod: e.target.value }))
                   }
-                  placeholder="e.g. Pressure-cooked jhol / bhuna / deep fried / boiled"
+                  placeholder={t("diet.ai.field3Placeholder")}
                   className="rounded-2xl h-10 w-full"
                 />
               </div>
@@ -1375,9 +1410,9 @@ export default function DietPage() {
                     <span className="flex items-center justify-center w-4 h-4 rounded-full bg-primary/15 text-primary text-[10px] font-bold shrink-0">
                       4
                     </span>
-                    Total Cooked
+                    {t("diet.ai.field4")}
                     <span className="text-[10px] text-muted-foreground font-normal">
-                      (optional)
+                      {t("diet.customFood.optional")}
                     </span>
                   </Label>
                   <Input
@@ -1388,7 +1423,7 @@ export default function DietPage() {
                         cookedPortionTotal: e.target.value,
                       }))
                     }
-                    placeholder="e.g. 750g total or 4 servings"
+                    placeholder={t("diet.ai.field4Placeholder")}
                     className="rounded-2xl h-10 w-full"
                   />
                 </div>
@@ -1397,9 +1432,9 @@ export default function DietPage() {
                     <span className="flex items-center justify-center w-4 h-4 rounded-full bg-primary/15 text-primary text-[10px] font-bold shrink-0">
                       5
                     </span>
-                    Portion You Ate
+                    {t("diet.ai.field5")}
                     <span className="text-[10px] text-muted-foreground font-normal">
-                      (optional)
+                      {t("diet.customFood.optional")}
                     </span>
                   </Label>
                   <Input
@@ -1407,18 +1442,18 @@ export default function DietPage() {
                     onChange={(e) =>
                       setAiForm((f) => ({ ...f, portionEaten: e.target.value }))
                     }
-                    placeholder="e.g. 150g / 1 katori / half / 1 of 4"
+                    placeholder={t("diet.ai.field5Placeholder")}
                     className="rounded-2xl h-10 w-full"
                   />
                 </div>
               </div>
 
               <p className="text-[10px] text-muted-foreground px-1">
-                Tip: Press{" "}
+                {t("diet.ai.tipBefore")}{" "}
                 <kbd className="px-1.5 py-0.5 rounded bg-muted text-[10px] font-mono border border-border/50">
                   ⌘ Enter
                 </kbd>{" "}
-                to analyze
+                {t("diet.ai.tipAfter")}
               </p>
 
               {/* AI Calculate & Fill Button */}
@@ -1431,12 +1466,12 @@ export default function DietPage() {
                 {aiLoading ? (
                   <>
                     <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
-                    <span>AI is analyzing & filling fields...</span>
+                    <span>{t("diet.ai.analyzing")}</span>
                   </>
                 ) : (
                   <>
                     <Sparkles className="w-4 h-4 shrink-0" />
-                    <span>✨ Analyze with AI & Fill Fields</span>
+                    <span>{t("diet.ai.analyzeButton")}</span>
                   </>
                 )}
               </Button>
@@ -1539,9 +1574,11 @@ export default function DietPage() {
             </div>
 
             <div className="space-y-1">
-              <Label className="font-semibold text-xs">Food Name</Label>
+              <Label className="font-semibold text-xs">
+                {t("diet.customFood.foodName")}
+              </Label>
               <Input
-                placeholder="e.g. Homemade Chicken Curry (150g)"
+                placeholder={t("diet.customFood.foodNamePlaceholder")}
                 value={customName}
                 onChange={(e) => setCustomName(e.target.value)}
                 required
@@ -1552,10 +1589,10 @@ export default function DietPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
               <div className="space-y-1 min-w-0">
                 <Label className="font-semibold text-xs">
-                  Serving Size (Base)
+                  {t("diet.customFood.servingSize")}
                 </Label>
                 <Input
-                  placeholder="e.g. 100g or 1 portion (150g)"
+                  placeholder={t("diet.customFood.servingPlaceholder")}
                   value={customServing}
                   onChange={(e) => setCustomServing(e.target.value)}
                   required
@@ -1564,7 +1601,9 @@ export default function DietPage() {
               </div>
 
               <div className="space-y-1 min-w-0">
-                <Label className="font-semibold text-xs">Calories (kcal)</Label>
+                <Label className="font-semibold text-xs">
+                  {t("diet.customFood.calories")}
+                </Label>
                 <Input
                   type="number"
                   value={customCalories}
@@ -1578,7 +1617,7 @@ export default function DietPage() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5 pt-1">
               <div className="space-y-1 min-w-0">
                 <Label className="font-semibold text-[11px] text-emerald-700 dark:text-emerald-400 truncate block">
-                  Protein (g)
+                  {t("diet.customFood.proteinG")}
                 </Label>
                 <Input
                   type="number"
@@ -1590,7 +1629,7 @@ export default function DietPage() {
               </div>
               <div className="space-y-1 min-w-0">
                 <Label className="font-semibold text-[11px] text-blue-700 dark:text-blue-400 truncate block">
-                  Carbs (g)
+                  {t("diet.customFood.carbsG")}
                 </Label>
                 <Input
                   type="number"
@@ -1602,7 +1641,7 @@ export default function DietPage() {
               </div>
               <div className="space-y-1 min-w-0">
                 <Label className="font-semibold text-[11px] text-purple-700 dark:text-purple-400 truncate block">
-                  Fat (g)
+                  {t("diet.customFood.fatG")}
                 </Label>
                 <Input
                   type="number"
@@ -1614,7 +1653,7 @@ export default function DietPage() {
               </div>
               <div className="space-y-1 min-w-0">
                 <Label className="font-semibold text-[11px] text-amber-700 dark:text-amber-400 truncate block">
-                  Fiber (g)
+                  {t("diet.customFood.fiberG")}
                 </Label>
                 <Input
                   type="number"
@@ -1668,16 +1707,18 @@ export default function DietPage() {
           <DialogHeader className="pr-7 sm:pr-8">
             <DialogTitle className="text-base sm:text-lg font-bold flex items-center gap-2">
               <Bookmark className="w-5 h-5 text-primary shrink-0" />
-              <span>Save Meal as Template</span>
+              <span>{t("diet.saveTemplate.title")}</span>
             </DialogTitle>
           </DialogHeader>
 
           <form onSubmit={handleCreateTemplate} className="space-y-4 text-xs">
             <div className="space-y-1">
-              <Label htmlFor="template-name">Template Name</Label>
+              <Label htmlFor="template-name">
+                {t("diet.saveTemplate.nameLabel")}
+              </Label>
               <Input
                 id="template-name"
-                placeholder="e.g. Daily Gym Breakfast, Office Lunch"
+                placeholder={t("diet.saveTemplate.namePlaceholder")}
                 value={templateName}
                 onChange={(e) => setTemplateName(e.target.value)}
                 required
@@ -1686,17 +1727,26 @@ export default function DietPage() {
             </div>
 
             <div className="space-y-1">
-              <Label>Category</Label>
+              <Label>{t("diet.saveTemplate.category")}</Label>
               <div className="grid grid-cols-2 gap-1.5 pt-1">
                 {[
-                  { id: "breakfast", label: "Breakfast" },
-                  { id: "lunch", label: "Lunch" },
-                  { id: "dinner", label: "Dinner" },
-                  { id: "iftar", label: "Iftar" },
-                  { id: "gym_meal", label: "Gym Meal" },
-                  { id: "office_lunch", label: "Office Lunch" },
-                  { id: "cheat_meal", label: "Cheat Meal" },
-                  { id: "custom", label: "Custom" },
+                  {
+                    id: "breakfast",
+                    labelKey: "diet.saveTemplate.catBreakfast",
+                  },
+                  { id: "lunch", labelKey: "diet.saveTemplate.catLunch" },
+                  { id: "dinner", labelKey: "diet.saveTemplate.catDinner" },
+                  { id: "iftar", labelKey: "diet.saveTemplate.catIftar" },
+                  { id: "gym_meal", labelKey: "diet.saveTemplate.catGymMeal" },
+                  {
+                    id: "office_lunch",
+                    labelKey: "diet.saveTemplate.catOfficeLunch",
+                  },
+                  {
+                    id: "cheat_meal",
+                    labelKey: "diet.saveTemplate.catCheatMeal",
+                  },
+                  { id: "custom", labelKey: "diet.saveTemplate.catCustom" },
                 ].map((cat) => (
                   <button
                     key={cat.id}
@@ -1710,7 +1760,7 @@ export default function DietPage() {
                         : "bg-muted/40 border-border/40 text-muted-foreground"
                     }`}
                   >
-                    {cat.label}
+                    {t(cat.labelKey)}
                   </button>
                 ))}
               </div>
@@ -1718,7 +1768,9 @@ export default function DietPage() {
 
             <div className="p-3 rounded-2xl bg-muted/40 border border-border/40 space-y-1">
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                Items in Template ({itemsToSave.length})
+                {t("diet.saveTemplate.itemsHeading", {
+                  count: itemsToSave.length,
+                })}
               </p>
               <p className="text-xs font-medium text-foreground truncate">
                 {itemsToSave.map((i) => i.name).join(", ")}

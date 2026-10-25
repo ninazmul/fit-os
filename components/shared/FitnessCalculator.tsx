@@ -10,44 +10,46 @@ import {
   Activity,
   ChevronRight,
 } from "lucide-react";
+import { useI18n } from "@/components/shared/I18nProvider";
 
 type CalcTab = "bmi" | "bmr" | "tdee" | "bodyfat" | "idealweight";
 
-const TABS: { id: CalcTab; label: string; icon: typeof Calculator }[] = [
-  { id: "bmi", label: "BMI", icon: Scale },
-  { id: "bmr", label: "BMR", icon: Flame },
-  { id: "tdee", label: "TDEE", icon: Activity },
-  { id: "bodyfat", label: "Body Fat %", icon: Heart },
-  { id: "idealweight", label: "Ideal Weight", icon: Target },
+const TABS: { id: CalcTab; labelKey: string; icon: typeof Calculator }[] = [
+  { id: "bmi", labelKey: "calculator.tab.bmi", icon: Scale },
+  { id: "bmr", labelKey: "calculator.tab.bmr", icon: Flame },
+  { id: "tdee", labelKey: "calculator.tab.tdee", icon: Activity },
+  { id: "bodyfat", labelKey: "calculator.tab.bodyfat", icon: Heart },
+  { id: "idealweight", labelKey: "calculator.tab.idealweight", icon: Target },
 ];
 
 function getBmiCategory(bmi: number) {
-  if (bmi < 16) return { label: "Severe Thinness", color: "#EF4444" };
-  if (bmi < 17) return { label: "Moderate Thinness", color: "#F59E0B" };
-  if (bmi < 18.5) return { label: "Mild Thinness", color: "#F59E0B" };
-  if (bmi < 25) return { label: "Normal Weight ✅", color: "#4E8B2E" };
-  if (bmi < 30) return { label: "Overweight", color: "#F59E0B" };
-  if (bmi < 35) return { label: "Obese Class I", color: "#EF4444" };
-  if (bmi < 40) return { label: "Obese Class II", color: "#EF4444" };
-  return { label: "Obese Class III", color: "#DC2626" };
+  if (bmi < 16) return { labelKey: "calculator.bmi.category.severeThinness", color: "#EF4444" };
+  if (bmi < 17) return { labelKey: "calculator.bmi.category.moderateThinness", color: "#F59E0B" };
+  if (bmi < 18.5) return { labelKey: "calculator.bmi.category.mildThinness", color: "#F59E0B" };
+  if (bmi < 25) return { labelKey: "calculator.bmi.category.normal", color: "#4E8B2E" };
+  if (bmi < 30) return { labelKey: "calculator.bmi.category.overweight", color: "#F59E0B" };
+  if (bmi < 35) return { labelKey: "calculator.bmi.category.obese1", color: "#EF4444" };
+  if (bmi < 40) return { labelKey: "calculator.bmi.category.obese2", color: "#EF4444" };
+  return { labelKey: "calculator.bmi.category.obese3", color: "#DC2626" };
 }
 
 function getBodyFatCategory(bf: number, gender: string) {
   if (gender === "male") {
-    if (bf < 6) return { label: "Essential Fat", color: "#F59E0B" };
-    if (bf < 14) return { label: "Athletic", color: "#4E8B2E" };
-    if (bf < 18) return { label: "Fitness", color: "#4E8B2E" };
-    if (bf < 25) return { label: "Average", color: "#6B7580" };
-    return { label: "Above Average", color: "#EF4444" };
+    if (bf < 6) return { labelKey: "calculator.bodyfat.category.essentialFat", color: "#F59E0B" };
+    if (bf < 14) return { labelKey: "calculator.bodyfat.category.athletic", color: "#4E8B2E" };
+    if (bf < 18) return { labelKey: "calculator.bodyfat.category.fitness", color: "#4E8B2E" };
+    if (bf < 25) return { labelKey: "calculator.bodyfat.category.average", color: "#6B7580" };
+    return { labelKey: "calculator.bodyfat.category.aboveAverage", color: "#EF4444" };
   }
-  if (bf < 14) return { label: "Essential Fat", color: "#F59E0B" };
-  if (bf < 21) return { label: "Athletic", color: "#4E8B2E" };
-  if (bf < 25) return { label: "Fitness", color: "#4E8B2E" };
-  if (bf < 32) return { label: "Average", color: "#6B7580" };
-  return { label: "Above Average", color: "#EF4444" };
+  if (bf < 14) return { labelKey: "calculator.bodyfat.category.essentialFat", color: "#F59E0B" };
+  if (bf < 21) return { labelKey: "calculator.bodyfat.category.athletic", color: "#4E8B2E" };
+  if (bf < 25) return { labelKey: "calculator.bodyfat.category.fitness", color: "#4E8B2E" };
+  if (bf < 32) return { labelKey: "calculator.bodyfat.category.average", color: "#6B7580" };
+  return { labelKey: "calculator.bodyfat.category.aboveAverage", color: "#EF4444" };
 }
 
 export default function FitnessCalculator() {
+  const { t } = useI18n();
   const [tab, setTab] = useState<CalcTab>("bmi");
   const [gender, setGender] = useState("male");
   const [age, setAge] = useState("");
@@ -177,6 +179,8 @@ export default function FitnessCalculator() {
     if (tab === "idealweight") calcIdealWeight();
   };
 
+  const activeTab = TABS.find((item) => item.id === tab);
+
   const inputClass =
     "w-full rounded-xl border border-primary/50 bg-white px-3 py-2.5 text-sm font-medium text-[#1F2937] outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-[#6B7580]/60";
   const labelClass = "text-[11px] font-semibold text-[#6B7580] mb-1 block";
@@ -186,32 +190,30 @@ export default function FitnessCalculator() {
       <div className="text-center max-w-2xl mx-auto space-y-2 mb-8">
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
           <Calculator className="w-3.5 h-3.5" />
-          <span>Free Fitness Calculators</span>
+          <span>{t("calculator.header.badge")}</span>
         </div>
         <h2
           className="text-2xl sm:text-3xl font-bold tracking-tight"
           style={{ fontFamily: "'Space Grotesk', sans-serif" }}
         >
-          Calculate Your BMI, BMR, TDEE &amp; Body Fat
+          {t("calculator.header.title")}
         </h2>
         <p className="text-xs sm:text-sm text-[#6B7580]">
-          Use our free online fitness calculators to find your Body Mass Index (BMI),
-          Basal Metabolic Rate (BMR), Total Daily Energy Expenditure (TDEE), Body Fat
-          Percentage, and Ideal Weight — powered by scientifically validated formulas.
+          {t("calculator.header.description")}
         </p>
       </div>
 
       <div className="max-w-3xl mx-auto p-5 sm:p-6 rounded-3xl border border-primary/50 bg-white shadow-sm">
         {/* Tabs */}
         <div className="flex flex-wrap gap-1.5 mb-6">
-          {TABS.map((t) => {
-            const Icon = t.icon;
-            const active = tab === t.id;
+          {TABS.map((item) => {
+            const Icon = item.icon;
+            const active = tab === item.id;
             return (
               <button
-                key={t.id}
+                key={item.id}
                 onClick={() => {
-                  setTab(t.id);
+                  setTab(item.id);
                   reset();
                 }}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all ${active
@@ -220,7 +222,7 @@ export default function FitnessCalculator() {
                   }`}
               >
                 <Icon className="w-3.5 h-3.5" />
-                {t.label}
+                {t(item.labelKey)}
               </button>
             );
           })}
@@ -230,7 +232,7 @@ export default function FitnessCalculator() {
         <div className="space-y-4">
           {/* Gender selector */}
           <div>
-            <label className={labelClass}>Gender</label>
+            <label className={labelClass}>{t("calculator.form.gender")}</label>
             <div className="flex gap-2">
               {(["male", "female"] as const).map((g) => (
                 <button
@@ -244,7 +246,7 @@ export default function FitnessCalculator() {
                     : "border-primary/50 bg-white text-[#6B7580] hover:bg-[#F1F2F3]"
                     }`}
                 >
-                  {g === "male" ? "♂ Male" : "♀ Female"}
+                  {g === "male" ? t("calculator.gender.male") : t("calculator.gender.female")}
                 </button>
               ))}
             </div>
@@ -253,7 +255,7 @@ export default function FitnessCalculator() {
           {/* Age — needed for BMR, TDEE */}
           {(tab === "bmr" || tab === "tdee") && (
             <div>
-              <label className={labelClass}>Age (years)</label>
+              <label className={labelClass}>{t("calculator.form.age")}</label>
               <input
                 type="number"
                 value={age}
@@ -261,7 +263,7 @@ export default function FitnessCalculator() {
                   setAge(e.target.value);
                   reset();
                 }}
-                placeholder="e.g. 25"
+                placeholder={t("calculator.placeholder.age")}
                 className={inputClass}
                 min={1}
                 max={120}
@@ -271,7 +273,7 @@ export default function FitnessCalculator() {
 
           {/* Height — always needed */}
           <div>
-            <label className={labelClass}>Height (cm)</label>
+            <label className={labelClass}>{t("calculator.form.height")}</label>
             <input
               type="number"
               value={height}
@@ -279,7 +281,7 @@ export default function FitnessCalculator() {
                 setHeight(e.target.value);
                 reset();
               }}
-              placeholder="e.g. 170"
+              placeholder={t("calculator.placeholder.height")}
               className={inputClass}
               min={50}
               max={300}
@@ -289,7 +291,7 @@ export default function FitnessCalculator() {
           {/* Weight — BMI, BMR, TDEE, BodyFat */}
           {tab !== "idealweight" && (
             <div>
-              <label className={labelClass}>Weight (kg)</label>
+              <label className={labelClass}>{t("calculator.form.weight")}</label>
               <input
                 type="number"
                 value={weight}
@@ -297,7 +299,7 @@ export default function FitnessCalculator() {
                   setWeight(e.target.value);
                   reset();
                 }}
-                placeholder="e.g. 70"
+                placeholder={t("calculator.placeholder.weight")}
                 className={inputClass}
                 min={10}
                 max={500}
@@ -310,7 +312,7 @@ export default function FitnessCalculator() {
             <>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className={labelClass}>Neck (cm)</label>
+                  <label className={labelClass}>{t("calculator.form.neck")}</label>
                   <input
                     type="number"
                     value={neck}
@@ -318,14 +320,14 @@ export default function FitnessCalculator() {
                       setNeck(e.target.value);
                       reset();
                     }}
-                    placeholder="e.g. 38"
+                    placeholder={t("calculator.placeholder.neck")}
                     className={inputClass}
                     min={10}
                     max={80}
                   />
                 </div>
                 <div>
-                  <label className={labelClass}>Waist (cm)</label>
+                  <label className={labelClass}>{t("calculator.form.waist")}</label>
                   <input
                     type="number"
                     value={waist}
@@ -333,7 +335,7 @@ export default function FitnessCalculator() {
                       setWaist(e.target.value);
                       reset();
                     }}
-                    placeholder="e.g. 82"
+                    placeholder={t("calculator.placeholder.waist")}
                     className={inputClass}
                     min={30}
                     max={200}
@@ -342,7 +344,7 @@ export default function FitnessCalculator() {
               </div>
               {gender === "female" && (
                 <div>
-                  <label className={labelClass}>Hip (cm)</label>
+                  <label className={labelClass}>{t("calculator.form.hip")}</label>
                   <input
                     type="number"
                     value={hip}
@@ -350,7 +352,7 @@ export default function FitnessCalculator() {
                       setHip(e.target.value);
                       reset();
                     }}
-                    placeholder="e.g. 96"
+                    placeholder={t("calculator.placeholder.hip")}
                     className={inputClass}
                     min={30}
                     max={200}
@@ -363,7 +365,7 @@ export default function FitnessCalculator() {
           {/* Activity level — TDEE */}
           {tab === "tdee" && (
             <div>
-              <label className={labelClass}>Activity Level</label>
+              <label className={labelClass}>{t("calculator.form.activity")}</label>
               <select
                 value={activityLevel}
                 onChange={(e) => {
@@ -372,11 +374,11 @@ export default function FitnessCalculator() {
                 }}
                 className={inputClass}
               >
-                <option value="1.2">Sedentary (office job, little exercise)</option>
-                <option value="1.375">Lightly Active (1-3 days/week)</option>
-                <option value="1.55">Moderately Active (3-5 days/week)</option>
-                <option value="1.725">Very Active (6-7 days/week)</option>
-                <option value="1.9">Extra Active (athlete / physical job)</option>
+                <option value="1.2">{t("calculator.activity.sedentary")}</option>
+                <option value="1.375">{t("calculator.activity.light")}</option>
+                <option value="1.55">{t("calculator.activity.moderate")}</option>
+                <option value="1.725">{t("calculator.activity.very")}</option>
+                <option value="1.9">{t("calculator.activity.extra")}</option>
               </select>
             </div>
           )}
@@ -387,7 +389,7 @@ export default function FitnessCalculator() {
             className="w-full py-3 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary/80 transition-all shadow-sm flex items-center justify-center gap-2"
           >
             <Calculator className="w-4 h-4" />
-            Calculate {TABS.find((t) => t.id === tab)?.label}
+            {t("calculator.button.calculate", { name: activeTab ? t(activeTab.labelKey) : "" })}
           </button>
         </div>
 
@@ -398,7 +400,7 @@ export default function FitnessCalculator() {
               <>
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-[#6B7580]">
-                    Your BMI
+                    {t("calculator.bmi.result.yourBmi")}
                   </span>
                   <span
                     className="text-3xl font-bold"
@@ -411,13 +413,13 @@ export default function FitnessCalculator() {
                   className="text-sm font-bold"
                   style={{ color: result.category.color }}
                 >
-                  {result.category.label}
+                  {t(result.category.labelKey)}
                 </p>
                 <p className="text-[11px] text-[#6B7580]">
-                  Healthy BMI Range: <strong>18.5 – 24.9 kg/m²</strong>
+                  {t("calculator.bmi.result.healthyRange")} <strong>18.5 – 24.9 kg/m²</strong>
                 </p>
                 <p className="text-[11px] text-[#6B7580]">
-                  Ideal Weight for your height:{" "}
+                  {t("calculator.bmi.result.idealWeight")}{" "}
                   <strong>
                     {result.idealMin} – {result.idealMax} kg
                   </strong>
@@ -429,7 +431,7 @@ export default function FitnessCalculator() {
               <>
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-[#6B7580]">
-                    Basal Metabolic Rate
+                    {t("calculator.bmr.result.label")}
                   </span>
                   <span
                     className="text-3xl font-bold text-primary"
@@ -439,9 +441,8 @@ export default function FitnessCalculator() {
                   </span>
                 </div>
                 <p className="text-[11px] text-[#6B7580]">
-                  <strong>calories/day</strong> — This is how many calories your body
-                  burns at complete rest (just to keep organs functioning). Formula:
-                  Mifflin-St Jeor.
+                  <strong>{t("calculator.unit.caloriesPerDay")}</strong>{" "}
+                  {t("calculator.bmr.result.description")}
                 </p>
               </>
             )}
@@ -451,41 +452,41 @@ export default function FitnessCalculator() {
                 <div className="grid grid-cols-3 gap-3 text-center">
                   <div className="p-3 rounded-xl bg-white border border-primary/50">
                     <p className="text-[10px] font-semibold text-[#6B7580]">
-                      Weight Loss
+                      {t("calculator.tdee.weightLoss")}
                     </p>
                     <p className="text-lg font-bold text-amber-600"
                       style={{ fontFamily: "'IBM Plex Mono', monospace" }}
                     >
                       {result.lose}
                     </p>
-                    <p className="text-[10px] text-[#6B7580]">kcal/day</p>
+                    <p className="text-[10px] text-[#6B7580]">{t("calculator.unit.kcalPerDay")}</p>
                   </div>
                   <div className="p-3 rounded-xl bg-primary/10 border border-primary/20">
                     <p className="text-[10px] font-semibold text-primary">
-                      Maintenance
+                      {t("calculator.tdee.maintenance")}
                     </p>
                     <p className="text-lg font-bold text-primary"
                       style={{ fontFamily: "'IBM Plex Mono', monospace" }}
                     >
                       {result.tdee}
                     </p>
-                    <p className="text-[10px] text-[#6B7580]">kcal/day</p>
+                    <p className="text-[10px] text-[#6B7580]">{t("calculator.unit.kcalPerDay")}</p>
                   </div>
                   <div className="p-3 rounded-xl bg-white border border-primary/50">
                     <p className="text-[10px] font-semibold text-[#6B7580]">
-                      Weight Gain
+                      {t("calculator.tdee.weightGain")}
                     </p>
                     <p className="text-lg font-bold text-blue-600"
                       style={{ fontFamily: "'IBM Plex Mono', monospace" }}
                     >
                       {result.gain}
                     </p>
-                    <p className="text-[10px] text-[#6B7580]">kcal/day</p>
+                    <p className="text-[10px] text-[#6B7580]">{t("calculator.unit.kcalPerDay")}</p>
                   </div>
                 </div>
                 <p className="text-[11px] text-[#6B7580]">
-                  Your BMR is <strong>{result.bmr} kcal</strong>. TDEE = BMR ×
-                  Activity Factor. Uses the Mifflin-St Jeor equation.
+                  {t("calculator.tdee.result.bmrPrefix")} <strong>{result.bmr} kcal</strong>
+                  {t("calculator.tdee.result.bmrSuffix")}
                 </p>
               </>
             )}
@@ -494,7 +495,7 @@ export default function FitnessCalculator() {
               <>
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-[#6B7580]">
-                    Body Fat Percentage
+                    {t("calculator.bodyfat.result.label")}
                   </span>
                   <span
                     className="text-3xl font-bold"
@@ -504,22 +505,24 @@ export default function FitnessCalculator() {
                   </span>
                 </div>
                 <p className="text-sm font-bold" style={{ color: result.category.color }}>
-                  {result.category.label}
+                  {t(result.category.labelKey)}
                 </p>
                 {result.leanMass && (
                   <div className="grid grid-cols-2 gap-3">
                     <div className="p-2.5 rounded-xl bg-white border border-primary/50 text-center">
-                      <p className="text-[10px] font-semibold text-[#6B7580]">Lean Mass</p>
+                      <p className="text-[10px] font-semibold text-[#6B7580]">{t("calculator.bodyfat.result.leanMass")}</p>
                       <p className="text-base font-bold text-primary">{result.leanMass} kg</p>
                     </div>
                     <div className="p-2.5 rounded-xl bg-white border border-primary/50 text-center">
-                      <p className="text-[10px] font-semibold text-[#6B7580]">Fat Mass</p>
+                      <p className="text-[10px] font-semibold text-[#6B7580]">{t("calculator.bodyfat.result.fatMass")}</p>
                       <p className="text-base font-bold text-amber-600">{result.fatMass} kg</p>
                     </div>
                   </div>
                 )}
                 <p className="text-[11px] text-[#6B7580]">
-                  Calculated using the <strong>U.S. Navy Body Fat Formula</strong>.
+                  {t("calculator.bodyfat.result.descriptionPrefix")}{" "}
+                  <strong>{t("calculator.bodyfat.result.formula")}</strong>
+                  {t("calculator.bodyfat.result.descriptionSuffix")}
                 </p>
               </>
             )}
@@ -527,7 +530,7 @@ export default function FitnessCalculator() {
             {tab === "idealweight" && (
               <>
                 <p className="text-xs font-bold text-[#1F2937] mb-2">
-                  Ideal Weight Estimates for Your Height
+                  {t("calculator.idealweight.result.title")}
                 </p>
                 <div className="grid grid-cols-2 gap-2">
                   {[
@@ -550,7 +553,7 @@ export default function FitnessCalculator() {
                   ))}
                 </div>
                 <p className="text-[11px] text-[#6B7580] mt-1">
-                  Healthy BMI Range:{" "}
+                  {t("calculator.bmi.result.healthyRange")}{" "}
                   <strong>
                     {result.bmiMin} – {result.bmiMax} kg
                   </strong>
@@ -562,8 +565,8 @@ export default function FitnessCalculator() {
             <div className="pt-2 border-t border-primary/10">
               <p className="text-[11px] text-[#6B7580] flex items-center gap-1">
                 <ChevronRight className="w-3 h-3 text-primary" />
-                Sign up for <strong className="text-primary">NutriBD</strong> to track
-                these metrics daily with personalized AI insights.
+                {t("calculator.cta.prefix")}{" "}
+                <strong className="text-primary">NutriBD</strong> {t("calculator.cta.suffix")}
               </p>
             </div>
           </div>
@@ -574,50 +577,41 @@ export default function FitnessCalculator() {
       <div className="max-w-3xl mx-auto mt-8 space-y-6 text-xs leading-relaxed text-[#6B7580]">
         <div className="p-4 rounded-2xl border border-primary/50 bg-white space-y-2">
           <h3 className="text-sm font-bold text-[#1F2937]">
-            What is BMI (Body Mass Index)?
+            {t("calculator.seo.bmi.title")}
           </h3>
           <p>
-            BMI is a simple screening tool that measures body fat based on your height
-            and weight. The formula is: <strong>BMI = weight (kg) ÷ height² (m²)</strong>.
-            A healthy BMI range is 18.5–24.9. BMI is used worldwide by doctors,
-            nutritionists, and fitness professionals to assess whether a person is
-            underweight, normal weight, overweight, or obese.
+            {t("calculator.seo.bmi.body1")}{" "}
+            <strong>{t("calculator.seo.bmi.formula")}</strong>
+            {t("calculator.seo.bmi.body2")}
           </p>
         </div>
         <div className="p-4 rounded-2xl border border-primary/50 bg-white space-y-2">
           <h3 className="text-sm font-bold text-[#1F2937]">
-            What is BMR (Basal Metabolic Rate)?
+            {t("calculator.seo.bmr.title")}
           </h3>
           <p>
-            BMR represents the number of calories your body burns at rest — just to keep
-            your heart beating, lungs breathing, and organs functioning. NutriBD uses the
-            <strong> Mifflin-St Jeor equation</strong>, the gold standard recommended by
-            the Academy of Nutrition and Dietetics: <strong>BMR = 10 × weight(kg) +
-              6.25 × height(cm) - 5 × age - 161 (female) / + 5 (male)</strong>.
+            {t("calculator.seo.bmr.body1")}{" "}
+            <strong>{t("calculator.seo.bmr.formula1")}</strong>
+            {t("calculator.seo.bmr.body2")}{" "}
+            <strong>{t("calculator.seo.bmr.formula2")}</strong>
+            {t("calculator.seo.bmr.bodySuffix")}
           </p>
         </div>
         <div className="p-4 rounded-2xl border border-primary/50 bg-white space-y-2">
           <h3 className="text-sm font-bold text-[#1F2937]">
-            What is TDEE (Total Daily Energy Expenditure)?
+            {t("calculator.seo.tdee.title")}
           </h3>
-          <p>
-            TDEE is the total number of calories you burn per day, including exercise and
-            daily activity. It&apos;s calculated by multiplying your BMR by an activity
-            factor. Knowing your TDEE helps you plan calorie intake for weight loss,
-            maintenance, or muscle gain. Eat below TDEE to lose weight, at TDEE to
-            maintain, or above TDEE to bulk.
-          </p>
+          <p>{t("calculator.seo.tdee.body")}</p>
         </div>
         <div className="p-4 rounded-2xl border border-primary/50 bg-white space-y-2">
           <h3 className="text-sm font-bold text-[#1F2937]">
-            How is Body Fat Percentage Calculated?
+            {t("calculator.seo.bodyfat.title")}
           </h3>
           <p>
-            NutriBD uses the <strong>U.S. Navy Body Fat Formula</strong>, which estimates
-            body fat percentage from neck, waist, and hip circumference measurements.
-            This method is clinically validated and widely used by military and sports
-            organizations. For men: measurements require neck and waist. For women: neck,
-            waist, and hip measurements are needed.
+            {t("calculator.seo.bodyfat.body1")}{" "}
+            <strong>{t("calculator.seo.bodyfat.formula")}</strong>
+            {t("calculator.seo.bodyfat.body2")}
+            {t("calculator.seo.bodyfat.bodySuffix")}
           </p>
         </div>
       </div>

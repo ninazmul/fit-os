@@ -32,6 +32,7 @@ import {
 import StatCard from "@/components/shared/StatCard";
 import EmptyState from "@/components/shared/EmptyState";
 import PageHeader from "@/components/shared/PageHeader";
+import { useI18n } from "@/components/shared/I18nProvider";
 import {
   Dumbbell,
   Plus,
@@ -57,15 +58,15 @@ const AdUnit = dynamic(() => import("@/components/shared/AdUnit"), {
   ssr: false,
 });
 
-const workoutTypes: { type: WorkoutType; label: string }[] = [
-  { type: "push", label: "Push Day (Chest, Shoulders, Triceps)" },
-  { type: "pull", label: "Pull Day (Back, Biceps)" },
-  { type: "legs", label: "Leg Day (Quads, Hamstrings, Calves)" },
-  { type: "upper", label: "Upper Body" },
-  { type: "lower", label: "Lower Body" },
-  { type: "full_body", label: "Full Body Workout" },
-  { type: "cardio", label: "Cardio & Endurance" },
-  { type: "custom", label: "Custom Routine" },
+const workoutTypes: { type: WorkoutType; labelKey: string }[] = [
+  { type: "push", labelKey: "workout.type.push" },
+  { type: "pull", labelKey: "workout.type.pull" },
+  { type: "legs", labelKey: "workout.type.legs" },
+  { type: "upper", labelKey: "workout.type.upper" },
+  { type: "lower", labelKey: "workout.type.lower" },
+  { type: "full_body", labelKey: "workout.type.fullBody" },
+  { type: "cardio", labelKey: "workout.type.cardio" },
+  { type: "custom", labelKey: "workout.type.custom" },
 ];
 
 const weekDays = [
@@ -131,9 +132,9 @@ const createPlanDay = (dayOfWeek = new Date().getDay()): PlanDayEditor => ({
   ],
 });
 
-const workoutTemplates: { name: string; days: PlanDayEditor[] }[] = [
+const workoutTemplates: { nameKey: string; days: PlanDayEditor[] }[] = [
   {
-    name: "3-Day Full Body",
+    nameKey: "workout.template.fullBody3",
     days: [
       createPlanDay(1),
       { ...createPlanDay(3), title: "Full Body B" },
@@ -141,7 +142,7 @@ const workoutTemplates: { name: string; days: PlanDayEditor[] }[] = [
     ],
   },
   {
-    name: "4-Day Upper Lower",
+    nameKey: "workout.template.upperLower4",
     days: [
       { ...createPlanDay(1), title: "Upper Strength" },
       {
@@ -202,7 +203,7 @@ const workoutTemplates: { name: string; days: PlanDayEditor[] }[] = [
     ],
   },
   {
-    name: "6-Day PPL",
+    nameKey: "workout.template.ppl6",
     days: [
       { ...createPlanDay(0), title: "Push A" },
       {
@@ -241,6 +242,7 @@ const workoutTemplates: { name: string; days: PlanDayEditor[] }[] = [
 ];
 
 export default function WorkoutPage() {
+  const { t } = useI18n();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [workouts, setWorkouts] = useState<any[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -454,11 +456,11 @@ export default function WorkoutPage() {
           })),
         })),
       });
-      toast.success("Workout plan saved with AI calorie estimates");
+      toast.success(t("workout.toast.planSaved"));
       notifyDataUpdated("workout");
       await fetchData();
     } catch {
-      toast.error("Failed to save workout plan");
+      toast.error(t("workout.toast.planSaveFailed"));
     } finally {
       setPlanSaving(false);
     }
@@ -498,12 +500,14 @@ export default function WorkoutPage() {
             seconds: exercise.trackingMode === "time" ? exercise.seconds : 0,
           })),
       );
-      toast.success(`${completionDay.title} completed`);
+      toast.success(
+        t("workout.toast.dayCompleted", { title: completionDay.title }),
+      );
       notifyDataUpdated("workout");
       setCompletionOpen(false);
       await fetchData();
     } catch {
-      toast.error("Failed to complete workout plan");
+      toast.error(t("workout.toast.dayCompleteFailed"));
     } finally {
       setCompletingDayId(null);
     }
@@ -543,23 +547,23 @@ export default function WorkoutPage() {
         notes,
       });
 
-      toast.success("Workout logged successfully! 💪");
+      toast.success(t("workout.toast.logged"));
       notifyDataUpdated("workout");
       setModalOpen(false);
       fetchData();
     } catch {
-      toast.error("Failed to log workout");
+      toast.error(t("workout.toast.logFailed"));
     }
   };
 
   const handleDeleteWorkout = async (id: string) => {
     try {
       await deleteWorkoutLog(id);
-      toast.success("Workout deleted");
+      toast.success(t("workout.toast.deleted"));
       notifyDataUpdated("workout");
       fetchData();
     } catch {
-      toast.error("Failed to delete workout");
+      toast.error(t("workout.toast.deleteFailed"));
     }
   };
 
@@ -568,15 +572,15 @@ export default function WorkoutPage() {
       {/* Title & Action */}
       <PageHeader
         icon={Dumbbell}
-        title="Workout Tracker"
-        subtitle="Log routines, track personal records, and build muscle consistency"
+        title={t("workout.title")}
+        subtitle={t("workout.subtitle")}
         actions={
           <Button
             onClick={() => setModalOpen(true)}
             className="rounded-xl gap-2 font-bold"
           >
             <Plus className="w-4 h-4" />
-            Quick Add Workout
+            {t("workout.actions.quickAdd")}
           </Button>
         }
       />
@@ -584,26 +588,26 @@ export default function WorkoutPage() {
       {/* PR Highlights & Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard
-          title="Personal Records (PRs)"
+          title={t("workout.stats.prs.title")}
           value={Object.keys(prs).length}
-          subtitle="Unique exercises with PR records"
+          subtitle={t("workout.stats.prs.subtitle")}
           icon={Trophy}
           variant="orange"
         />
 
         <StatCard
-          title="Workouts Last 30 Days"
+          title={t("workout.stats.sessions.title")}
           value={workouts.length}
-          subtitle="Total sessions completed"
+          subtitle={t("workout.stats.sessions.subtitle")}
           icon={Dumbbell}
           variant="green"
         />
 
         <StatCard
-          title="Est. Calories Burned"
+          title={t("workout.stats.calories.title")}
           value={workouts.reduce((s, w) => s + (w.caloriesBurned || 0), 0)}
           unit="kcal"
-          subtitle="Past 30 days total"
+          subtitle={t("workout.stats.calories.subtitle")}
           icon={Flame}
           variant="purple"
         />
@@ -614,16 +618,14 @@ export default function WorkoutPage() {
           <div className="space-y-2">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-wider">
               <Sparkles className="w-3.5 h-3.5" />
-              Weekly Workout Builder
+              {t("workout.builder.badge")}
             </div>
             <div>
               <h2 className="text-xl font-black tracking-tight">
-                Create your daily workout templates
+                {t("workout.builder.heading")}
               </h2>
               <p className="text-xs text-muted-foreground max-w-2xl">
-                Pick the weekdays you train, add exercise names, sets, and reps.
-                AI estimates calories so the dashboard can show the right
-                workout button on the right day.
+                {t("workout.builder.description")}
               </p>
             </div>
           </div>
@@ -637,7 +639,7 @@ export default function WorkoutPage() {
               className="rounded-xl text-xs font-bold gap-1"
             >
               <Plus className="w-3.5 h-3.5" />
-              Add Day
+              {t("workout.actions.addDay")}
             </Button>
             <Button
               type="button"
@@ -646,7 +648,9 @@ export default function WorkoutPage() {
               className="rounded-xl text-xs font-bold gap-1 bg-primary hover:bg-primary/90"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              {planSaving ? "Estimating..." : "Save Plan"}
+              {planSaving
+                ? t("workout.actions.estimating")
+                : t("workout.actions.savePlan")}
             </Button>
           </div>
         </div>
@@ -666,9 +670,11 @@ export default function WorkoutPage() {
                     : "bg-muted/20 border-border/50"
                 } ${isToday ? "ring-2 ring-primary/30" : ""}`}
               >
-                <p className="text-xs font-black">{day.short}</p>
+                <p className="text-xs font-black">
+                  {t(`workout.weekdayShort.${day.value}`)}
+                </p>
                 <p className="text-[11px] text-muted-foreground mt-1 truncate">
-                  {planDay?.title || "Rest day"}
+                  {planDay?.title || t("workout.builder.restDay")}
                 </p>
                 {planDay && (
                   <button
@@ -678,7 +684,9 @@ export default function WorkoutPage() {
                     className="mt-3 inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline disabled:opacity-60"
                   >
                     <CheckCircle2 className="w-3 h-3" />
-                    {completingDayId === planDay._id ? "Saving" : "Complete"}
+                    {completingDayId === planDay._id
+                      ? t("workout.actions.saving")
+                      : t("workout.actions.complete")}
                   </button>
                 )}
               </div>
@@ -689,7 +697,7 @@ export default function WorkoutPage() {
         <div className="flex flex-wrap gap-2">
           {workoutTemplates.map((template) => (
             <Button
-              key={template.name}
+              key={template.nameKey}
               type="button"
               variant="outline"
               size="sm"
@@ -706,7 +714,7 @@ export default function WorkoutPage() {
               className="rounded-xl text-xs font-bold gap-1 border-primary/30 text-primary hover:bg-primary/10"
             >
               <Calendar className="w-3.5 h-3.5" />
-              {template.name}
+              {t(template.nameKey)}
             </Button>
           ))}
         </div>
@@ -719,7 +727,9 @@ export default function WorkoutPage() {
             >
               <div className="grid grid-cols-1 md:grid-cols-[160px_1fr_auto] gap-3">
                 <div className="space-y-1">
-                  <Label className="text-xs">Training Day</Label>
+                  <Label className="text-xs">
+                    {t("workout.form.trainingDay")}
+                  </Label>
                   <Select
                     value={String(day.dayOfWeek)}
                     onValueChange={(value) =>
@@ -734,7 +744,7 @@ export default function WorkoutPage() {
                     <SelectContent>
                       {weekDays.map((item) => (
                         <SelectItem key={item.value} value={String(item.value)}>
-                          {item.label}
+                          {t(`workout.weekday.${item.value}`)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -742,13 +752,15 @@ export default function WorkoutPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <Label className="text-xs">Workout Name</Label>
+                  <Label className="text-xs">
+                    {t("workout.form.workoutName")}
+                  </Label>
                   <Input
                     value={day.title}
                     onChange={(e) =>
                       handlePlanDayChange(dayIndex, { title: e.target.value })
                     }
-                    placeholder="e.g. Push Day / Upper Strength"
+                    placeholder={t("workout.form.workoutNamePlaceholder")}
                     className="rounded-xl font-bold"
                   />
                 </div>
@@ -760,7 +772,7 @@ export default function WorkoutPage() {
                   onClick={() => handleRemovePlanDay(dayIndex)}
                   disabled={planDays.length <= 1}
                   className="rounded-xl self-end text-muted-foreground hover:text-red-500"
-                  title="Remove day"
+                  title={t("workout.actions.removeDay")}
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
@@ -779,7 +791,7 @@ export default function WorkoutPage() {
                           exerciseName: e.target.value,
                         })
                       }
-                      placeholder="Workout name"
+                      placeholder={t("workout.form.planExercisePlaceholder")}
                       className="rounded-xl bg-background"
                     />
                     <Select
@@ -797,8 +809,12 @@ export default function WorkoutPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="reps">Reps</SelectItem>
-                        <SelectItem value="time">Time</SelectItem>
+                        <SelectItem value="reps">
+                          {t("workout.form.reps")}
+                        </SelectItem>
+                        <SelectItem value="time">
+                          {t("workout.form.time")}
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <Input
@@ -810,7 +826,7 @@ export default function WorkoutPage() {
                           sets: Number(e.target.value),
                         })
                       }
-                      placeholder="Sets"
+                      placeholder={t("workout.form.sets")}
                       className="rounded-xl bg-background"
                     />
                     <Input
@@ -833,7 +849,9 @@ export default function WorkoutPage() {
                         }
                       }}
                       placeholder={
-                        exercise.trackingMode === "time" ? "Seconds" : "Reps"
+                        exercise.trackingMode === "time"
+                          ? t("workout.form.seconds")
+                          : t("workout.form.reps")
                       }
                       className="rounded-xl bg-background"
                     />
@@ -846,7 +864,7 @@ export default function WorkoutPage() {
                       }
                       disabled={day.exercises.length <= 1}
                       className="rounded-xl text-muted-foreground hover:text-red-500"
-                      title="Remove exercise"
+                      title={t("workout.actions.removeExercise")}
                     >
                       <X className="w-4 h-4" />
                     </Button>
@@ -862,7 +880,7 @@ export default function WorkoutPage() {
                 className="rounded-xl text-xs font-bold gap-1"
               >
                 <Plus className="w-3.5 h-3.5" />
-                Add Exercise
+                {t("workout.actions.addExercise")}
               </Button>
             </div>
           ))}
@@ -870,14 +888,14 @@ export default function WorkoutPage() {
       </div>
 
       {/* Mid-page Ad */}
-      <AdUnit size="auto" label="Sponsored" maxWidth="970px" />
+      <AdUnit size="auto" label={t("workout.ad.sponsored")} maxWidth="970px" />
 
       {/* PR Cards Carousel / Grid */}
       {Object.keys(prs).length > 0 && (
         <div className="glass-card p-5 rounded-3xl border border-border/50 space-y-3">
           <h3 className="text-base font-bold flex items-center gap-2">
             <Trophy className="w-5 h-5 text-amber-500" />
-            Top Personal Records (PRs)
+            {t("workout.prs.heading")}
           </h3>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -896,7 +914,7 @@ export default function WorkoutPage() {
                   </span>
                 </p>
                 <p className="text-[10px] text-muted-foreground">
-                  Logged: {record.date}
+                  {t("workout.prs.logged", { date: record.date })}
                 </p>
               </div>
             ))}
@@ -907,15 +925,15 @@ export default function WorkoutPage() {
       {/* Workout History */}
       <div className="space-y-4">
         <h2 className="text-lg font-bold tracking-tight">
-          Recent Workout History
+          {t("workout.history.heading")}
         </h2>
 
         {workouts.length === 0 && !loading && (
           <EmptyState
             icon={Dumbbell}
-            title="No Workouts Logged Yet"
-            description="Start logging your routines to track sets, reps, and PRs."
-            actionText="Log Your First Workout"
+            title={t("workout.empty.title")}
+            description={t("workout.empty.description")}
+            actionText={t("workout.empty.action")}
             onAction={() => setModalOpen(true)}
           />
         )}
@@ -971,7 +989,7 @@ export default function WorkoutPage() {
                         key={sIdx}
                         className="px-2.5 py-1 rounded-lg bg-background border border-border/50 text-[11px] font-bold"
                       >
-                        Set {set.setNumber}:{" "}
+                        {t("workout.form.set", { number: set.setNumber })}:{" "}
                         {set.durationSeconds
                           ? `${set.durationSeconds}s`
                           : `${set.weight ? `${set.weight}kg x ` : ""}${set.reps} reps`}
@@ -989,11 +1007,10 @@ export default function WorkoutPage() {
         <DialogContent className="sm:max-w-lg rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold">
-              Complete Template Workout
+              {t("workout.completion.title")}
             </DialogTitle>
             <DialogDescription className="text-xs">
-              Select what you completed today. Calories update from the
-              completed work only.
+              {t("workout.completion.description")}
             </DialogDescription>
           </DialogHeader>
 
@@ -1001,9 +1018,10 @@ export default function WorkoutPage() {
             <div className="rounded-2xl bg-muted/30 border border-border/50 p-3">
               <p className="text-sm font-black">{completionDay?.title}</p>
               <p className="text-xs text-muted-foreground">
-                {completionDay?.estimatedDurationMinutes || 0} min planned
-                &middot; {completionDay?.estimatedCaloriesBurned || 0} kcal
-                planned
+                {t("workout.completion.planned", {
+                  duration: completionDay?.estimatedDurationMinutes || 0,
+                  calories: completionDay?.estimatedCaloriesBurned || 0,
+                })}
               </p>
             </div>
 
@@ -1031,17 +1049,22 @@ export default function WorkoutPage() {
                       {exercise.exerciseName}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Planned: {exercise.sets} sets &times;{" "}
-                      {exercise.trackingMode === "time"
-                        ? `${exercise.seconds}s`
-                        : `${exercise.reps} reps`}
+                      {t("workout.completion.plannedSets", {
+                        sets: exercise.sets,
+                        detail:
+                          exercise.trackingMode === "time"
+                            ? `${exercise.seconds}s`
+                            : `${exercise.reps} reps`,
+                      })}
                     </p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
-                    <Label className="text-[11px]">Sets done</Label>
+                    <Label className="text-[11px]">
+                      {t("workout.form.setsDone")}
+                    </Label>
                     <Input
                       type="number"
                       min={0}
@@ -1070,8 +1093,8 @@ export default function WorkoutPage() {
                   <div className="space-y-1">
                     <Label className="text-[11px]">
                       {exercise.trackingMode === "time"
-                        ? "Seconds/set"
-                        : "Reps/set"}
+                        ? t("workout.form.secondsPerSet")
+                        : t("workout.form.repsPerSet")}
                     </Label>
                     <Input
                       type="number"
@@ -1108,7 +1131,9 @@ export default function WorkoutPage() {
               disabled={Boolean(completingDayId)}
               className="w-full rounded-xl bg-primary hover:bg-primary/90 font-bold"
             >
-              {completingDayId ? "Saving..." : "Save Completed Workout"}
+              {completingDayId
+                ? t("workout.actions.savingDots")
+                : t("workout.actions.saveCompleted")}
             </Button>
           </div>
         </DialogContent>
@@ -1119,29 +1144,28 @@ export default function WorkoutPage() {
         <DialogContent className="sm:max-w-xl rounded-2xl p-6 max-h-[90vh] overflow-y-auto space-y-4">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold">
-              Quick Add Workout
+              {t("workout.quickAdd.title")}
             </DialogTitle>
             <DialogDescription className="text-xs">
-              Add workout names, sets, and reps. Calories are estimated
-              automatically.
+              {t("workout.quickAdd.description")}
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSaveWorkout} className="space-y-4 text-xs">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label>Workout Title</Label>
+                <Label>{t("workout.form.title")}</Label>
                 <Input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g. Chest & Triceps Blast"
+                  placeholder={t("workout.form.titlePlaceholder")}
                   required
                   className="rounded-xl"
                 />
               </div>
 
               <div className="space-y-1">
-                <Label>Routine Type</Label>
+                <Label>{t("workout.form.routineType")}</Label>
                 <Select
                   value={workoutType}
                   onValueChange={(v) => setWorkoutType(v as WorkoutType)}
@@ -1150,9 +1174,9 @@ export default function WorkoutPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {workoutTypes.map((t) => (
-                      <SelectItem key={t.type} value={t.type}>
-                        {t.label}
+                    {workoutTypes.map((type) => (
+                      <SelectItem key={type.type} value={type.type}>
+                        {t(type.labelKey)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -1163,7 +1187,9 @@ export default function WorkoutPage() {
             {/* Exercises List Editor */}
             <div className="space-y-3 pt-2">
               <div className="flex items-center justify-between">
-                <Label className="font-bold text-sm">Exercises & Sets</Label>
+                <Label className="font-bold text-sm">
+                  {t("workout.form.exercisesAndSets")}
+                </Label>
                 <Button
                   type="button"
                   variant="outline"
@@ -1171,7 +1197,7 @@ export default function WorkoutPage() {
                   onClick={handleAddExercise}
                   className="rounded-xl text-xs border-primary text-primary"
                 >
-                  + Add Exercise
+                  + {t("workout.actions.addExercise")}
                 </Button>
               </div>
 
@@ -1182,7 +1208,7 @@ export default function WorkoutPage() {
                 >
                   <div className="grid grid-cols-1 sm:grid-cols-[1fr_120px] gap-2">
                     <Input
-                      placeholder="Exercise Name (e.g. Squat, Plank)"
+                      placeholder={t("workout.form.exerciseNamePlaceholder")}
                       value={ex.exerciseName}
                       onChange={(e) => {
                         const updated = [...exercises];
@@ -1215,8 +1241,12 @@ export default function WorkoutPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="reps">Reps</SelectItem>
-                        <SelectItem value="time">Time</SelectItem>
+                        <SelectItem value="reps">
+                          {t("workout.form.reps")}
+                        </SelectItem>
+                        <SelectItem value="time">
+                          {t("workout.form.time")}
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -1226,12 +1256,14 @@ export default function WorkoutPage() {
                     {ex.sets.map((set, setIdx) => (
                       <div key={setIdx} className="flex items-center gap-2">
                         <span className="w-12 text-[11px] font-semibold text-muted-foreground">
-                          Set {set.setNumber}
+                          {t("workout.form.set", { number: set.setNumber })}
                         </span>
                         <Input
                           type="number"
                           placeholder={
-                            ex.trackingMode === "time" ? "Seconds" : "Reps"
+                            ex.trackingMode === "time"
+                              ? t("workout.form.seconds")
+                              : t("workout.form.reps")
                           }
                           value={
                             ex.trackingMode === "time"
@@ -1267,7 +1299,7 @@ export default function WorkoutPage() {
                     onClick={() => handleAddSet(exIdx)}
                     className="text-[11px] text-primary hover:bg-primary/10 rounded-xl"
                   >
-                    + Add Set
+                    + {t("workout.actions.addSet")}
                   </Button>
                 </div>
               ))}
@@ -1277,7 +1309,7 @@ export default function WorkoutPage() {
               type="submit"
               className="w-full rounded-xl bg-primary hover:bg-primary/90 font-bold"
             >
-              Save Workout Session 🎉
+              {t("workout.actions.saveSession")}
             </Button>
           </form>
         </DialogContent>
