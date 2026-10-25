@@ -247,9 +247,9 @@ export default function ProfilePage() {
   const remainingKg =
     weightProgress?.remainingKg ??
     (profile?.currentWeight && profile?.targetWeight ? Math.abs(Math.round((profile.currentWeight - profile.targetWeight) * 10) / 10) : 0);
-  const startWeight = weightProgress?.startWeightKg ?? profile?.currentWeight ?? 70;
-  const currentWeight = weightProgress?.currentWeightKg ?? profile?.currentWeight ?? 70;
-  const targetWeight = weightProgress?.targetWeightKg ?? profile?.targetWeight ?? 70;
+  const startWeight = weightProgress?.startWeight ?? profile?.currentWeight ?? 70;
+  const currentWeight = weightProgress?.currentWeight ?? profile?.currentWeight ?? 70;
+  const targetWeight = weightProgress?.targetWeight ?? profile?.targetWeight ?? 70;
 
   const isBn = locale === "bn";
   const tabsList = [
