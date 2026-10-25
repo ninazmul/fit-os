@@ -34,7 +34,8 @@ export const dashboardEn: Record<string, string> = {
   "dashboard.quickActions.addFood": "Add Food",
   "dashboard.quickActions.addWater": "Add Water",
   "dashboard.quickActions.workout": "Workout",
-  "dashboard.quickActions.foodDiary": "Food Diary",
+  "dashboard.quickActions.sleep": "Sleep",
+  "dashboard.quickActions.weight": "Weight",
   // Meals section
   "dashboard.meals.aria": "Today's meals",
   "dashboard.meals.titleToday": "Today's Meals",
@@ -45,18 +46,8 @@ export const dashboardEn: Record<string, string> = {
   "dashboard.meals.defaultServing": "1 serving",
   "dashboard.meals.macroInline": "P{protein}g C{carbs}g F{fat}g",
   "dashboard.meals.removeItem": "Remove {name}",
-  // Daily habit tiles
-  "dashboard.habits.aria": "Daily habits",
-  "dashboard.habit.water": "Water",
-  "dashboard.habit.workout": "Workout",
-  "dashboard.habit.sleep": "Sleep",
-  "dashboard.habit.workoutCountLogged": "{n} logged",
-  "dashboard.habit.planned": "Planned",
-  "dashboard.habit.notLogged": "Not logged",
+  // Workout card
   "dashboard.habit.complete": "Complete",
-  "dashboard.habit.logWorkout": "Log workout",
-  "dashboard.habit.logSleep": "Log sleep",
-  "dashboard.habit.logWater": "Log water",
   // Toasts
   "dashboard.toast.itemRemoved": "Item removed",
   "dashboard.toast.removeItemFailed": "Failed to remove item",
@@ -98,7 +89,8 @@ export const dashboardBn: Record<string, string> = {
   "dashboard.quickActions.addFood": "খাবার যোগ করুন",
   "dashboard.quickActions.addWater": "পানি যোগ করুন",
   "dashboard.quickActions.workout": "ওয়ার্কআউট",
-  "dashboard.quickActions.foodDiary": "খাবারের ডায়েরি",
+  "dashboard.quickActions.sleep": "ঘুম",
+  "dashboard.quickActions.weight": "ওজন",
   // Meals section
   "dashboard.meals.aria": "আজকের খাবার",
   "dashboard.meals.titleToday": "আজকের খাবার",
@@ -109,18 +101,8 @@ export const dashboardBn: Record<string, string> = {
   "dashboard.meals.defaultServing": "১ সার্ভিং",
   "dashboard.meals.macroInline": "প্রো{protein}g কার্ব{carbs}g চর্বি{fat}g",
   "dashboard.meals.removeItem": "{name} মুছুন",
-  // Daily habit tiles
-  "dashboard.habits.aria": "দৈনিক অভ্যাস",
-  "dashboard.habit.water": "পানি",
-  "dashboard.habit.workout": "ওয়ার্কআউট",
-  "dashboard.habit.sleep": "ঘুম",
-  "dashboard.habit.workoutCountLogged": "{n} টি লগ করা হয়েছে",
-  "dashboard.habit.planned": "পরিকল্পিত",
-  "dashboard.habit.notLogged": "লগ করা হয়নি",
+  // Workout card
   "dashboard.habit.complete": "সম্পন্ন করুন",
-  "dashboard.habit.logWorkout": "ওয়ার্কআউট লগ করুন",
-  "dashboard.habit.logSleep": "ঘুম লগ করুন",
-  "dashboard.habit.logWater": "পানি লগ করুন",
   // Toasts
   "dashboard.toast.itemRemoved": "আইটেম মুছে ফেলা হয়েছে",
   "dashboard.toast.removeItemFailed": "আইটেম মুছতে ব্যর্থ হয়েছে",

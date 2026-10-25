@@ -33,6 +33,7 @@ import {
   Moon,
   Sun,
   Apple,
+  Scale,
   CheckCircle2,
   RotateCcw,
 } from "lucide-react";
@@ -315,14 +316,6 @@ export default function DashboardPage() {
     todayWorkoutPlan,
   } = data;
 
-  const waterGoalMl = profile.waterGoalMl || 2500;
-  const waterPct = Math.min(
-    100,
-    Math.round((today.waterMl / waterGoalMl) * 100),
-  );
-  const waterLitres = (today.waterMl / 1000).toFixed(1);
-  const waterGoalLitres = (waterGoalMl / 1000).toFixed(1);
-
   // Determine the meal slot most likely to be logged right now
   const currentHour = new Date().getHours();
   let currentSuggestedSlot: MealType = "lunch";
@@ -356,67 +349,6 @@ export default function DashboardPage() {
     (exercise) => exercise.selected && exercise.setsCompleted > 0,
   ).length;
 
-  // Jump to the inline checklist when today's plan is still pending,
-  // otherwise fall back to the manual quick-log workout sheet.
-  const focusTodayWorkout = () => {
-    if (todayWorkoutPlan && !today.workoutDone) {
-      setWorkoutCardOpen(true);
-      document
-        .getElementById("today-workout")
-        ?.scrollIntoView({ behavior: "smooth", block: "center" });
-      return;
-    }
-    setQuickWorkoutOpen(true);
-  };
-
-  const habitTiles = [
-    {
-      key: "water",
-      label: t("dashboard.habit.water"),
-      icon: Droplet,
-      value: `${waterLitres} / ${waterGoalLitres} L`,
-      pct: waterPct,
-      barClass: "bg-sky-500",
-      iconClass: "text-sky-600 dark:text-sky-400 bg-sky-500/10",
-      onClick: () => openQuickLog("water"),
-      actionLabel: t("dashboard.habit.logWater"),
-    },
-    {
-      key: "workout",
-      label: t("dashboard.habit.workout"),
-      icon: Dumbbell,
-      value: today.workoutDone
-        ? t("dashboard.habit.workoutCountLogged", { n: today.workoutCount })
-        : todayWorkoutPlan
-          ? t("dashboard.habit.planned")
-          : t("dashboard.habit.notLogged"),
-      pct: today.workoutDone ? 100 : 0,
-      barClass: "bg-amber-500",
-      iconClass: "text-amber-600 dark:text-amber-400 bg-amber-500/10",
-      onClick: focusTodayWorkout,
-      actionLabel:
-        todayWorkoutPlan && !today.workoutDone
-          ? t("dashboard.habit.complete")
-          : t("dashboard.habit.logWorkout"),
-    },
-    {
-      key: "sleep",
-      label: t("dashboard.habit.sleep"),
-      icon: Moon,
-      value:
-        today.sleepHours !== null
-          ? `${today.sleepHours} h`
-          : t("dashboard.habit.notLogged"),
-      pct:
-        today.sleepHours !== null
-          ? Math.min(100, Math.round((today.sleepHours / 8) * 100))
-          : 0,
-      barClass: "bg-indigo-500",
-      iconClass: "text-indigo-600 dark:text-indigo-400 bg-indigo-500/10",
-      onClick: () => openQuickLog("sleep"),
-      actionLabel: t("dashboard.habit.logSleep"),
-    },
-  ];
 
   return (
     <div className="space-y-5 pb-12">
@@ -575,159 +507,21 @@ export default function DashboardPage() {
           </Button>
           <Button
             variant="outline"
-            onClick={focusTodayWorkout}
+            onClick={() => openQuickLog("sleep")}
             className="h-11 gap-1.5 rounded-2xl border-border/60 text-xs font-semibold"
           >
-            <Dumbbell className="h-4 w-4 text-amber-500" />
-            {t("dashboard.quickActions.workout")}
+            <Moon className="h-4 w-4 text-indigo-500" />
+            {t("dashboard.quickActions.sleep")}
           </Button>
           <Button
-            asChild
             variant="outline"
+            onClick={() => openQuickLog("weight")}
             className="h-11 gap-1.5 rounded-2xl border-border/60 text-xs font-semibold"
           >
-            <Link href="/diet">
-              <UtensilsCrossed className="h-4 w-4 text-emerald-500" />
-              {t("dashboard.quickActions.foodDiary")}
-            </Link>
+            <Scale className="h-4 w-4 text-rose-500" />
+            {t("dashboard.quickActions.weight")}
           </Button>
         </div>
-      </section>
-
-      {/* ─────────────── Today's planned workout — inline checklist ─────────────── */}
-      <section
-        id="today-workout"
-        aria-label={isToday ? t("workout.today.badge") : dayLabel}
-        className="glass-card scroll-mt-20 space-y-4 rounded-3xl border border-border/50 p-5 sm:p-6"
-      >
-        {todayWorkoutPlan ? (
-          <>
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0 space-y-1">
-                <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-primary">
-                  <Dumbbell className="h-3 w-3" />
-                  {isToday ? t("workout.today.badge") : dayLabel}
-                </div>
-                <h2 className="truncate font-heading text-base font-black tracking-tight sm:text-lg">
-                  {todayWorkoutPlan.title}
-                </h2>
-              </div>
-
-              <div className="flex shrink-0 items-center gap-2">
-                {today.workoutDone ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                    <CheckCircle2 className="h-3 w-3" />
-                    {t("dashboard.habit.complete")}
-                  </span>
-                ) : (
-                  <span className="text-xs font-bold tabular-nums text-primary">
-                    {t("workout.today.progress", {
-                      done: workoutSelectedCount,
-                      total: workoutChecklist.length,
-                    })}
-                  </span>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setWorkoutCardOpen((prev) => !prev)}
-                  aria-expanded={workoutCardOpen}
-                  aria-controls="today-workout-body"
-                  aria-label={
-                    workoutCardOpen
-                      ? t("workout.today.hideDetails")
-                      : t("workout.today.showDetails")
-                  }
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-border/60 text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-                >
-                  <ChevronDown
-                    className={cn(
-                      "h-4 w-4 transition-transform",
-                      workoutCardOpen && "rotate-180",
-                    )}
-                  />
-                </button>
-              </div>
-            </div>
-
-            {workoutCardOpen && (
-              <div id="today-workout-body" className="space-y-4">
-                <div className="space-y-2">
-                  {workoutChecklist.map((exercise, index) => (
-                    <ExerciseChecklistItem
-                      key={`${exercise.exerciseName}-${index}`}
-                      exercise={exercise}
-                      t={t}
-                      onChange={(patch) => updateWorkoutExercise(index, patch)}
-                    />
-                  ))}
-                </div>
-
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <Button
-                    type="button"
-                    onClick={handleSaveTodayWorkout}
-                    disabled={savingWorkout || workoutSelectedCount === 0}
-                    className="h-11 flex-1 gap-2 rounded-xl font-bold"
-                  >
-                    <CheckCircle2 className="h-4 w-4" />
-                    {savingWorkout
-                      ? t("workout.actions.savingDots")
-                      : t("workout.today.save")}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={resetWorkoutChecklist}
-                    disabled={savingWorkout}
-                    className="h-11 gap-2 rounded-xl font-bold text-muted-foreground"
-                  >
-                    <RotateCcw className="h-4 w-4" />
-                    {t("workout.today.reset")}
-                  </Button>
-                </div>
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-2.5">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <Dumbbell className="h-4 w-4" />
-              </span>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-bold">
-                  {t("workout.today.restTitle")}
-                </p>
-                <p className="truncate text-[11px] text-muted-foreground">
-                  {t("workout.today.restDescription")}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex shrink-0 items-center gap-1.5">
-              <Button
-                asChild
-                size="sm"
-                variant="outline"
-                className="h-9 gap-1.5 rounded-xl border-primary/30 font-bold text-primary hover:bg-primary/10"
-              >
-                <Link href="/workout">
-                  <Plus className="h-3.5 w-3.5" />
-                  {t("workout.today.createPlan")}
-                </Link>
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                onClick={() => setQuickWorkoutOpen(true)}
-                className="h-9 gap-1.5 rounded-xl font-semibold text-muted-foreground"
-              >
-                {t("dashboard.quickActions.workout")}
-              </Button>
-            </div>
-          </div>
-        )}
       </section>
 
       {/* ─────────────── Section D — Today's meals ─────────────── */}
@@ -866,47 +660,139 @@ export default function DashboardPage() {
         </section>
       )}
 
-      {/* ─────────────── Section E — Compact daily habits (water/workout/sleep) ─────────────── */}
+      {/* ─────────────── Today's planned workout — inline checklist ─────────────── */}
       <section
-        aria-label={t("dashboard.habits.aria")}
-        className="grid grid-cols-3 gap-2.5"
+        aria-label={isToday ? t("workout.today.badge") : dayLabel}
+        className="glass-card space-y-4 rounded-3xl border border-border/50 p-5 sm:p-6"
       >
-        {habitTiles.map((tile) => {
-          const Icon = tile.icon;
-          return (
-            <button
-              key={tile.key}
-              type="button"
-              onClick={tile.onClick}
-              className="glass-card rounded-2xl border border-border/50 p-3 text-left transition-all hover:border-primary/40 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-              aria-label={`${tile.label}: ${tile.value}. ${tile.actionLabel}`}
-            >
-              <div className="flex items-center gap-2">
-                <span
-                  className={cn(
-                    "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg",
-                    tile.iconClass,
-                  )}
+        {todayWorkoutPlan ? (
+          <>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 space-y-1">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-primary">
+                  <Dumbbell className="h-3 w-3" />
+                  {isToday ? t("workout.today.badge") : dayLabel}
+                </div>
+                <h2 className="truncate font-heading text-base font-black tracking-tight sm:text-lg">
+                  {todayWorkoutPlan.title}
+                </h2>
+              </div>
+
+              <div className="flex shrink-0 items-center gap-2">
+                {today.workoutDone ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                    <CheckCircle2 className="h-3 w-3" />
+                    {t("dashboard.habit.complete")}
+                  </span>
+                ) : (
+                  <span className="text-xs font-bold tabular-nums text-primary">
+                    {t("workout.today.progress", {
+                      done: workoutSelectedCount,
+                      total: workoutChecklist.length,
+                    })}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setWorkoutCardOpen((prev) => !prev)}
+                  aria-expanded={workoutCardOpen}
+                  aria-controls="today-workout-body"
+                  aria-label={
+                    workoutCardOpen
+                      ? t("workout.today.hideDetails")
+                      : t("workout.today.showDetails")
+                  }
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-border/60 text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
                 >
-                  <Icon className="h-3.5 w-3.5" />
-                </span>
-                <span className="truncate text-xs font-bold">{tile.label}</span>
+                  <ChevronDown
+                    className={cn(
+                      "h-4 w-4 transition-transform",
+                      workoutCardOpen && "rotate-180",
+                    )}
+                  />
+                </button>
               </div>
-              <p className="mt-2 truncate text-xs font-semibold text-muted-foreground tabular-nums">
-                {tile.value}
-              </p>
-              <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                <div
-                  className={cn(
-                    "h-full rounded-full transition-all",
-                    tile.barClass,
-                  )}
-                  style={{ width: `${tile.pct}%` }}
-                />
+            </div>
+
+            {workoutCardOpen && (
+              <div id="today-workout-body" className="space-y-4">
+                <div className="space-y-2">
+                  {workoutChecklist.map((exercise, index) => (
+                    <ExerciseChecklistItem
+                      key={`${exercise.exerciseName}-${index}`}
+                      exercise={exercise}
+                      t={t}
+                      onChange={(patch) => updateWorkoutExercise(index, patch)}
+                    />
+                  ))}
+                </div>
+
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button
+                    type="button"
+                    onClick={handleSaveTodayWorkout}
+                    disabled={savingWorkout || workoutSelectedCount === 0}
+                    className="h-11 flex-1 gap-2 rounded-xl font-bold"
+                  >
+                    <CheckCircle2 className="h-4 w-4" />
+                    {savingWorkout
+                      ? t("workout.actions.savingDots")
+                      : t("workout.today.save")}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={resetWorkoutChecklist}
+                    disabled={savingWorkout}
+                    className="h-11 gap-2 rounded-xl font-bold text-muted-foreground"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    {t("workout.today.reset")}
+                  </Button>
+                </div>
               </div>
-            </button>
-          );
-        })}
+            )}
+          </>
+        ) : (
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <Dumbbell className="h-4 w-4" />
+              </span>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-bold">
+                  {t("workout.today.restTitle")}
+                </p>
+                <p className="truncate text-[11px] text-muted-foreground">
+                  {t("workout.today.restDescription")}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex shrink-0 items-center gap-1.5">
+              <Button
+                asChild
+                size="sm"
+                variant="outline"
+                className="h-9 gap-1.5 rounded-xl border-primary/30 font-bold text-primary hover:bg-primary/10"
+              >
+                <Link href="/workout">
+                  <Plus className="h-3.5 w-3.5" />
+                  {t("workout.today.createPlan")}
+                </Link>
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => setQuickWorkoutOpen(true)}
+                className="h-9 gap-1.5 rounded-xl font-semibold text-muted-foreground"
+              >
+                {t("dashboard.quickActions.workout")}
+              </Button>
+            </div>
+          </div>
+        )}
       </section>
     </div>
   );
