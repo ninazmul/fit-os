@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import LandingShell from "@/components/landing/LandingShell";
 import { buildPublicPageMetadata, publicSeoPages } from "@/lib/seo";
-import { dictionaries } from "@/lib/i18n";
 import { APP_NAME, APP_TAGLINE } from "@/lib/constants";
 
 export const metadata: Metadata = buildPublicPageMetadata("/sign-in");
@@ -9,13 +8,6 @@ export const metadata: Metadata = buildPublicPageMetadata("/sign-in");
 const calculatorLinks = publicSeoPages.filter((page) =>
   page.path.includes("calculator"),
 );
-
-// FAQ structured data uses the canonical (English) dictionary copy for SEO.
-const en = dictionaries.en;
-const faqItems = [1, 2, 3, 4, 5].map((n) => ({
-  q: en[`landing.faq.q${n}`],
-  a: en[`landing.faq.a${n}`],
-}));
 
 const structuredData = [
   {
@@ -26,15 +18,6 @@ const structuredData = [
     operatingSystem: "All",
     offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
     description: APP_TAGLINE,
-  },
-  {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: faqItems.map((item) => ({
-      "@type": "Question",
-      name: item.q,
-      acceptedAnswer: { "@type": "Answer", text: item.a },
-    })),
   },
 ];
 

@@ -8,17 +8,12 @@ import {
   Sparkles,
   ShieldCheck,
   Zap,
-  Activity,
-  PieChart,
   ArrowRight,
   Smartphone,
-  BookOpen,
   Brain,
-  ScanBarcode,
-  Moon,
   TrendingUp,
+  Moon,
   Lock,
-  ChevronDown,
 } from "lucide-react";
 import AdUnit from "@/components/shared/AdUnit";
 import FitnessCalculator from "@/components/shared/FitnessCalculator";
@@ -34,80 +29,13 @@ import {
   APP_AUTHOR_URL,
 } from "@/lib/constants";
 
-const featureHighlights = [
-  {
-    icon: Brain,
-    titleKey: "landing.feature.gemini.title",
-    descKey: "landing.feature.gemini.desc",
-    color: "from-purple-500/20 to-primary/20",
-    iconColor: "text-purple-600 dark:text-purple-400",
-  },
-  {
-    icon: Flame,
-    titleKey: "landing.feature.recipe.title",
-    descKey: "landing.feature.recipe.desc",
-    color: "from-amber-500/20 to-primary/20",
-    iconColor: "text-amber-600 dark:text-amber-400",
-  },
-  {
-    icon: ScanBarcode,
-    titleKey: "landing.feature.barcode.title",
-    descKey: "landing.feature.barcode.desc",
-    color: "from-blue-500/20 to-primary/20",
-    iconColor: "text-blue-600 dark:text-blue-400",
-  },
-  {
-    icon: TrendingUp,
-    titleKey: "landing.feature.trajectory.title",
-    descKey: "landing.feature.trajectory.desc",
-    color: "from-emerald-500/20 to-primary/20",
-    iconColor: "text-emerald-600 dark:text-emerald-400",
-  },
-  {
-    icon: Dumbbell,
-    titleKey: "landing.feature.workout.title",
-    descKey: "landing.feature.workout.desc",
-    color: "from-rose-500/20 to-primary/20",
-    iconColor: "text-rose-600 dark:text-rose-400",
-  },
-  {
-    icon: Moon,
-    titleKey: "landing.feature.sleep.title",
-    descKey: "landing.feature.sleep.desc",
-    color: "from-indigo-500/20 to-primary/20",
-    iconColor: "text-indigo-600 dark:text-indigo-400",
-  },
-];
-
-const saasPillars = [
-  {
-    icon: Brain,
-    titleKey: "landing.pillar.gemini.title",
-    descKey: "landing.pillar.gemini.desc",
-  },
-  {
-    icon: Smartphone,
-    titleKey: "landing.pillar.pwa.title",
-    descKey: "landing.pillar.pwa.desc",
-  },
-  {
-    icon: ShieldCheck,
-    titleKey: "landing.pillar.privacy.title",
-    descKey: "landing.pillar.privacy.desc",
-  },
-  {
-    icon: PieChart,
-    titleKey: "landing.pillar.macros.title",
-    descKey: "landing.pillar.macros.desc",
-  },
-];
-
-const faqKeys = [
-  { q: "landing.faq.q1", a: "landing.faq.a1" },
-  { q: "landing.faq.q2", a: "landing.faq.a2" },
-  { q: "landing.faq.q3", a: "landing.faq.a3" },
-  { q: "landing.faq.q4", a: "landing.faq.a4" },
-  { q: "landing.faq.q5", a: "landing.faq.a5" },
+// Simple, plain-language summary of what the app offers.
+const serveItems = [
+  { icon: Flame, key: "landing.serve.diet" },
+  { icon: Dumbbell, key: "landing.serve.workout" },
+  { icon: TrendingUp, key: "landing.serve.body" },
+  { icon: Moon, key: "landing.serve.sleep" },
+  { icon: Brain, key: "landing.serve.ai" },
 ];
 
 const trustBadges = [
@@ -203,17 +131,11 @@ export default function LandingShell({
 }: LandingShellProps) {
   const { t } = useI18n();
 
-  const stats = [
-    { value: t("landing.stat1.value"), label: t("landing.stat1.label") },
-    { value: t("landing.stat2.value"), label: t("landing.stat2.label") },
-    { value: t("landing.stat3.value"), label: t("landing.stat3.label") },
-  ];
-
   return (
     <div className="relative z-10 mx-auto max-w-7xl px-4 pb-12 pt-4 sm:px-6 lg:px-8">
       {/* Top Navbar */}
       <header className="sticky top-3 z-30 mb-6 flex items-center justify-between gap-3 rounded-3xl border border-border/60 bg-background/80 px-4 py-3 shadow-lg shadow-black/5 backdrop-blur-xl sm:mb-10 sm:px-6">
-        <Link href="/sign-in" className="flex min-w-0 items-center gap-3 group">
+        <Link href="/sign-in" className="group flex min-w-0 items-center gap-3">
           <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border/50 bg-card p-1 shadow-sm transition-transform duration-300 group-hover:scale-105">
             <Image
               src={APP_LOGO}
@@ -224,17 +146,9 @@ export default function LandingShell({
             />
           </div>
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="truncate text-lg font-black tracking-tight font-heading">
-                {APP_NAME}
-              </span>
-              <span className="hidden rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-black text-primary sm:inline-flex">
-                {APP_VERSION}
-              </span>
-              <span className="hidden rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 sm:inline-flex">
-                ✨ Gemini AI
-              </span>
-            </div>
+            <span className="block truncate text-lg font-black tracking-tight font-heading">
+              {APP_NAME}
+            </span>
             <p className="truncate text-[11px] font-medium text-muted-foreground">
               {APP_TAGLINE}
             </p>
@@ -244,13 +158,6 @@ export default function LandingShell({
         <div className="flex items-center gap-2">
           <LanguageToggle />
           <Link
-            href="#calc"
-            className="hidden items-center gap-1.5 rounded-2xl border border-border/60 bg-muted/40 px-4 py-2.5 text-xs font-bold text-foreground transition-all hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 sm:inline-flex"
-          >
-            {t("nav.calculators")}{" "}
-            <Zap className="h-3.5 w-3.5 text-primary" />
-          </Link>
-          <Link
             href="#auth"
             className="flex shrink-0 items-center gap-1.5 rounded-2xl bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground shadow-md shadow-primary/25 transition-all hover:scale-[1.02] hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98]"
           >
@@ -259,9 +166,9 @@ export default function LandingShell({
         </div>
       </header>
 
-      {/* Hero Section */}
-      <main className="mb-12 grid gap-6 min-w-0 lg:grid-cols-[minmax(0,1fr)_440px] lg:items-start lg:gap-8">
-        <section className="space-y-6 min-w-0 rounded-[2.5rem] border border-border/60 bg-card/70 p-6 shadow-xl shadow-black/5 backdrop-blur-xl sm:p-8 lg:min-h-[calc(100vh-10rem)] lg:p-10">
+      {/* Hero + Auth */}
+      <main className="mb-12 grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_440px] lg:items-start lg:gap-8">
+        <section className="min-w-0 space-y-6 rounded-[2.5rem] border border-border/60 bg-card/70 p-6 shadow-xl shadow-black/5 backdrop-blur-xl sm:p-8 lg:p-10">
           {/* Top Pill */}
           <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1.5 text-xs font-bold text-primary shadow-sm">
             <Sparkles className="h-4 w-4 shrink-0 text-primary" />
@@ -270,7 +177,7 @@ export default function LandingShell({
 
           {/* Main Headline */}
           <div className="space-y-4">
-            <h1 className="max-w-3xl text-3xl font-black leading-[1.08] tracking-tight text-foreground sm:text-5xl lg:text-[3.85rem]">
+            <h1 className="max-w-2xl text-3xl font-black leading-[1.1] tracking-tight text-foreground sm:text-4xl lg:text-5xl">
               {t("landing.heroTitlePre")}{" "}
               <span className="bg-gradient-to-r from-primary via-emerald-500 to-teal-500 bg-clip-text text-transparent">
                 {t("landing.heroTitleHighlight")}
@@ -281,23 +188,26 @@ export default function LandingShell({
             </p>
           </div>
 
-          {/* Live Stats Counters */}
-          <div className="grid grid-cols-3 overflow-hidden rounded-2xl border border-border/50 bg-muted/30 backdrop-blur-md">
-            {stats.map(({ value, label }, index) => (
-              <div
-                key={label}
-                className={`px-3 py-3.5 text-center ${
-                  index > 0 ? "border-l border-border/50" : ""
-                }`}
-              >
-                <p className="text-base font-black text-primary sm:text-xl">
-                  {value}
-                </p>
-                <p className="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                  {label}
-                </p>
-              </div>
-            ))}
+          {/* What you get */}
+          <div className="space-y-3">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+              {t("landing.serve.title")}
+            </p>
+            <ul className="grid gap-2.5 sm:grid-cols-2">
+              {serveItems.map(({ icon: Icon, key }) => (
+                <li
+                  key={key}
+                  className="flex items-start gap-2.5 rounded-2xl border border-border/50 bg-card/60 p-3 transition-colors hover:border-primary/40 hover:bg-card/90"
+                >
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <span className="text-xs leading-relaxed text-foreground">
+                    {t(key)}
+                  </span>
+                </li>
+              ))}
+            </ul>
           </div>
 
           {/* CTA Buttons */}
@@ -312,38 +222,8 @@ export default function LandingShell({
               href="#calc"
               className="flex items-center justify-center gap-2 rounded-2xl border border-border/60 bg-card/80 px-6 py-3.5 text-sm font-bold text-foreground transition-all hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 active:scale-[0.99]"
             >
-              {t("landing.ctaExplore")}{" "}
-              <Zap className="h-4 w-4 text-primary" />
+              {t("landing.ctaExplore")} <Zap className="h-4 w-4 text-primary" />
             </Link>
-          </div>
-
-          {/* Feature Highlights Grid */}
-          <div className="grid gap-3 sm:grid-cols-2">
-            {featureHighlights.map((item) => {
-              const Icon = item.icon;
-              return (
-                <article
-                  key={item.titleKey}
-                  className="group relative overflow-hidden rounded-2xl border border-border/50 bg-card/60 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:bg-card/90 hover:shadow-md"
-                >
-                  <div className="flex items-start gap-3">
-                    <div
-                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${item.color} shadow-sm`}
-                    >
-                      <Icon className={`h-5 w-5 ${item.iconColor}`} />
-                    </div>
-                    <div className="min-w-0">
-                      <h2 className="text-xs font-bold leading-tight">
-                        {t(item.titleKey)}
-                      </h2>
-                      <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-                        {t(item.descKey)}
-                      </p>
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
           </div>
 
           {/* Quick Calculator Badges */}
@@ -370,7 +250,7 @@ export default function LandingShell({
         </section>
 
         {/* Auth Card Aside */}
-        <aside id="auth" className="lg:sticky lg:top-24 min-w-0">
+        <aside id="auth" className="min-w-0 lg:sticky lg:top-24">
           <div className="overflow-hidden rounded-[2rem] border border-border/60 bg-card/80 p-4 shadow-xl shadow-black/5 backdrop-blur-xl sm:p-5">
             {/* Header Box */}
             <div className="mb-4 flex items-center gap-3 rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/10 via-emerald-500/5 to-transparent p-3.5">
@@ -382,7 +262,7 @@ export default function LandingShell({
                 <p className="text-sm font-black text-foreground">
                   {t("landing.aside.title")}
                 </p>
-                <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
+                <p className="mt-0.5 text-[11px] leading-tight text-muted-foreground">
                   {t("landing.aside.desc")}
                 </p>
               </div>
@@ -407,81 +287,10 @@ export default function LandingShell({
         </aside>
       </main>
 
-      {/* Feature Pillars */}
-      <section className="space-y-6 py-10 sm:py-14">
-        <div className="mx-auto max-w-2xl space-y-2 text-center">
-          <h2 className="text-2xl font-black tracking-tight sm:text-4xl">
-            {t("landing.pillars.title")}
-          </h2>
-          <p className="text-xs text-muted-foreground sm:text-sm leading-relaxed">
-            {t("landing.pillars.desc")}
-          </p>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {saasPillars.map((pillar) => {
-            const Icon = pillar.icon;
-            return (
-              <article
-                key={pillar.titleKey}
-                className="group space-y-3 rounded-3xl border border-border/60 bg-card/60 p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg"
-              >
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 text-primary shadow-sm transition-transform duration-300 group-hover:scale-105">
-                  <Icon className="h-5 w-5" />
-                </div>
-                <h3 className="text-sm font-bold">{t(pillar.titleKey)}</h3>
-                <p className="text-xs leading-relaxed text-muted-foreground">
-                  {t(pillar.descKey)}
-                </p>
-              </article>
-            );
-          })}
-        </div>
-      </section>
-
       {/* Interactive Calculators Section */}
       <div id="calc" className="py-6">
         <FitnessCalculator />
       </div>
-
-      {/* FAQ Section */}
-      <section className="border-t border-border/60 py-10 sm:py-14">
-        <div className="grid gap-8 lg:grid-cols-12 lg:items-start">
-          <div className="space-y-4 lg:col-span-5">
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card/60 px-3.5 py-1 text-xs font-bold text-foreground">
-              <BookOpen className="h-3.5 w-3.5 text-primary" />
-              <span>{t("landing.faq.badge")}</span>
-            </div>
-            <h2 className="text-2xl font-black tracking-tight sm:text-3xl">
-              {t("landing.faq.title", { appName: APP_NAME })}
-            </h2>
-            <p className="text-xs leading-relaxed text-muted-foreground sm:text-sm">
-              {t("landing.faq.desc", { appName: APP_NAME })}
-            </p>
-          </div>
-
-          <div className="space-y-3 lg:col-span-7">
-            {faqKeys.map((faq, index) => (
-              <details
-                key={faq.q}
-                open={index === 0}
-                className="group rounded-2xl border border-border/60 bg-card/60 p-4 shadow-sm transition-all hover:border-primary/40 open:border-primary/40 open:bg-card/90 open:shadow-md"
-              >
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-xs font-bold text-foreground marker:content-none sm:text-sm [&::-webkit-details-marker]:hidden">
-                  <span className="flex items-center gap-2">
-                    <Activity className="h-3.5 w-3.5 shrink-0 text-primary" />
-                    {t(faq.q)}
-                  </span>
-                  <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-300 group-open:rotate-180" />
-                </summary>
-                <p className="mt-2.5 pl-5 text-xs leading-relaxed text-muted-foreground">
-                  {t(faq.a)}
-                </p>
-              </details>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* Bottom Ad Unit */}
       <div className="border-t border-border/60 py-6">
