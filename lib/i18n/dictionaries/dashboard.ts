@@ -46,6 +46,8 @@ export const dashboardEn: Record<string, string> = {
   "dashboard.meals.defaultServing": "1 serving",
   "dashboard.meals.macroInline": "P{protein}g C{carbs}g F{fat}g",
   "dashboard.meals.removeItem": "Remove {name}",
+  "dashboard.meals.showDetails": "Show meals",
+  "dashboard.meals.hideDetails": "Hide meals",
   // Workout card
   "dashboard.habit.complete": "Complete",
   // Toasts
@@ -101,6 +103,8 @@ export const dashboardBn: Record<string, string> = {
   "dashboard.meals.defaultServing": "১ সার্ভিং",
   "dashboard.meals.macroInline": "প্রো{protein}g কার্ব{carbs}g চর্বি{fat}g",
   "dashboard.meals.removeItem": "{name} মুছুন",
+  "dashboard.meals.showDetails": "খাবার দেখুন",
+  "dashboard.meals.hideDetails": "খাবার লুকান",
   // Workout card
   "dashboard.habit.complete": "সম্পন্ন করুন",
   // Toasts

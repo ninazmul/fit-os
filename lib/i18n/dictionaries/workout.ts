@@ -46,16 +46,21 @@ export const workoutEn: Record<string, string> = {
   // Plan view
   "workout.plan.heading": "Your Weekly Workout Plan",
   "workout.plan.description":
-    "Your weekly training split. Tap Edit Plan to change days, exercises, sets, or reps.",
+    "Your weekly training split. Tap the pencil on any day to change its exercises, sets, or reps, and drag the handle to reorder them.",
   "workout.plan.empty": "No weekly plan yet",
   "workout.plan.emptyHint":
-    "Tap Edit Plan to build your weekly split in a minute.",
+    "Tap Add Day or pick a template to build your weekly split in a minute.",
   // Weekly builder
   "workout.builder.badge": "Weekly Workout Builder",
   "workout.builder.heading": "Create your daily workout templates",
   "workout.builder.description":
     "Pick the weekdays you train, add exercise names, sets, and reps. AI estimates calories so the dashboard can show the right workout button on the right day.",
   "workout.builder.restDay": "Rest day",
+  "workout.builder.templates": "Start from a template",
+  "workout.builder.templatesConfirm":
+    "This replaces your current weekly plan. Continue?",
+  "workout.builder.dragHint": "Drag to reorder",
+  "workout.builder.nameRequired": "Workout name is required",
   // Templates
   "workout.template.fullBody3": "3-Day Full Body",
   "workout.template.upperLower4": "4-Day Upper Lower",
@@ -183,16 +188,21 @@ export const workoutBn: Record<string, string> = {
   // Plan view
   "workout.plan.heading": "আপনার সাপ্তাহিক ওয়ার্কআউট প্ল্যান",
   "workout.plan.description":
-    "আপনার সাপ্তাহিক ট্রেনিং স্প্লিট। দিন, ব্যায়াম, সেট বা রেপ পরিবর্তন করতে প্ল্যান সম্পাদনা চাপুন।",
+    "আপনার সাপ্তাহিক ট্রেনিং স্প্লিট। যেকোনো দিনের পেন্সিলে ট্যাপ করে ব্যায়াম, সেট বা রেপ পরিবর্তন করুন, আর হ্যান্ডেল টেনে তাদের ক্রম বদলান।",
   "workout.plan.empty": "এখনো কোনো সাপ্তাহিক প্ল্যান নেই",
   "workout.plan.emptyHint":
-    "এক মিনিটে আপনার সাপ্তাহিক স্প্লিট তৈরি করতে প্ল্যান সম্পাদনা চাপুন।",
+    "দিন যোগ করুন চেপে বা একটি টেমপ্লেট বেছে নিয়ে এক মিনিটে আপনার সাপ্তাহিক স্প্লিট তৈরি করুন।",
   // Weekly builder
   "workout.builder.badge": "সাপ্তাহিক ওয়ার্কআউট বিল্ডার",
   "workout.builder.heading": "আপনার দৈনিক ওয়ার্কআউট টেমপ্লেট তৈরি করুন",
   "workout.builder.description":
     "আপনি কোন দিনগুলোতে ট্রেনিং করেন সেগুলো বেছে নিন, তারপর ব্যায়ামের নাম, সেট ও রেপ যোগ করুন। এআই ক্যালোরি হিসাব করে, যাতে ড্যাশবোর্ড সঠিক দিনে সঠিক ওয়ার্কআউট বাটন দেখাতে পারে।",
   "workout.builder.restDay": "বিশ্রামের দিন",
+  "workout.builder.templates": "টেমপ্লেট থেকে শুরু করুন",
+  "workout.builder.templatesConfirm":
+    "এটি আপনার বর্তমান সাপ্তাহিক প্ল্যান মুছে ফেলবে। চালিয়ে যাবেন?",
+  "workout.builder.dragHint": "ক্রম পরিবর্তনে টেনে আনুন",
+  "workout.builder.nameRequired": "ওয়ার্কআউটের নাম প্রয়োজন",
   // Templates
   "workout.template.fullBody3": "৩ দিনের ফুল বডি",
   "workout.template.upperLower4": "৪ দিনের আপার লোয়ার",

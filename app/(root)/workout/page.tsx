@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   completeWorkoutPlanDay,
   deleteWorkoutLog,
@@ -48,9 +48,12 @@ import {
   CheckCircle2,
   Pencil,
   RotateCcw,
+  GripVertical,
   X,
 } from "lucide-react";
+import { Reorder, useDragControls } from "framer-motion";
 import { getLocalDateString } from "@/lib/utils";
+import type { TranslationVars } from "@/lib/i18n";
 import type {
   WorkoutType,
   IWorkoutExercise,
@@ -86,6 +89,8 @@ const weekDays = [
 ];
 
 type PlanExerciseEditor = {
+  /** Stable client-side key so drag-to-reorder keeps row identity. */
+  id: string;
   exerciseName: string;
   trackingMode: "reps" | "time";
   sets: number;
@@ -100,6 +105,24 @@ type PlanDayEditor = {
   exercises: PlanExerciseEditor[];
 };
 
+let planExerciseIdSeq = 0;
+const makePlanExerciseId = () => `pe-${(planExerciseIdSeq += 1)}`;
+
+const createPlanExercise = (
+  exerciseName: string,
+  sets = 3,
+  reps = 10,
+  seconds = 0,
+  trackingMode: "reps" | "time" = "reps",
+): PlanExerciseEditor => ({
+  id: makePlanExerciseId(),
+  exerciseName,
+  trackingMode,
+  sets,
+  reps,
+  seconds,
+});
+
 type QuickWorkoutExercise = IWorkoutExercise & {
   trackingMode: "reps" | "time";
   seconds: number;
@@ -109,27 +132,9 @@ const createPlanDay = (dayOfWeek = new Date().getDay()): PlanDayEditor => ({
   dayOfWeek,
   title: `${weekDays.find((day) => day.value === dayOfWeek)?.label || "Daily"} Workout`,
   exercises: [
-    {
-      exerciseName: "Bench Press",
-      trackingMode: "reps",
-      sets: 3,
-      reps: 10,
-      seconds: 0,
-    },
-    {
-      exerciseName: "Shoulder Press",
-      trackingMode: "reps",
-      sets: 3,
-      reps: 10,
-      seconds: 0,
-    },
-    {
-      exerciseName: "Triceps Pushdown",
-      trackingMode: "reps",
-      sets: 3,
-      reps: 12,
-      seconds: 0,
-    },
+    createPlanExercise("Bench Press", 3, 10),
+    createPlanExercise("Shoulder Press", 3, 10),
+    createPlanExercise("Triceps Pushdown", 3, 12),
   ],
 });
 
@@ -150,27 +155,9 @@ const workoutTemplates: { nameKey: string; days: PlanDayEditor[] }[] = [
         ...createPlanDay(2),
         title: "Lower Strength",
         exercises: [
-          {
-            exerciseName: "Squat",
-            trackingMode: "reps",
-            sets: 4,
-            reps: 8,
-            seconds: 0,
-          },
-          {
-            exerciseName: "Romanian Deadlift",
-            trackingMode: "reps",
-            sets: 3,
-            reps: 10,
-            seconds: 0,
-          },
-          {
-            exerciseName: "Plank",
-            trackingMode: "time",
-            sets: 3,
-            reps: 0,
-            seconds: 45,
-          },
+          createPlanExercise("Squat", 4, 8),
+          createPlanExercise("Romanian Deadlift", 3, 10),
+          createPlanExercise("Plank", 3, 0, 45, "time"),
         ],
       },
       { ...createPlanDay(4), title: "Upper Volume" },
@@ -178,27 +165,9 @@ const workoutTemplates: { nameKey: string; days: PlanDayEditor[] }[] = [
         ...createPlanDay(6),
         title: "Lower Volume",
         exercises: [
-          {
-            exerciseName: "Leg Press",
-            trackingMode: "reps",
-            sets: 4,
-            reps: 12,
-            seconds: 0,
-          },
-          {
-            exerciseName: "Lunges",
-            trackingMode: "reps",
-            sets: 3,
-            reps: 12,
-            seconds: 0,
-          },
-          {
-            exerciseName: "Side Plank",
-            trackingMode: "time",
-            sets: 3,
-            reps: 0,
-            seconds: 30,
-          },
+          createPlanExercise("Leg Press", 4, 12),
+          createPlanExercise("Lunges", 3, 12),
+          createPlanExercise("Side Plank", 3, 0, 30, "time"),
         ],
       },
     ],
@@ -211,27 +180,9 @@ const workoutTemplates: { nameKey: string; days: PlanDayEditor[] }[] = [
         ...createPlanDay(1),
         title: "Pull A",
         exercises: [
-          {
-            exerciseName: "Lat Pulldown",
-            trackingMode: "reps",
-            sets: 4,
-            reps: 10,
-            seconds: 0,
-          },
-          {
-            exerciseName: "Seated Row",
-            trackingMode: "reps",
-            sets: 3,
-            reps: 10,
-            seconds: 0,
-          },
-          {
-            exerciseName: "Biceps Curl",
-            trackingMode: "reps",
-            sets: 3,
-            reps: 12,
-            seconds: 0,
-          },
+          createPlanExercise("Lat Pulldown", 4, 10),
+          createPlanExercise("Seated Row", 3, 10),
+          createPlanExercise("Biceps Curl", 3, 12),
         ],
       },
       { ...createPlanDay(2), title: "Legs A" },
@@ -247,14 +198,20 @@ const toPlanDayEditor = (day: IWorkoutPlanDay): PlanDayEditor => ({
   _id: day._id,
   dayOfWeek: day.dayOfWeek,
   title: day.title,
-  exercises: day.exercises.map((exercise) => ({
-    exerciseName: exercise.exerciseName,
-    trackingMode: exercise.trackingMode || "reps",
-    sets: exercise.sets,
-    reps: exercise.reps,
-    seconds: exercise.seconds || 0,
-  })),
+  exercises: day.exercises.map((exercise) =>
+    createPlanExercise(
+      exercise.exerciseName,
+      exercise.sets,
+      exercise.reps,
+      exercise.seconds || 0,
+      exercise.trackingMode || "reps",
+    ),
+  ),
 });
+
+/** Draft days stay in weekday order so edit indexes remain predictable. */
+const sortPlanDraft = (days: PlanDayEditor[]) =>
+  [...days].sort((a, b) => a.dayOfWeek - b.dayOfWeek);
 
 /** Seed a checklist row from a planned exercise (defaults to fully completed). */
 const toCompletionEditor = (
@@ -287,15 +244,124 @@ const saveDayCompletion = async (
   );
 };
 
+/**
+ * One draggable exercise row inside a plan day editor. Dragging is limited to
+ * the grip handle so the inputs stay usable on touch devices.
+ */
+function PlanExerciseRow({
+  exercise,
+  canRemove,
+  t,
+  onChange,
+  onRemove,
+}: {
+  exercise: PlanExerciseEditor;
+  canRemove: boolean;
+  t: (key: string, vars?: TranslationVars) => string;
+  onChange: (patch: Partial<PlanExerciseEditor>) => void;
+  onRemove: () => void;
+}) {
+  const dragControls = useDragControls();
+  const isTime = exercise.trackingMode === "time";
+
+  return (
+    <Reorder.Item
+      value={exercise.id}
+      dragListener={false}
+      dragControls={dragControls}
+      style={{ position: "relative" }}
+      className="grid grid-cols-1 items-center gap-2 rounded-2xl border border-border/60 bg-background p-2 sm:grid-cols-[32px_1fr_104px_76px_88px_36px]"
+    >
+      <button
+        type="button"
+        onPointerDown={(event) => dragControls.start(event)}
+        aria-label={t("workout.builder.dragHint")}
+        title={t("workout.builder.dragHint")}
+        className="flex h-8 w-8 cursor-grab touch-none items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-primary active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
+
+      <Input
+        value={exercise.exerciseName}
+        onChange={(event) => onChange({ exerciseName: event.target.value })}
+        placeholder={t("workout.form.planExercisePlaceholder")}
+        className="rounded-xl"
+      />
+
+      <Select
+        value={exercise.trackingMode}
+        onValueChange={(value) =>
+          onChange({
+            trackingMode: value as "reps" | "time",
+            reps: value === "time" ? 0 : exercise.reps || 10,
+            seconds: value === "time" ? exercise.seconds || 30 : 0,
+          })
+        }
+      >
+        <SelectTrigger className="rounded-xl">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="reps">{t("workout.form.reps")}</SelectItem>
+          <SelectItem value="time">{t("workout.form.time")}</SelectItem>
+        </SelectContent>
+      </Select>
+
+      <Input
+        type="number"
+        inputMode="numeric"
+        min={1}
+        value={exercise.sets}
+        onChange={(event) => onChange({ sets: Number(event.target.value) })}
+        placeholder={t("workout.form.sets")}
+        aria-label={t("workout.form.sets")}
+        className="rounded-xl"
+      />
+
+      <Input
+        type="number"
+        inputMode="numeric"
+        min={1}
+        value={isTime ? exercise.seconds : exercise.reps}
+        onChange={(event) =>
+          onChange(
+            isTime
+              ? { seconds: Number(event.target.value) }
+              : { reps: Number(event.target.value) },
+          )
+        }
+        placeholder={isTime ? t("workout.form.seconds") : t("workout.form.reps")}
+        className="rounded-xl"
+      />
+
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        onClick={onRemove}
+        disabled={!canRemove}
+        className="rounded-xl text-muted-foreground hover:text-red-500"
+        title={t("workout.actions.removeExercise")}
+      >
+        <X className="w-4 h-4" />
+      </Button>
+    </Reorder.Item>
+  );
+}
+
 export default function WorkoutPage() {
   const { t } = useI18n();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [workouts, setWorkouts] = useState<any[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [prs, setPrs] = useState<Record<string, any>>({});
-  const [planDays, setPlanDays] = useState<PlanDayEditor[]>([createPlanDay(6)]);
+  const [planDays, setPlanDays] = useState<PlanDayEditor[]>([]);
   const [savedPlanDays, setSavedPlanDays] = useState<IWorkoutPlanDay[]>([]);
-  const [planEditing, setPlanEditing] = useState(false);
+  // Index of the single day currently open for inline editing (null = plan view).
+  const [editingDayIndex, setEditingDayIndex] = useState<number | null>(null);
+  // Mirrors editingDayIndex so background refreshes never clobber an open draft.
+  const editingDayIndexRef = useRef<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [planSaving, setPlanSaving] = useState(false);
   const [completingDayId, setCompletingDayId] = useState<string | null>(null);
@@ -345,8 +411,9 @@ export default function WorkoutPage() {
       setPrs(prData);
       const days = (plan?.days || []) as IWorkoutPlanDay[];
       setSavedPlanDays(days);
-      if (days.length > 0) {
-        setPlanDays(days.map(toPlanDayEditor));
+      // Keep an open day draft intact; otherwise mirror the saved plan.
+      if (editingDayIndexRef.current === null) {
+        setPlanDays(sortPlanDraft(days.map(toPlanDayEditor)));
       }
       const todayPlan = days.find(
         (day) => day.dayOfWeek === new Date().getDay(),
@@ -418,13 +485,27 @@ export default function WorkoutPage() {
     }
   };
 
-  const handleCancelEditPlan = () => {
-    setPlanDays(
-      savedPlanDays.length > 0
-        ? savedPlanDays.map(toPlanDayEditor)
-        : [createPlanDay(new Date().getDay())],
-    );
-    setPlanEditing(false);
+  /** Open a single day for editing (only one day can be edited at a time). */
+  const startEditingDay = (index: number) => {
+    editingDayIndexRef.current = index;
+    setEditingDayIndex(index);
+  };
+
+  const stopEditingDay = () => {
+    editingDayIndexRef.current = null;
+    setEditingDayIndex(null);
+  };
+
+  const handleCancelDayEdit = () => {
+    const index = editingDayIndex;
+    const draft = index === null ? null : planDays[index];
+    if (draft && !draft._id) {
+      // A brand-new day that was never persisted — drop it entirely.
+      setPlanDays((prev) => prev.filter((_, itemIndex) => itemIndex !== index));
+    } else {
+      setPlanDays(sortPlanDraft(savedPlanDays.map(toPlanDayEditor)));
+    }
+    stopEditingDay();
   };
 
   const handleAddSet = (exerciseIndex: number) => {
@@ -458,15 +539,20 @@ export default function WorkoutPage() {
     ]);
   };
 
+  /** Append a fresh day and open it straight away for editing. */
   const handleAddPlanDay = () => {
     const usedDays = new Set(planDays.map((day) => day.dayOfWeek));
-    const nextDay =
-      weekDays.find((day) => !usedDays.has(day.value))?.value ?? 0;
-    setPlanDays([...planDays, createPlanDay(nextDay)]);
+    const nextDay = planDays.length
+      ? (weekDays.find((day) => !usedDays.has(day.value))?.value ?? 0)
+      : todayDow;
+    const nextDraft = sortPlanDraft([...planDays, createPlanDay(nextDay)]);
+    setPlanDays(nextDraft);
+    startEditingDay(nextDraft.length - 1);
   };
 
   const handleRemovePlanDay = (dayIndex: number) => {
-    setPlanDays(planDays.filter((_, index) => index !== dayIndex));
+    setPlanDays((prev) => prev.filter((_, index) => index !== dayIndex));
+    stopEditingDay();
   };
 
   const handlePlanDayChange = (
@@ -502,21 +588,28 @@ export default function WorkoutPage() {
     setPlanDays(
       planDays.map((day, index) =>
         index === dayIndex
-          ? {
-              ...day,
-              exercises: [
-                ...day.exercises,
-                {
-                  exerciseName: "New Exercise",
-                  trackingMode: "reps",
-                  sets: 3,
-                  reps: 10,
-                  seconds: 0,
-                },
-              ],
-            }
+          ? { ...day, exercises: [...day.exercises, createPlanExercise("New Exercise")] }
           : day,
       ),
+    );
+  };
+
+  /** Drag-to-reorder: rebuild the day's exercise list in the dropped order. */
+  const handleReorderPlanExercises = (
+    dayIndex: number,
+    orderedIds: string[],
+  ) => {
+    setPlanDays((prev) =>
+      prev.map((day, index) => {
+        if (index !== dayIndex) return day;
+        const byId = new Map(day.exercises.map((exercise) => [exercise.id, exercise]));
+        return {
+          ...day,
+          exercises: orderedIds
+            .map((id) => byId.get(id))
+            .filter((exercise): exercise is PlanExerciseEditor => Boolean(exercise)),
+        };
+      }),
     );
   };
 
@@ -537,11 +630,12 @@ export default function WorkoutPage() {
     );
   };
 
-  const handleSaveWorkoutPlan = async () => {
+  /** Persist the whole weekly plan (the action replaces the days array). */
+  const persistPlan = async (days: PlanDayEditor[]) => {
     try {
       setPlanSaving(true);
       await saveWorkoutPlan({
-        days: planDays.map((day) => ({
+        days: days.map((day) => ({
           _id: day._id,
           dayOfWeek: day.dayOfWeek,
           title: day.title,
@@ -561,12 +655,42 @@ export default function WorkoutPage() {
       toast.success(t("workout.toast.planSaved"));
       notifyDataUpdated("workout");
       await fetchData();
-      setPlanEditing(false);
+      return true;
     } catch {
       toast.error(t("workout.toast.planSaveFailed"));
+      return false;
     } finally {
       setPlanSaving(false);
     }
+  };
+
+  const handleSavePlanDay = async (dayIndex: number) => {
+    const day = planDays[dayIndex];
+    if (!day) return;
+    if (!day.title.trim()) {
+      toast.error(t("workout.builder.nameRequired"));
+      return;
+    }
+    if (await persistPlan(planDays)) stopEditingDay();
+  };
+
+  /** Templates replace the whole week, so confirm before wiping a live plan. */
+  const handleApplyTemplate = (days: PlanDayEditor[]) => {
+    if (
+      savedPlanDays.length > 0 &&
+      !confirm(t("workout.builder.templatesConfirm"))
+    ) {
+      return;
+    }
+    const draft = sortPlanDraft(
+      days.map((day) => ({
+        ...day,
+        exercises: day.exercises.map((exercise) => ({ ...exercise })),
+      })),
+    );
+    setPlanDays(draft);
+    stopEditingDay();
+    void persistPlan(draft);
   };
 
   const openCompletionDialog = (day: IWorkoutPlanDay) => {
@@ -762,7 +886,7 @@ export default function WorkoutPage() {
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button
               type="button"
-              onClick={() => setPlanEditing(true)}
+              onClick={handleAddPlanDay}
               className="rounded-xl font-bold gap-2"
             >
               <Pencil className="h-4 w-4" />
@@ -818,64 +942,24 @@ export default function WorkoutPage() {
             </div>
             <div>
               <h2 className="text-xl font-black tracking-tight">
-                {planEditing
-                  ? t("workout.builder.heading")
-                  : t("workout.plan.heading")}
+                {t("workout.plan.heading")}
               </h2>
               <p className="text-xs text-muted-foreground max-w-2xl">
-                {planEditing
-                  ? t("workout.builder.description")
-                  : t("workout.plan.description")}
+                {t("workout.plan.description")}
               </p>
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            {planEditing ? (
-              <>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleAddPlanDay}
-                  disabled={planDays.length >= 7}
-                  className="rounded-xl text-xs font-bold gap-1"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  {t("workout.actions.addDay")}
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleSaveWorkoutPlan}
-                  disabled={planSaving || planDays.length === 0}
-                  className="rounded-xl text-xs font-bold gap-1 bg-primary hover:bg-primary/90"
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  {planSaving
-                    ? t("workout.actions.estimating")
-                    : t("workout.actions.savePlan")}
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={handleCancelEditPlan}
-                  disabled={planSaving}
-                  className="rounded-xl text-xs font-bold gap-1 text-muted-foreground"
-                >
-                  {t("workout.actions.cancelEdit")}
-                </Button>
-              </>
-            ) : (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setPlanEditing(true)}
-                className="rounded-xl text-xs font-bold gap-1 border-primary/30 text-primary hover:bg-primary/10"
-              >
-                <Pencil className="w-3.5 h-3.5" />
-                {t("workout.actions.editPlan")}
-              </Button>
-            )}
-          </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleAddPlanDay}
+            disabled={planDays.length >= 7 || editingDayIndex !== null}
+            className="rounded-xl text-xs font-bold gap-1 self-start"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            {t("workout.actions.addDay")}
+          </Button>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
@@ -917,38 +1001,46 @@ export default function WorkoutPage() {
           })}
         </div>
 
-        {planEditing ? (
-          <>
-            <div className="flex flex-wrap gap-2">
-              {workoutTemplates.map((template) => (
-                <Button
-                  key={template.nameKey}
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setPlanDays(
-                      template.days.map((day) => ({
-                        ...day,
-                        exercises: day.exercises.map((exercise) => ({
-                          ...exercise,
-                        })),
-                      })),
-                    )
-                  }
-                  className="rounded-xl text-xs font-bold gap-1 border-primary/30 text-primary hover:bg-primary/10"
-                >
-                  <Calendar className="w-3.5 h-3.5" />
-                  {t(template.nameKey)}
-                </Button>
-              ))}
-            </div>
+        <div className="space-y-2 rounded-2xl border border-dashed border-border/60 bg-muted/20 p-3">
+          <p className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-muted-foreground">
+            <Calendar className="h-3 w-3" />
+            {t("workout.builder.templates")}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {workoutTemplates.map((template) => (
+              <Button
+                key={template.nameKey}
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={planSaving || editingDayIndex !== null}
+                onClick={() => handleApplyTemplate(template.days)}
+                className="rounded-xl text-xs font-bold gap-1 border-primary/30 text-primary hover:bg-primary/10"
+              >
+                <Calendar className="w-3.5 h-3.5" />
+                {t(template.nameKey)}
+              </Button>
+            ))}
+          </div>
+        </div>
 
-            <div className="space-y-4">
-              {planDays.map((day, dayIndex) => (
+        <div className="space-y-3">
+          {planDays.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border/60 bg-muted/20 p-6 text-center space-y-1">
+              <p className="text-sm font-bold">{t("workout.plan.empty")}</p>
+              <p className="text-xs text-muted-foreground">
+                {t("workout.plan.emptyHint")}
+              </p>
+            </div>
+          ) : (
+            planDays.map((day, dayIndex) => {
+              const savedDay = savedPlanDays.find(
+                (item) => item._id === day._id,
+              );
+              return editingDayIndex === dayIndex ? (
                 <div
                   key={`${day.dayOfWeek}-${dayIndex}`}
-                  className="rounded-2xl border border-border/60 bg-card p-4 space-y-4"
+                  className="rounded-2xl border border-primary/40 bg-card p-4 space-y-4 shadow-sm ring-1 ring-primary/10"
                 >
                   <div className="grid grid-cols-1 md:grid-cols-[160px_1fr_auto] gap-3">
                     <div className="space-y-1">
@@ -1008,107 +1100,33 @@ export default function WorkoutPage() {
                     </Button>
                   </div>
 
-                  <div className="space-y-2">
+                  <Reorder.Group
+                    axis="y"
+                    values={day.exercises.map((exercise) => exercise.id)}
+                    onReorder={(orderedIds) =>
+                      handleReorderPlanExercises(dayIndex, orderedIds)
+                    }
+                    className="space-y-2"
+                  >
                     {day.exercises.map((exercise, exerciseIndex) => (
-                      <div
-                        key={`${exercise.exerciseName}-${exerciseIndex}`}
-                        className="grid grid-cols-1 sm:grid-cols-[1fr_112px_86px_96px_36px] gap-2"
-                      >
-                        <Input
-                          value={exercise.exerciseName}
-                          onChange={(e) =>
-                            handlePlanExerciseChange(dayIndex, exerciseIndex, {
-                              exerciseName: e.target.value,
-                            })
-                          }
-                          placeholder={t("workout.form.planExercisePlaceholder")}
-                          className="rounded-xl bg-background"
-                        />
-                        <Select
-                          value={exercise.trackingMode}
-                          onValueChange={(value) =>
-                            handlePlanExerciseChange(dayIndex, exerciseIndex, {
-                              trackingMode: value as "reps" | "time",
-                              reps: value === "time" ? 0 : exercise.reps || 10,
-                              seconds:
-                                value === "time" ? exercise.seconds || 30 : 0,
-                            })
-                          }
-                        >
-                          <SelectTrigger className="rounded-xl bg-background">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="reps">
-                              {t("workout.form.reps")}
-                            </SelectItem>
-                            <SelectItem value="time">
-                              {t("workout.form.time")}
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Input
-                          type="number"
-                          min={1}
-                          value={exercise.sets}
-                          onChange={(e) =>
-                            handlePlanExerciseChange(dayIndex, exerciseIndex, {
-                              sets: Number(e.target.value),
-                            })
-                          }
-                          placeholder={t("workout.form.sets")}
-                          className="rounded-xl bg-background"
-                        />
-                        <Input
-                          type="number"
-                          min={1}
-                          value={
-                            exercise.trackingMode === "time"
-                              ? exercise.seconds
-                              : exercise.reps
-                          }
-                          onChange={(e) => {
-                            if (exercise.trackingMode === "time") {
-                              handlePlanExerciseChange(
-                                dayIndex,
-                                exerciseIndex,
-                                {
-                                  seconds: Number(e.target.value),
-                                },
-                              );
-                            } else {
-                              handlePlanExerciseChange(
-                                dayIndex,
-                                exerciseIndex,
-                                {
-                                  reps: Number(e.target.value),
-                                },
-                              );
-                            }
-                          }}
-                          placeholder={
-                            exercise.trackingMode === "time"
-                              ? t("workout.form.seconds")
-                              : t("workout.form.reps")
-                          }
-                          className="rounded-xl bg-background"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() =>
-                            handleRemovePlanExercise(dayIndex, exerciseIndex)
-                          }
-                          disabled={day.exercises.length <= 1}
-                          className="rounded-xl text-muted-foreground hover:text-red-500"
-                          title={t("workout.actions.removeExercise")}
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
+                      <PlanExerciseRow
+                        key={exercise.id}
+                        exercise={exercise}
+                        canRemove={day.exercises.length > 1}
+                        t={t}
+                        onChange={(patch) =>
+                          handlePlanExerciseChange(
+                            dayIndex,
+                            exerciseIndex,
+                            patch,
+                          )
+                        }
+                        onRemove={() =>
+                          handleRemovePlanExercise(dayIndex, exerciseIndex)
+                        }
+                      />
                     ))}
-                  </div>
+                  </Reorder.Group>
 
                   <Button
                     type="button"
@@ -1120,58 +1138,85 @@ export default function WorkoutPage() {
                     <Plus className="w-3.5 h-3.5" />
                     {t("workout.actions.addExercise")}
                   </Button>
-                </div>
-              ))}
-            </div>
-          </>
-        ) : (
-          <div className="space-y-3">
-            {savedPlanDays.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-border/60 bg-muted/20 p-6 text-center space-y-1">
-                <p className="text-sm font-bold">{t("workout.plan.empty")}</p>
-                <p className="text-xs text-muted-foreground">
-                  {t("workout.plan.emptyHint")}
-                </p>
-              </div>
-            ) : (
-              [...savedPlanDays]
-                .sort((a, b) => a.dayOfWeek - b.dayOfWeek)
-                .map((day) => (
-                  <div
-                    key={day._id ?? day.dayOfWeek}
-                    className="rounded-2xl border border-border/60 bg-card/70 p-4 space-y-3"
-                  >
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-primary">
-                        {t(`workout.weekdayShort.${day.dayOfWeek}`)}
-                      </span>
-                      <p className="text-sm font-bold">{day.title}</p>
-                      <span className="ml-auto inline-flex items-center gap-1 text-[10px] font-bold text-muted-foreground">
-                        <Clock className="h-3 w-3" />
-                        {day.estimatedDurationMinutes} min
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {day.exercises.map((exercise, exerciseIndex) => (
-                        <span
-                          key={`${exercise.exerciseName}-${exerciseIndex}`}
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 bg-background px-2.5 py-1 text-[11px] font-semibold"
-                        >
-                          {exercise.exerciseName}
-                          <span className="text-muted-foreground">
-                            {exercise.sets}×
-                            {exercise.trackingMode === "time"
-                              ? `${exercise.seconds}s`
-                              : exercise.reps}
-                          </span>
-                        </span>
-                      ))}
-                    </div>
+
+                  <div className="flex items-center justify-end gap-2 border-t border-border/60 pt-3">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleCancelDayEdit}
+                      disabled={planSaving}
+                      className="rounded-xl text-xs font-bold"
+                    >
+                      {t("workout.actions.cancelEdit")}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => handleSavePlanDay(dayIndex)}
+                      disabled={planSaving}
+                      className="rounded-xl text-xs font-bold gap-1"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      {planSaving
+                        ? t("workout.actions.estimating")
+                        : t("workout.actions.savePlan")}
+                    </Button>
                   </div>
-                ))
-            )}
-          </div>
-        )}
+                </div>
+              ) : (
+                <div
+                  key={`${day.dayOfWeek}-${dayIndex}`}
+                  className="rounded-2xl border border-border/60 bg-card/70 p-4 space-y-3"
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-primary">
+                      {t(`workout.weekdayShort.${day.dayOfWeek}`)}
+                    </span>
+                    <p className="text-sm font-bold">{day.title}</p>
+                    {savedDay?.estimatedDurationMinutes ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        {savedDay.estimatedDurationMinutes} min
+                      </span>
+                    ) : null}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => startEditingDay(dayIndex)}
+                      disabled={editingDayIndex !== null || planSaving}
+                      className="ml-auto h-8 w-8 rounded-lg text-muted-foreground hover:text-primary"
+                      title={t("workout.actions.editPlan")}
+                      aria-label={t("workout.actions.editPlan")}
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {day.exercises.map((exercise, exerciseIndex) => (
+                      <span
+                        key={exercise.id}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 bg-background px-2.5 py-1 text-[11px] font-semibold"
+                      >
+                        <span className="tabular-nums text-muted-foreground">
+                          {exerciseIndex + 1}.
+                        </span>
+                        {exercise.exerciseName}
+                        <span className="text-muted-foreground">
+                          {exercise.sets}×
+                          {exercise.trackingMode === "time"
+                            ? `${exercise.seconds}s`
+                            : exercise.reps}
+                        </span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
       </div>
 
       {/* PR Cards Carousel / Grid */}

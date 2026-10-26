@@ -125,6 +125,7 @@ export default function DashboardPage() {
   const [quickWorkoutOpen, setQuickWorkoutOpen] = useState(false);
   const [savingWorkout, setSavingWorkout] = useState(false);
   const [workoutCardOpen, setWorkoutCardOpen] = useState(false);
+  const [mealsCardOpen, setMealsCardOpen] = useState(false);
   const [workoutChecklist, setWorkoutChecklist] = useState<ChecklistExercise[]>(
     [],
   );
@@ -537,126 +538,150 @@ export default function DashboardPage() {
                 ? t("dashboard.meals.titleToday")
                 : t("dashboard.meals.title")}
             </h2>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => openAddFood()}
-              className="h-8 gap-1 rounded-xl text-xs font-semibold"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              {t("dashboard.meals.add")}
-            </Button>
-          </div>
-
-          <div className="divide-y divide-border/50">
-            {MEAL_SLOTS.map((slot) => {
-              const meal = todayMeals[slot.type] || {
-                items: [],
-                calories: 0,
-              };
-              const Icon = slot.icon;
-
-              return (
-                <div key={slot.type} className="py-3 first:pt-0 last:pb-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex min-w-0 items-center gap-2">
-                      <span
-                        className={cn(
-                          "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border",
-                          slot.color,
-                        )}
-                      >
-                        <Icon className="h-3.5 w-3.5" />
-                      </span>
-                      <span className="truncate text-sm font-bold">
-                        {t(slot.labelKey)}
-                      </span>
-                    </div>
-
-                    <div className="flex shrink-0 items-center gap-1.5">
-                      <span className="text-xs font-semibold tabular-nums text-muted-foreground">
-                        {Math.round(meal.calories || 0)} kcal
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => openAddFood(slot.type)}
-                        className="h-7 w-7 rounded-lg"
-                        aria-label={t("dashboard.meals.addFoodTo", {
-                          slot: t(slot.labelKey),
-                        })}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  {meal.items.length === 0 ? (
-                    <p className="ml-9 mt-1.5 text-xs text-muted-foreground">
-                      {t("dashboard.meals.nothingLogged")}
-                    </p>
-                  ) : (
-                    <ul className="ml-9 mt-2 space-y-1.5">
-                      {meal.items.map(
-                        (
-                          item: {
-                            name: string;
-                            serving?: string;
-                            quantity?: number;
-                            calories: number;
-                            protein: number;
-                            carbs: number;
-                            fat: number;
-                          },
-                          idx: number,
-                        ) => (
-                          <li
-                            key={`${item.name}-${idx}`}
-                            className="flex items-center justify-between gap-3"
-                          >
-                            <div className="min-w-0">
-                              <p className="truncate text-sm">{item.name}</p>
-                              <p className="text-[11px] text-muted-foreground">
-                                {item.serving ||
-                                  t("dashboard.meals.defaultServing")}
-                                {item.quantity && item.quantity !== 1
-                                  ? ` × ${item.quantity}`
-                                  : ""}{" "}
-                                &middot; {Math.round(item.calories || 0)} kcal
-                                &middot;{" "}
-                                {t("dashboard.meals.macroInline", {
-                                  protein: item.protein,
-                                  carbs: item.carbs,
-                                  fat: item.fat,
-                                })}
-                              </p>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() =>
-                                meal._id && handleRemoveMealItem(meal._id, idx)
-                              }
-                              disabled={
-                                !meal._id ||
-                                itemDeletingKey === `${meal._id}_${idx}`
-                              }
-                              className="h-7 w-7 shrink-0 rounded-lg text-muted-foreground hover:text-destructive"
-                              aria-label={t("dashboard.meals.removeItem", {
-                                name: item.name,
-                              })}
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          </li>
-                        ),
-                      )}
-                    </ul>
+            <div className="flex shrink-0 items-center gap-1.5">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => openAddFood()}
+                className="h-8 gap-1 rounded-xl text-xs font-semibold"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                {t("dashboard.meals.add")}
+              </Button>
+              <button
+                type="button"
+                onClick={() => setMealsCardOpen((prev) => !prev)}
+                aria-expanded={mealsCardOpen}
+                aria-controls="today-meals-body"
+                aria-label={
+                  mealsCardOpen
+                    ? t("dashboard.meals.hideDetails")
+                    : t("dashboard.meals.showDetails")
+                }
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-border/60 text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+              >
+                <ChevronDown
+                  className={cn(
+                    "h-4 w-4 transition-transform",
+                    mealsCardOpen && "rotate-180",
                   )}
-                </div>
-              );
-            })}
+                />
+              </button>
+            </div>
           </div>
+
+          {mealsCardOpen && (
+            <div id="today-meals-body" className="divide-y divide-border/50">
+              {MEAL_SLOTS.map((slot) => {
+                const meal = todayMeals[slot.type] || {
+                  items: [],
+                  calories: 0,
+                };
+                const Icon = slot.icon;
+
+                return (
+                  <div key={slot.type} className="py-3 first:pt-0 last:pb-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <span
+                          className={cn(
+                            "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border",
+                            slot.color,
+                          )}
+                        >
+                          <Icon className="h-3.5 w-3.5" />
+                        </span>
+                        <span className="truncate text-sm font-bold">
+                          {t(slot.labelKey)}
+                        </span>
+                      </div>
+
+                      <div className="flex shrink-0 items-center gap-1.5">
+                        <span className="text-xs font-semibold tabular-nums text-muted-foreground">
+                          {Math.round(meal.calories || 0)} kcal
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openAddFood(slot.type)}
+                          className="h-7 w-7 rounded-lg"
+                          aria-label={t("dashboard.meals.addFoodTo", {
+                            slot: t(slot.labelKey),
+                          })}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {meal.items.length === 0 ? (
+                      <p className="ml-9 mt-1.5 text-xs text-muted-foreground">
+                        {t("dashboard.meals.nothingLogged")}
+                      </p>
+                    ) : (
+                      <ul className="ml-9 mt-2 space-y-1.5">
+                        {meal.items.map(
+                          (
+                            item: {
+                              name: string;
+                              serving?: string;
+                              quantity?: number;
+                              calories: number;
+                              protein: number;
+                              carbs: number;
+                              fat: number;
+                            },
+                            idx: number,
+                          ) => (
+                            <li
+                              key={`${item.name}-${idx}`}
+                              className="flex items-center justify-between gap-3"
+                            >
+                              <div className="min-w-0">
+                                <p className="truncate text-sm">{item.name}</p>
+                                <p className="text-[11px] text-muted-foreground">
+                                  {item.serving ||
+                                    t("dashboard.meals.defaultServing")}
+                                  {item.quantity && item.quantity !== 1
+                                    ? ` × ${item.quantity}`
+                                    : ""}{" "}
+                                  &middot; {Math.round(item.calories || 0)} kcal
+                                  &middot;{" "}
+                                  {t("dashboard.meals.macroInline", {
+                                    protein: item.protein,
+                                    carbs: item.carbs,
+                                    fat: item.fat,
+                                  })}
+                                </p>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() =>
+                                  meal._id &&
+                                  handleRemoveMealItem(meal._id, idx)
+                                }
+                                disabled={
+                                  !meal._id ||
+                                  itemDeletingKey === `${meal._id}_${idx}`
+                                }
+                                className="h-7 w-7 shrink-0 rounded-lg text-muted-foreground hover:text-destructive"
+                                aria-label={t("dashboard.meals.removeItem", {
+                                  name: item.name,
+                                })}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </li>
+                          ),
+                        )}
+                      </ul>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </section>
       )}
 
