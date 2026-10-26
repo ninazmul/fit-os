@@ -95,21 +95,21 @@ export async function getFullProfileHealthMetrics() {
     workoutPlanDoc,
   ] = await Promise.all([
     BodyMeasurement.findOne({ clerkId: user.id })
-      .sort({ date: -1, createdAt: -1 })
+      .sort({ date: -1 })
       .lean() as Promise<IBodyMeasurement | null>,
     BodyMeasurement.findOne({ clerkId: user.id })
-      .sort({ date: 1, createdAt: 1 })
+      .sort({ date: 1 })
       .lean() as Promise<IBodyMeasurement | null>,
     BodyMeasurement.find({ clerkId: user.id })
-      .sort({ date: -1, createdAt: -1 })
+      .sort({ date: -1 })
       .skip(1)
       .limit(1)
       .lean() as unknown as Promise<IBodyMeasurement[]>,
     WeightLog.findOne({ clerkId: user.id })
-      .sort({ date: -1, createdAt: -1 })
+      .sort({ date: -1 })
       .lean() as unknown as Promise<{ weight: number; date: string } | null>,
     WeightLog.findOne({ clerkId: user.id })
-      .sort({ date: 1, createdAt: 1 })
+      .sort({ date: 1 })
       .lean() as unknown as Promise<{ weight: number; date: string } | null>,
     WeightLog.find({ clerkId: user.id, date: { $gte: fourteenDaysAgoStr } })
       .sort({ date: 1 })
@@ -359,7 +359,7 @@ export async function getProfileNutritionTargets() {
 
   const [profile, latestWeightDoc] = await Promise.all([
     UserProfile.findOne({ clerkId: user.id }).lean() as Promise<IUserProfile | null>,
-    WeightLog.findOne({ clerkId: user.id }).sort({ date: -1, createdAt: -1 }).lean() as Promise<{ weight: number } | null>,
+    WeightLog.findOne({ clerkId: user.id }).sort({ date: -1 }).lean() as Promise<{ weight: number } | null>,
   ]);
   if (!profile) return null;
 

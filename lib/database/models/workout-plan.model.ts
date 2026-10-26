@@ -11,6 +11,7 @@ const WorkoutPlanExerciseSchema = new Schema(
     sets: { type: Number, required: true, default: 3 },
     reps: { type: Number, required: true, default: 10 },
     seconds: { type: Number, default: 0 },
+    weight: { type: Number, default: 0 }, // working load per set, in kg
     caloriesBurned: { type: Number, default: 0 },
   },
   { _id: true },
@@ -29,13 +30,11 @@ const WorkoutPlanDaySchema = new Schema(
 
 const WorkoutPlanSchema = new Schema(
   {
-    clerkId: { type: String, required: true, unique: true, index: true },
+    clerkId: { type: String, required: true, unique: true },
     days: [WorkoutPlanDaySchema],
   },
   { timestamps: true },
 );
-
-WorkoutPlanSchema.index({ clerkId: 1, "days.dayOfWeek": 1 });
 
 const WorkoutPlan =
   models.WorkoutPlan || model("WorkoutPlan", WorkoutPlanSchema);

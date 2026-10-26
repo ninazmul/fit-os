@@ -3,18 +3,26 @@
 import { connectToDatabase } from "@/lib/database";
 import WorkoutLog from "@/lib/database/models/workout-log.model";
 import WorkoutPlan from "@/lib/database/models/workout-plan.model";
+import PersonalRecord from "@/lib/database/models/personal-record.model";
 import UserProfile from "@/lib/database/models/user-profile.model";
 import { currentUser } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import {
   completeWorkoutPlanDaySchema,
+  personalRecordSchema,
   workoutLogSchema,
   workoutPlanSchema,
+  type PersonalRecordFormValues,
   type WorkoutLogFormValues,
   type WorkoutPlanFormValues,
 } from "@/validations/fitness";
 import { getLocalDateString } from "@/lib/utils";
-import type { IWorkoutPlanDay, IUserProfile } from "@/types/fitness";
+import type {
+  IPersonalRecord,
+  IPersonalRecordSummary,
+  IWorkoutPlanDay,
+  IUserProfile,
+} from "@/types/fitness";
 
 type PlanExerciseInput = {
   exerciseName: string;
@@ -22,11 +30,15 @@ type PlanExerciseInput = {
   sets: number;
   reps: number;
   seconds?: number;
+  weight?: number; // working load per set, in kg
 };
 
 function getDayOfWeekFromDate(dateStr: string) {
   return new Date(`${dateStr}T12:00:00`).getDay();
 }
+
+/** Preferred Gemini models, newest first (older names are deprecated). */
+const WORKOUT_CALORIE_MODELS = ["gemini-3.8-flash", "gemini-flash-latest"] as const;
 
 function estimateWorkoutDuration(exercises: PlanExerciseInput[]) {
   const totalSets = exercises.reduce((sum, ex) => sum + Number(ex.sets || 0), 0);
@@ -41,6 +53,24 @@ function estimateWorkoutDuration(exercises: PlanExerciseInput[]) {
   return Math.max(5, Math.round(totalSets * 2.5 + exercises.length * 3 + timeSeconds / 60));
 }
 
+/** Total external work performed: kg lifted across every rep. */
+function totalVolumeLoad(exercises: PlanExerciseInput[]) {
+  return exercises.reduce(
+    (sum, ex) =>
+      sum +
+      (ex.trackingMode === "time"
+        ? 0
+        : Number(ex.sets || 0) * Number(ex.reps || 0) * Number(ex.weight || 0)),
+    0,
+  );
+}
+
+/**
+ * Deterministic MET-based estimate used when the AI is unavailable.
+ * Duration and body weight drive the bulk of the cost; resistance-training
+ * volume load adds a small progressive-overload premium so heavier sessions
+ * score a little higher than light ones.
+ */
 function fallbackWorkoutCalories(
   exercises: PlanExerciseInput[],
   profile?: Partial<IUserProfile> | null,
@@ -50,11 +80,17 @@ function fallbackWorkoutCalories(
   const names = exercises.map((e) => e.exerciseName.toLowerCase()).join(" ");
   const cardioTerms = ["run", "jog", "cycle", "bike", "cardio", "hiit", "burpee", "jump", "rope"];
   const legTerms = ["squat", "deadlift", "lunge", "leg", "press"];
-  const met = cardioTerms.some((term) => names.includes(term))
+  const isCardio = cardioTerms.some((term) => names.includes(term));
+  const baseMet = isCardio
     ? 8
     : legTerms.some((term) => names.includes(term))
       ? 6
       : 5;
+  // ~10,000 kg of volume load ≈ +1 MET, capped so a single outlier can't dominate.
+  const loadPremium = isCardio
+    ? 0
+    : Math.min(1.5, totalVolumeLoad(exercises) / 10000);
+  const met = baseMet + loadPremium;
   return Math.max(20, Math.round(((met * 3.5 * bodyWeight) / 200) * duration));
 }
 
@@ -74,6 +110,16 @@ async function estimateWorkoutCaloriesWithAI(
     return { durationMinutes: duration, caloriesBurned: fallbackCalories };
   }
 
+  const exerciseLines = exercises
+    .map((e) =>
+      e.trackingMode === "time"
+        ? `${e.exerciseName}: ${e.sets} sets x ${e.seconds || 0} seconds`
+        : `${e.exerciseName}: ${e.sets} sets x ${e.reps} reps${
+            Number(e.weight) > 0 ? ` @ ${Number(e.weight)}kg` : ""
+          }`,
+    )
+    .join("; ");
+
   try {
     const prompt = `You are an exercise physiology calorie estimator. Estimate active workout calories for this planned session.
 
@@ -85,8 +131,14 @@ User:
 
 Workout:
 - title: ${title}
-- exercises: ${exercises.map((e) => e.trackingMode === "time" ? `${e.exerciseName}: ${e.sets} sets x ${e.seconds || 0} seconds` : `${e.exerciseName}: ${e.sets} sets x ${e.reps} reps`).join("; ")}
+- exercises: ${exerciseLines}
 - estimatedDurationMinutes: ${duration}
+- totalVolumeLoadKg: ${totalVolumeLoad(exercises)}
+
+Rules:
+- Resistance-training energy cost scales mostly with session duration and body weight; a higher load volume raises intensity only modestly. Do NOT inflate the estimate from load alone.
+- Count only the active workout window (exclude rest-of-day metabolism).
+- Keep estimates realistic (e.g. a ~45-minute moderate strength session for a 70kg adult is roughly 200-350 kcal).
 
 Return strict JSON only:
 {
@@ -94,22 +146,26 @@ Return strict JSON only:
   "caloriesBurned": 260
 }`;
 
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.15,
-            responseMimeType: "application/json",
-          },
-        }),
-      },
-    );
+    let res: Response | null = null;
+    for (const model of WORKOUT_CALORIE_MODELS) {
+      res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: 0.15,
+              responseMimeType: "application/json",
+            },
+          }),
+        },
+      );
+      if (res.ok) break;
+    }
 
-    if (!res.ok) {
+    if (!res || !res.ok) {
       return { durationMinutes: duration, caloriesBurned: fallbackCalories };
     }
 
@@ -161,6 +217,10 @@ export async function logWorkout(formData: WorkoutLogFormValues) {
             0,
           ) / Math.max(1, exercise.sets.length),
         ) || 0,
+      weight: Math.round(
+        exercise.sets.reduce((sum, set) => sum + Number(set.weight || 0), 0) /
+          Math.max(1, exercise.sets.length),
+      ),
     };
   });
   const aiEstimate = await estimateWorkoutCaloriesWithAI(
@@ -228,6 +288,7 @@ export async function saveWorkoutPlan(formData: WorkoutPlanFormValues) {
           sets: ex.sets,
           reps: ex.reps,
           seconds: ex.seconds,
+          weight: ex.weight,
           caloriesBurned: caloriesPerSetTotal
             ? Math.round((estimate.caloriesBurned * ex.sets) / caloriesPerSetTotal)
             : 0,
@@ -280,6 +341,7 @@ export async function completeWorkoutPlanDay(
     setsCompleted: number;
     reps: number;
     seconds: number;
+    weight?: number;
   }>,
 ) {
   await connectToDatabase();
@@ -305,6 +367,7 @@ export async function completeWorkoutPlanDay(
         setsCompleted: exercise.sets,
         reps: exercise.reps,
         seconds: exercise.seconds || 0,
+        weight: exercise.weight || 0,
       })),
   });
 
@@ -333,6 +396,7 @@ export async function completeWorkoutPlanDay(
       sets: exercise.setsCompleted,
       reps: exercise.reps,
       seconds: exercise.seconds,
+      weight: exercise.weight || 0,
     })),
     profile,
   );
@@ -358,7 +422,7 @@ export async function completeWorkoutPlanDay(
       sets: Array.from({ length: Number(ex.setsCompleted) || 1 }, (_, index) => ({
         setNumber: index + 1,
         reps: ex.trackingMode === "time" ? 0 : Number(ex.reps) || 1,
-        weight: 0,
+        weight: ex.trackingMode === "time" ? 0 : Number(ex.weight) || 0,
         durationSeconds: ex.trackingMode === "time" ? Number(ex.seconds) || 0 : 0,
       })),
       durationMinutes: totalSets
@@ -403,47 +467,113 @@ export async function getWorkoutHistory(days: number = 30) {
   return JSON.parse(JSON.stringify(logs));
 }
 
-export async function getPersonalRecords() {
+export async function getPersonalRecords(): Promise<
+  Record<string, IPersonalRecordSummary>
+> {
   await connectToDatabase();
   const user = await currentUser();
   if (!user) return {};
 
-  const workouts = (await WorkoutLog.find(
-    { clerkId: user.id },
-    { "exercises.exerciseName": 1, "exercises.sets.weight": 1, "exercises.sets.reps": 1, date: 1 }
-  ).lean()) as unknown as {
+  const [workouts, manual] = await Promise.all([
+    WorkoutLog.find(
+      { clerkId: user.id },
+      {
+        "exercises.exerciseName": 1,
+        "exercises.sets.weight": 1,
+        "exercises.sets.reps": 1,
+        date: 1,
+      },
+    ).lean(),
+    PersonalRecord.find({ clerkId: user.id }).lean(),
+  ]);
+
+  const prMap: Record<string, IPersonalRecordSummary> = {};
+
+  // A PR needs an actual load (weight × reps); bodyweight/time sets are skipped.
+  const consider = (
+    rawName: string,
+    weight: number,
+    reps: number,
+    date: string,
+    source: "log" | "manual",
+    id?: string,
+  ) => {
+    if (!rawName || weight <= 0 || reps <= 0) return;
+    const key = rawName.toLowerCase().trim();
+    const volume = weight * reps;
+    const current = prMap[key];
+    const isBetter =
+      !current ||
+      volume > current.weight * current.reps ||
+      (volume === current.weight * current.reps && date > current.date);
+    if (isBetter) {
+      prMap[key] = { weight, reps, date, source, _id: id };
+    }
+  };
+
+  for (const w of workouts as unknown as {
     date: string;
     exercises: Array<{
       exerciseName: string;
       sets: Array<{ weight: number; reps: number }>;
     }>;
-  }[];
-
-  const prMap: Record<string, { weight: number; reps: number; date: string }> = {};
-
-  for (let i = 0; i < workouts.length; i++) {
-    const w = workouts[i];
-    if (!w.exercises) continue;
-    for (let j = 0; j < w.exercises.length; j++) {
-      const ex = w.exercises[j];
-      if (!ex.exerciseName || !ex.sets) continue;
-      const key = ex.exerciseName.toLowerCase().trim();
-      for (let k = 0; k < ex.sets.length; k++) {
-        const set = ex.sets[k];
-        const volume = (set.weight || 0) * (set.reps || 0);
-        const currentPr = prMap[key];
-        if (!currentPr || volume > (currentPr.weight * currentPr.reps)) {
-          prMap[key] = {
-            weight: set.weight || 0,
-            reps: set.reps || 0,
-            date: w.date,
-          };
-        }
+  }[]) {
+    for (const ex of w.exercises || []) {
+      for (const set of ex.sets || []) {
+        consider(
+          ex.exerciseName,
+          Number(set.weight) || 0,
+          Number(set.reps) || 0,
+          w.date,
+          "log",
+        );
       }
     }
   }
 
+  for (const record of manual as unknown as IPersonalRecord[]) {
+    consider(
+      record.exerciseName,
+      Number(record.weight) || 0,
+      Number(record.reps) || 0,
+      record.date,
+      "manual",
+      String(record._id),
+    );
+  }
+
   return prMap;
+}
+
+/** Manually add a personal record (independent of logged workouts). */
+export async function addPersonalRecord(formData: PersonalRecordFormValues) {
+  await connectToDatabase();
+  const user = await currentUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const validated = personalRecordSchema.parse(formData);
+  const record = await PersonalRecord.create({
+    clerkId: user.id,
+    exerciseName: validated.exerciseName.trim(),
+    weight: validated.weight,
+    reps: validated.reps,
+    date: validated.date || getLocalDateString(),
+    notes: validated.notes || "",
+  });
+
+  revalidatePath("/");
+  revalidatePath("/workout");
+  return JSON.parse(JSON.stringify(record));
+}
+
+export async function deletePersonalRecord(id: string) {
+  await connectToDatabase();
+  const user = await currentUser();
+  if (!user) throw new Error("Unauthorized");
+
+  await PersonalRecord.findOneAndDelete({ _id: id, clerkId: user.id });
+  revalidatePath("/");
+  revalidatePath("/workout");
 }
 
 export async function deleteWorkoutLog(logId: string) {

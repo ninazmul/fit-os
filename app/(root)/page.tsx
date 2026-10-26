@@ -47,12 +47,14 @@ const toChecklistExercise = (exercise: {
   sets: number;
   reps: number;
   seconds?: number;
+  weight?: number;
 }): ChecklistExercise => ({
   exerciseName: exercise.exerciseName,
   trackingMode: exercise.trackingMode || "reps",
   sets: exercise.sets,
   reps: exercise.reps,
   seconds: exercise.seconds || 0,
+  weight: exercise.weight || 0,
   selected: true,
   setsCompleted: exercise.sets,
 });
@@ -265,6 +267,7 @@ export default function DashboardPage() {
           setsCompleted: exercise.setsCompleted,
           reps: exercise.trackingMode === "time" ? 0 : exercise.reps,
           seconds: exercise.trackingMode === "time" ? exercise.seconds : 0,
+          weight: exercise.trackingMode === "time" ? 0 : exercise.weight || 0,
         })),
       );
       toast.success(

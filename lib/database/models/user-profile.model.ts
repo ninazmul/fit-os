@@ -2,7 +2,7 @@ import { Schema, model, models } from "mongoose";
 
 const UserProfileSchema = new Schema(
   {
-    clerkId: { type: String, required: true, unique: true, index: true },
+    clerkId: { type: String, required: true, unique: true },
     name: { type: String, required: true },
     gender: { type: String, enum: ["male", "female", "other"], default: "male" },
     age: { type: Number, required: true, default: 25 },

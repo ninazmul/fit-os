@@ -241,13 +241,13 @@ export async function generateAIProfileAssessment(
   const [latestMeasurement, latestWeightDoc, firstWeightDoc, recentMeals] =
     await Promise.all([
       BodyMeasurement.findOne({ clerkId: user.id })
-        .sort({ date: -1, createdAt: -1 })
+        .sort({ date: -1 })
         .lean() as Promise<IBodyMeasurement | null>,
       WeightLog.findOne({ clerkId: user.id })
-        .sort({ date: -1, createdAt: -1 })
+        .sort({ date: -1 })
         .lean() as Promise<IWeightLog | null>,
       WeightLog.findOne({ clerkId: user.id })
-        .sort({ date: 1, createdAt: 1 })
+        .sort({ date: 1 })
         .lean() as Promise<IWeightLog | null>,
       MealLog.find({
         clerkId: user.id,

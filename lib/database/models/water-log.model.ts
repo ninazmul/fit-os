@@ -8,14 +8,15 @@ const WaterEntrySchema = new Schema({
 
 const WaterLogSchema = new Schema(
   {
-    clerkId: { type: String, required: true, index: true },
-    date: { type: String, required: true, index: true }, // YYYY-MM-DD
+    clerkId: { type: String, required: true },
+    date: { type: String, required: true }, // YYYY-MM-DD
     entries: { type: [WaterEntrySchema], default: [] },
     totalMl: { type: Number, default: 0 },
   },
   { timestamps: true },
 );
 
+// One log per user per day; covers every point and range read.
 WaterLogSchema.index({ clerkId: 1, date: 1 }, { unique: true });
 
 const WaterLog = models.WaterLog || model("WaterLog", WaterLogSchema);

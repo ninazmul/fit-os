@@ -17,7 +17,8 @@ const BodyMeasurementSchema = new Schema(
   { timestamps: true }
 );
 
-BodyMeasurementSchema.index({ clerkId: 1, date: -1, updatedAt: -1 });
+// Upserted one-per-day on `{clerkId, date}`. This single index covers every
+// read (latest/earliest/range/list) and all date-ordered sorts.
 BodyMeasurementSchema.index({ clerkId: 1, date: -1 });
 
 const BodyMeasurement =

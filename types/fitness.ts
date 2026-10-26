@@ -171,6 +171,26 @@ export interface IWorkoutLog {
   notes?: string;
 }
 
+/** A manually added personal-record entry (independent of logged workouts). */
+export interface IPersonalRecord {
+  _id?: string;
+  clerkId: string;
+  exerciseName: string;
+  weight: number; // in kg
+  reps: number;
+  date: string; // YYYY-MM-DD
+  notes?: string;
+}
+
+/** Merged PR view: the best of auto-derived logs and manual entries. */
+export interface IPersonalRecordSummary {
+  weight: number;
+  reps: number;
+  date: string;
+  source: "log" | "manual";
+  _id?: string;
+}
+
 export interface IWorkoutPlanExercise {
   _id?: string;
   exerciseName: string;
@@ -178,6 +198,7 @@ export interface IWorkoutPlanExercise {
   sets: number;
   reps: number;
   seconds?: number;
+  weight?: number; // working load per set, in kg
   caloriesBurned?: number;
 }
 

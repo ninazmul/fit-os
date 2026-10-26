@@ -128,6 +128,7 @@ export const workoutPlanExerciseSchema = z.object({
   sets: z.coerce.number().min(1).max(20),
   reps: z.coerce.number().min(0).max(200).default(0),
   seconds: z.coerce.number().min(0).max(3600).default(0),
+  weight: z.coerce.number().min(0).max(500).default(0),
 });
 
 export const workoutPlanDaySchema = z.object({
@@ -149,12 +150,21 @@ export const completedWorkoutPlanExerciseSchema = z.object({
   setsCompleted: z.coerce.number().min(0).max(20),
   reps: z.coerce.number().min(0).max(200),
   seconds: z.coerce.number().min(0).max(3600),
+  weight: z.coerce.number().min(0).max(500).default(0),
 });
 
 export const completeWorkoutPlanDaySchema = z.object({
   date: z.string().min(1),
   planDayId: z.string().min(1),
   completedExercises: z.array(completedWorkoutPlanExerciseSchema).min(1),
+});
+
+export const personalRecordSchema = z.object({
+  exerciseName: z.string().min(1, "Exercise name required").max(120),
+  weight: z.coerce.number().min(0).max(500),
+  reps: z.coerce.number().min(1).max(200),
+  date: z.string().min(1),
+  notes: z.string().max(300).optional(),
 });
 
 export const waterLogSchema = z.object({
@@ -197,3 +207,4 @@ export type WeightLogFormValues = z.infer<typeof weightLogSchema>;
 export type BodyMeasurementFormValues = z.infer<typeof bodyMeasurementSchema>;
 export type WorkoutLogFormValues = z.infer<typeof workoutLogSchema>;
 export type WorkoutPlanFormValues = z.infer<typeof workoutPlanSchema>;
+export type PersonalRecordFormValues = z.infer<typeof personalRecordSchema>;

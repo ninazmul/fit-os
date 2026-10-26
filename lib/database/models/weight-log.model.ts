@@ -10,8 +10,8 @@ const WeightLogSchema = new Schema(
   { timestamps: true }
 );
 
+// One entry per user per day. Serves every read (latest/earliest/range/sort).
 WeightLogSchema.index({ clerkId: 1, date: -1 }, { unique: true });
-WeightLogSchema.index({ clerkId: 1, date: 1 });
 
 const WeightLog = models.WeightLog || model("WeightLog", WeightLogSchema);
 

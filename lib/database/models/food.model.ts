@@ -2,7 +2,7 @@ import { Schema, model, models } from "mongoose";
 
 const FoodSchema = new Schema(
   {
-    name: { type: String, required: true, index: true },
+    name: { type: String, required: true },
     category: {
       type: String,
       default: "custom",
@@ -22,8 +22,9 @@ const FoodSchema = new Schema(
   { timestamps: true }
 );
 
-// Indexes for fast lookup and search
-FoodSchema.index({ name: "text" });
+// getFoods list: find(...).sort({isCustom:-1, name:1}) — covered sort.
+FoodSchema.index({ isCustom: -1, name: 1 });
+// Ownership / per-user custom foods.
 FoodSchema.index({ isCustom: 1, clerkId: 1 });
 FoodSchema.index({ isCustom: 1, category: 1 });
 FoodSchema.index({ isCustom: 1, createdAt: -1 });

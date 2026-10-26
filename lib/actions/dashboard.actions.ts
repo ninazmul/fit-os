@@ -53,7 +53,7 @@ export async function getDashboardData(dateStr?: string) {
     // Use latest weight log (same as diet page's getProfileNutritionTargets)
     // so both pages always compute identical calorie targets.
     const latestWeightDoc = await WeightLog.findOne({ clerkId: user.id })
-      .sort({ date: -1, createdAt: -1 })
+      .sort({ date: -1 })
       .lean() as { weight: number } | null;
     const currentWeight = latestWeightDoc?.weight || profile.currentWeight;
 

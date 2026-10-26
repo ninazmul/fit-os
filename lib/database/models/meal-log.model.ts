@@ -33,10 +33,10 @@ const MealLogSchema = new Schema(
   { timestamps: true }
 );
 
-// Primary upsert key: logMeal / appendMealItem / getDailyNutritionSummary
+// Primary upsert key + all date-scoped reads. Also serves
+// `{clerkId, date}` range queries and `sort({date})` via a prefix scan,
+// so no separate `{clerkId, date}` index is needed.
 MealLogSchema.index({ clerkId: 1, date: 1, mealType: 1 }, { unique: true });
-// Range queries: getMealLogsForRange, dashboard weekly, insights, AI actions
-MealLogSchema.index({ clerkId: 1, date: 1 });
 // Recent-foods query: MealLog.find({clerkId}).sort({createdAt:-1}).limit(20)
 MealLogSchema.index({ clerkId: 1, createdAt: -1 });
 

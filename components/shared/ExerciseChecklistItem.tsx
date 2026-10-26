@@ -12,6 +12,7 @@ export type ChecklistExercise = {
   sets: number;
   reps: number;
   seconds: number;
+  weight: number; // working load per set, in kg
   selected: boolean;
   setsCompleted: number;
 };
@@ -110,17 +111,15 @@ export function ExerciseChecklistItem({
               sets: exercise.sets,
               detail: isTime
                 ? formatDuration(exercise.seconds)
-                : `${exercise.reps} reps`,
+                : `${exercise.reps} reps${
+                    exercise.weight > 0 ? ` @ ${exercise.weight}kg` : ""
+                  }`,
             })}
           </p>
         </div>
       </div>
 
-      <div
-        className={`mt-3 grid gap-3 pl-7 ${
-          isTime ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-2"
-        }`}
-      >
+      <div className="mt-3 grid grid-cols-2 gap-3 pl-7 sm:grid-cols-3">
         <div className="space-y-1">
           <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
             {t("workout.form.setsDone")}
@@ -170,19 +169,35 @@ export function ExerciseChecklistItem({
             </div>
           </>
         ) : (
-          <div className="space-y-1">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
-              {t("workout.form.repsPerSet")}
-            </p>
-            <NumberStepper
-              value={exercise.reps}
-              min={0}
-              max={100}
-              disabled={!exercise.selected}
-              ariaLabel={t("workout.form.repsPerSet")}
-              onChange={(value) => onChange({ reps: value })}
-            />
-          </div>
+          <>
+            <div className="space-y-1">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                {t("workout.form.repsPerSet")}
+              </p>
+              <NumberStepper
+                value={exercise.reps}
+                min={0}
+                max={100}
+                disabled={!exercise.selected}
+                ariaLabel={t("workout.form.repsPerSet")}
+                onChange={(value) => onChange({ reps: value })}
+              />
+            </div>
+            <div className="space-y-1">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                {t("workout.form.weightKg")}
+              </p>
+              <NumberStepper
+                value={exercise.weight ?? 0}
+                min={0}
+                max={500}
+                step={2.5}
+                disabled={!exercise.selected}
+                ariaLabel={t("workout.form.weightKg")}
+                onChange={(value) => onChange({ weight: value })}
+              />
+            </div>
+          </>
         )}
       </div>
     </div>

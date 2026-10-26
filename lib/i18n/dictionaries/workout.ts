@@ -115,9 +115,27 @@ export const workoutEn: Record<string, string> = {
   "workout.form.setsDone": "Sets done",
   "workout.form.secondsPerSet": "Seconds/set",
   "workout.form.repsPerSet": "Reps/set",
+  "workout.form.weightKg": "Weight (kg)",
+  "workout.form.weightShort": "kg",
   // Personal records
   "workout.prs.heading": "Top Personal Records (PRs)",
   "workout.prs.logged": "Logged: {date}",
+  "workout.prs.add": "Add PR",
+  "workout.prs.addTitle": "Add Personal Record",
+  "workout.prs.addDescription":
+    "Log a best lift manually. It is merged with records detected from your workouts.",
+  "workout.prs.field.exercise": "Exercise",
+  "workout.prs.field.exercisePlaceholder": "e.g. Bench Press",
+  "workout.prs.field.date": "Date",
+  "workout.prs.manual": "Manual",
+  "workout.prs.delete": "Delete personal record",
+  "workout.prs.empty":
+    "No personal records yet. Complete workouts with weights, or add one manually.",
+  "workout.prs.invalid": "Enter an exercise, weight, and reps",
+  "workout.prs.added": "Personal record added",
+  "workout.prs.addFailed": "Failed to add personal record",
+  "workout.prs.deleted": "Personal record deleted",
+  "workout.prs.deleteFailed": "Failed to delete personal record",
   // History
   "workout.history.heading": "Recent Workout History",
   // Empty state
@@ -266,9 +284,27 @@ export const workoutBn: Record<string, string> = {
   "workout.form.setsDone": "সম্পন্ন সেট",
   "workout.form.secondsPerSet": "সেকেন্ড/সেট",
   "workout.form.repsPerSet": "রেপ/সেট",
+  "workout.form.weightKg": "ওজন (কেজি)",
+  "workout.form.weightShort": "কেজি",
   // Personal records
   "workout.prs.heading": "শীর্ষ ব্যক্তিগত রেকর্ড (PR)",
   "workout.prs.logged": "লগ করা: {date}",
+  "workout.prs.add": "PR যোগ করুন",
+  "workout.prs.addTitle": "ব্যক্তিগত রেকর্ড যোগ করুন",
+  "workout.prs.addDescription":
+    "সরাসরি আপনার সেরা লিফট লগ করুন। এটি ওয়ার্কআউট থেকে শনাক্ত করা রেকর্ডের সাথে মিলিয়ে দেখানো হবে।",
+  "workout.prs.field.exercise": "ব্যায়াম",
+  "workout.prs.field.exercisePlaceholder": "যেমন: বেঞ্চ প্রেস",
+  "workout.prs.field.date": "তারিখ",
+  "workout.prs.manual": "ম্যানুয়াল",
+  "workout.prs.delete": "ব্যক্তিগত রেকর্ড মুছুন",
+  "workout.prs.empty":
+    "এখনো কোনো ব্যক্তিগত রেকর্ড নেই। ওজনসহ ওয়ার্কআউট সম্পন্ন করুন, অথবা ম্যানুয়ালি একটি যোগ করুন।",
+  "workout.prs.invalid": "ব্যায়াম, ওজন ও রেপ লিখুন",
+  "workout.prs.added": "ব্যক্তিগত রেকর্ড যোগ হয়েছে",
+  "workout.prs.addFailed": "ব্যক্তিগত রেকর্ড যোগ করা যায়নি",
+  "workout.prs.deleted": "ব্যক্তিগত রেকর্ড মুছে ফেলা হয়েছে",
+  "workout.prs.deleteFailed": "ব্যক্তিগত রেকর্ড মুছে ফেলা যায়নি",
   // History
   "workout.history.heading": "সাম্প্রতিক ওয়ার্কআউট ইতিহাস",
   // Empty state

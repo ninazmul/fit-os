@@ -36,11 +36,11 @@ const WorkoutLogSchema = new Schema(
   { timestamps: true }
 );
 
-// Compound indexes for history queries and PR aggregations
-WorkoutLogSchema.index({ clerkId: 1, date: -1 });
-WorkoutLogSchema.index({ clerkId: 1, date: 1 });
-WorkoutLogSchema.index({ clerkId: 1, date: 1, sourcePlanDayId: 1 });
-WorkoutLogSchema.index({ clerkId: 1, "exercises.exerciseName": 1 });
+// Single index covering every access pattern:
+//  - history/export: find({clerkId}).sort({date:-1})        (forward scan)
+//  - date-scoped reads: find({clerkId, date}) / date ranges (prefix)
+//  - plan-day dedup: findOne({clerkId, date, sourcePlanDayId}) (all equality)
+WorkoutLogSchema.index({ clerkId: 1, date: -1, sourcePlanDayId: 1 });
 
 const WorkoutLog = models.WorkoutLog || model("WorkoutLog", WorkoutLogSchema);
 

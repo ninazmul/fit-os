@@ -11,8 +11,8 @@ const SleepSessionSchema = new Schema({
 
 const SleepLogSchema = new Schema(
   {
-    clerkId: { type: String, required: true, index: true },
-    date: { type: String, required: true, index: true }, // YYYY-MM-DD (wake date)
+    clerkId: { type: String, required: true },
+    date: { type: String, required: true }, // YYYY-MM-DD (wake date)
     sessions: { type: [SleepSessionSchema], default: [] },
     totalHours: { type: Number, default: 0 },
     avgQuality: { type: Number, min: 1, max: 5, default: 0 },
@@ -20,6 +20,7 @@ const SleepLogSchema = new Schema(
   { timestamps: true },
 );
 
+// One log per user per day; covers every point and range read.
 SleepLogSchema.index({ clerkId: 1, date: 1 }, { unique: true });
 
 const SleepLog = models.SleepLog || model("SleepLog", SleepLogSchema);

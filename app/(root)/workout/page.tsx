@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
+  addPersonalRecord,
   completeWorkoutPlanDay,
+  deletePersonalRecord,
   deleteWorkoutLog,
   getPersonalRecords,
   getWorkoutHistory,
@@ -59,6 +61,7 @@ import type {
   IWorkoutExercise,
   IWorkoutPlanDay,
   IWorkoutPlanExercise,
+  IPersonalRecordSummary,
 } from "@/types/fitness";
 import dynamic from "next/dynamic";
 import toast from "react-hot-toast";
@@ -96,6 +99,7 @@ type PlanExerciseEditor = {
   sets: number;
   reps: number;
   seconds: number;
+  weight: number; // working load per set, in kg
 };
 
 type PlanDayEditor = {
@@ -114,6 +118,7 @@ const createPlanExercise = (
   reps = 10,
   seconds = 0,
   trackingMode: "reps" | "time" = "reps",
+  weight = 0,
 ): PlanExerciseEditor => ({
   id: makePlanExerciseId(),
   exerciseName,
@@ -121,6 +126,7 @@ const createPlanExercise = (
   sets,
   reps,
   seconds,
+  weight,
 });
 
 type QuickWorkoutExercise = IWorkoutExercise & {
@@ -205,6 +211,7 @@ const toPlanDayEditor = (day: IWorkoutPlanDay): PlanDayEditor => ({
       exercise.reps,
       exercise.seconds || 0,
       exercise.trackingMode || "reps",
+      exercise.weight || 0,
     ),
   ),
 });
@@ -222,6 +229,7 @@ const toCompletionEditor = (
   sets: exercise.sets,
   reps: exercise.reps,
   seconds: exercise.seconds || 0,
+  weight: exercise.weight || 0,
   selected: true,
   setsCompleted: exercise.sets,
 });
@@ -240,6 +248,7 @@ const saveDayCompletion = async (
       setsCompleted: exercise.setsCompleted,
       reps: exercise.trackingMode === "time" ? 0 : exercise.reps,
       seconds: exercise.trackingMode === "time" ? exercise.seconds : 0,
+      weight: exercise.trackingMode === "time" ? 0 : exercise.weight || 0,
     })),
   );
 };
@@ -391,21 +400,39 @@ function PlanExerciseRow({
           </div>
         </>
       ) : (
-        <div className="w-[58px] space-y-1">
-          <FieldLabel>{t("workout.form.reps")}</FieldLabel>
-          <Input
-            key={`reps-${exercise.id}`}
-            type="number"
-            inputMode="numeric"
-            min={1}
-            defaultValue={exercise.reps}
-            onChange={(event) =>
-              onFieldChange({ reps: Number(event.target.value) })
-            }
-            aria-label={t("workout.form.reps")}
-            className={compactNumberInput}
-          />
-        </div>
+        <>
+          <div className="w-[58px] space-y-1">
+            <FieldLabel>{t("workout.form.reps")}</FieldLabel>
+            <Input
+              key={`reps-${exercise.id}`}
+              type="number"
+              inputMode="numeric"
+              min={1}
+              defaultValue={exercise.reps}
+              onChange={(event) =>
+                onFieldChange({ reps: Number(event.target.value) })
+              }
+              aria-label={t("workout.form.reps")}
+              className={compactNumberInput}
+            />
+          </div>
+          <div className="w-[64px] space-y-1">
+            <FieldLabel>{t("workout.form.weightShort")}</FieldLabel>
+            <Input
+              key={`weight-${exercise.id}`}
+              type="number"
+              inputMode="decimal"
+              min={0}
+              step="2.5"
+              defaultValue={exercise.weight}
+              onChange={(event) =>
+                onFieldChange({ weight: Number(event.target.value) })
+              }
+              aria-label={t("workout.form.weightKg")}
+              className={compactNumberInput}
+            />
+          </div>
+        </>
       )}
 
       <Button
@@ -428,8 +455,7 @@ export default function WorkoutPage() {
   const { t } = useI18n();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [workouts, setWorkouts] = useState<any[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [prs, setPrs] = useState<Record<string, any>>({});
+  const [prs, setPrs] = useState<Record<string, IPersonalRecordSummary>>({});
   const [planDays, setPlanDaysState] = useState<PlanDayEditor[]>([]);
   /**
    * Live mirror of the plan draft. Per-keystroke text edits write straight to
@@ -489,7 +515,22 @@ export default function WorkoutPage() {
     },
   ]);
 
-  const fetchData = useCallback(async () => {
+  // Manual personal-record dialog state
+  const [prModalOpen, setPrModalOpen] = useState(false);
+  const [prSaving, setPrSaving] = useState(false);
+  const [prForm, setPrForm] = useState({
+    exerciseName: "",
+    weight: "",
+    reps: "",
+    date: getLocalDateString(),
+  });
+
+  /**
+   * Load the latest workouts/PRs/plan. Pass `syncPlan` after a successful plan
+   * save so the draft picks up server-derived fields (new day ids, AI duration
+   * and calorie estimates) without a manual reload.
+   */
+  const fetchData = useCallback(async (options?: { syncPlan?: boolean }) => {
     try {
       setLoading(true);
       const [history, prData, plan] = await Promise.all([
@@ -502,7 +543,7 @@ export default function WorkoutPage() {
       const days = (plan?.days || []) as IWorkoutPlanDay[];
       setSavedPlanDays(days);
       // Keep an open day draft intact; otherwise mirror the saved plan.
-      if (editingDayIndexRef.current === null) {
+      if (options?.syncPlan || editingDayIndexRef.current === null) {
         setPlanDays(sortPlanDraft(days.map(toPlanDayEditor)));
       }
       const todayPlan = days.find(
@@ -616,7 +657,7 @@ export default function WorkoutPage() {
     targetEx.sets.push({
       setNumber: targetEx.sets.length + 1,
       reps: targetEx.trackingMode === "time" ? 0 : lastSet.reps,
-      weight: 0,
+      weight: targetEx.trackingMode === "time" ? 0 : Number(lastSet.weight) || 0,
       durationSeconds:
         targetEx.trackingMode === "time"
           ? lastSet.durationSeconds || targetEx.seconds || 30
@@ -676,9 +717,11 @@ export default function WorkoutPage() {
     const nextDay = current.length
       ? (weekDays.find((day) => !usedDays.has(day.value))?.value ?? 0)
       : todayDow;
-    const nextDraft = sortPlanDraft([...current, createPlanDay(nextDay)]);
+    const created = createPlanDay(nextDay);
+    const nextDraft = sortPlanDraft([...current, created]);
     setPlanDays(nextDraft);
-    startEditingDay(nextDraft.length - 1);
+    // The draft is weekday-sorted, so open the index of the day we just added.
+    startEditingDay(nextDraft.indexOf(created));
   };
 
   const handleRemovePlanDay = (dayIndex: number) => {
@@ -849,12 +892,18 @@ export default function WorkoutPage() {
               exercise.trackingMode === "time"
                 ? Number(exercise.seconds) || 1
                 : 0,
+            weight:
+              exercise.trackingMode === "time"
+                ? 0
+                : Number(exercise.weight) || 0,
           })),
         })),
       });
       toast.success(t("workout.toast.planSaved"));
       notifyDataUpdated("workout");
-      await fetchData();
+      // Force the draft to mirror the saved plan so newly created days show
+      // their server ids + AI estimates immediately (no manual reload).
+      await fetchData({ syncPlan: true });
       return true;
     } catch {
       toast.error(t("workout.toast.planSaveFailed"));
@@ -959,7 +1008,8 @@ export default function WorkoutPage() {
           sets: exercise.sets.map((set) => ({
             setNumber: set.setNumber,
             reps: exercise.trackingMode === "time" ? 0 : set.reps,
-            weight: 0,
+            weight:
+              exercise.trackingMode === "time" ? 0 : Number(set.weight) || 0,
             durationSeconds:
               exercise.trackingMode === "time"
                 ? Number(set.durationSeconds || exercise.seconds || 0)
@@ -986,6 +1036,51 @@ export default function WorkoutPage() {
       fetchData();
     } catch {
       toast.error(t("workout.toast.deleteFailed"));
+    }
+  };
+
+  /** Add a personal record by hand (for lifts not captured in workout history). */
+  const handleAddPR = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const weight = Number(prForm.weight);
+    const reps = Number(prForm.reps);
+    if (!prForm.exerciseName.trim() || weight <= 0 || reps <= 0) {
+      toast.error(t("workout.prs.invalid"));
+      return;
+    }
+    try {
+      setPrSaving(true);
+      await addPersonalRecord({
+        exerciseName: prForm.exerciseName.trim(),
+        weight,
+        reps,
+        date: prForm.date || getLocalDateString(),
+      });
+      toast.success(t("workout.prs.added"));
+      setPrModalOpen(false);
+      setPrForm({
+        exerciseName: "",
+        weight: "",
+        reps: "",
+        date: getLocalDateString(),
+      });
+      notifyDataUpdated("workout");
+      await fetchData();
+    } catch {
+      toast.error(t("workout.prs.addFailed"));
+    } finally {
+      setPrSaving(false);
+    }
+  };
+
+  const handleDeletePR = async (id: string) => {
+    try {
+      await deletePersonalRecord(id);
+      toast.success(t("workout.prs.deleted"));
+      notifyDataUpdated("workout");
+      await fetchData();
+    } catch {
+      toast.error(t("workout.prs.deleteFailed"));
     }
   };
 
@@ -1451,7 +1546,11 @@ export default function WorkoutPage() {
                           {exercise.sets}×
                           {exercise.trackingMode === "time"
                             ? formatDuration(exercise.seconds)
-                            : exercise.reps}
+                            : `${exercise.reps}${
+                                exercise.weight > 0
+                                  ? ` @ ${exercise.weight}kg`
+                                  : ""
+                              }`}
                         </span>
                       </span>
                     ))}
@@ -1463,37 +1562,69 @@ export default function WorkoutPage() {
         </div>
       </div>
 
-      {/* PR Cards Carousel / Grid */}
-      {Object.keys(prs).length > 0 && (
-        <div className="glass-card p-5 rounded-3xl border border-border/50 space-y-3">
+      {/* Personal Records */}
+      <div className="glass-card p-5 rounded-3xl border border-border/50 space-y-3">
+        <div className="flex items-center justify-between gap-3">
           <h3 className="text-base font-bold flex items-center gap-2">
             <Trophy className="w-5 h-5 text-amber-500" />
             {t("workout.prs.heading")}
           </h3>
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5 rounded-full"
+            onClick={() => setPrModalOpen(true)}
+          >
+            <Plus className="w-4 h-4" />
+            {t("workout.prs.add")}
+          </Button>
+        </div>
 
+        {Object.keys(prs).length === 0 ? (
+          <p className="text-xs text-muted-foreground py-2">
+            {t("workout.prs.empty")}
+          </p>
+        ) : (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {Object.entries(prs).map(([name, record]) => (
               <div
                 key={name}
-                className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs space-y-1"
+                className="relative p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs space-y-1"
               >
-                <p className="font-bold capitalize truncate text-foreground">
+                <p className="font-bold capitalize truncate text-foreground pr-5">
                   {name}
                 </p>
-                <p className="text-lg font-extrabold text-amber-600 dark:text-amber-400">
+                {record.source === "manual" && record._id && (
+                  <button
+                    type="button"
+                    onClick={() => handleDeletePR(record._id as string)}
+                    aria-label={t("workout.prs.delete")}
+                    className="absolute top-2 right-2 text-muted-foreground hover:text-destructive transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                <p className="text-lg font-extrabold text-amber-600 dark:text-amber-400 tabular-nums">
                   {record.weight} kg{" "}
                   <span className="text-xs font-normal text-muted-foreground">
                     &times; {record.reps} reps
                   </span>
                 </p>
-                <p className="text-[10px] text-muted-foreground">
-                  {t("workout.prs.logged", { date: record.date })}
-                </p>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <p className="text-[10px] text-muted-foreground">
+                    {t("workout.prs.logged", { date: record.date })}
+                  </p>
+                  {record.source === "manual" && (
+                    <span className="text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400">
+                      {t("workout.prs.manual")}
+                    </span>
+                  )}
+                </div>
               </div>
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Workout History */}
       <div className="space-y-4">
@@ -1579,6 +1710,112 @@ export default function WorkoutPage() {
           </div>
         ))}
       </div>
+
+      <Dialog open={prModalOpen} onOpenChange={setPrModalOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto rounded-3xl p-5 sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold flex items-center gap-2">
+              <Trophy className="w-5 h-5 text-amber-500" />
+              {t("workout.prs.addTitle")}
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              {t("workout.prs.addDescription")}
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleAddPR} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="pr-name">
+                {t("workout.prs.field.exercise")}
+              </Label>
+              <Input
+                id="pr-name"
+                value={prForm.exerciseName}
+                onChange={(e) =>
+                  setPrForm((prev) => ({
+                    ...prev,
+                    exerciseName: e.target.value,
+                  }))
+                }
+                placeholder={t("workout.prs.field.exercisePlaceholder")}
+                autoComplete="off"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="pr-weight">
+                  {t("workout.form.weightKg")}
+                </Label>
+                <Input
+                  id="pr-weight"
+                  type="number"
+                  inputMode="decimal"
+                  step="2.5"
+                  min="0"
+                  value={prForm.weight}
+                  onChange={(e) =>
+                    setPrForm((prev) => ({ ...prev, weight: e.target.value }))
+                  }
+                  placeholder="0"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="pr-reps">{t("workout.form.reps")}</Label>
+                <Input
+                  id="pr-reps"
+                  type="number"
+                  inputMode="numeric"
+                  step="1"
+                  min="1"
+                  value={prForm.reps}
+                  onChange={(e) =>
+                    setPrForm((prev) => ({ ...prev, reps: e.target.value }))
+                  }
+                  placeholder="0"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="pr-date">{t("workout.prs.field.date")}</Label>
+              <Input
+                id="pr-date"
+                type="date"
+                value={prForm.date}
+                onChange={(e) =>
+                  setPrForm((prev) => ({ ...prev, date: e.target.value }))
+                }
+              />
+            </div>
+
+            <div className="flex gap-2 pt-1">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1 rounded-full"
+                onClick={() => setPrModalOpen(false)}
+              >
+                {t("workout.actions.cancelEdit")}
+              </Button>
+              <Button
+                type="submit"
+                disabled={prSaving}
+                className="flex-1 rounded-full gap-1.5"
+              >
+                {prSaving ? (
+                  t("workout.actions.savingDots")
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4" />
+                    {t("workout.prs.add")}
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={completionOpen} onOpenChange={setCompletionOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto rounded-3xl p-5 sm:max-w-lg">
@@ -1796,7 +2033,7 @@ export default function WorkoutPage() {
                               </span>
                             </div>
                           ) : (
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex flex-wrap items-center gap-1.5">
                               <Input
                                 type="number"
                                 inputMode="numeric"
@@ -1824,6 +2061,35 @@ export default function WorkoutPage() {
                               />
                               <span className="text-[10px] font-semibold text-muted-foreground">
                                 {t("workout.form.reps")}
+                              </span>
+                              <Input
+                                type="number"
+                                inputMode="decimal"
+                                min={0}
+                                step="2.5"
+                                aria-label={t("workout.form.weightKg")}
+                                value={set.weight}
+                                onChange={(e) => {
+                                  const value = Number(e.target.value);
+                                  setExercises((prev) =>
+                                    prev.map((item, i) =>
+                                      i !== exIdx
+                                        ? item
+                                        : {
+                                            ...item,
+                                            sets: item.sets.map((s, j) =>
+                                              j === setIdx
+                                                ? { ...s, weight: value }
+                                                : s,
+                                            ),
+                                          },
+                                    ),
+                                  );
+                                }}
+                                className={compactSetInput}
+                              />
+                              <span className="text-[10px] font-semibold text-muted-foreground">
+                                {t("workout.form.weightShort")}
                               </span>
                             </div>
                           )}
