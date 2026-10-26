@@ -67,7 +67,7 @@ export const guideEn: Record<string, string> = {
   // Tab 2 — Dashboard & habits
   "guide.dashboard.introTitle": "Your Daily Command Center",
   "guide.dashboard.introBody":
-    "The dashboard is one scrolling workspace: date navigation, today's nutrition, quick actions, today's meals and daily habits.",
+    "The dashboard is one scrolling workspace: date navigation, today's nutrition, quick actions, today's meals and today's workout.",
   "guide.dashboard.itemsHeading": "What each section does",
   "guide.dashboard.i1.title": "Date navigation",
   "guide.dashboard.i1.body":
@@ -77,7 +77,7 @@ export const guideEn: Record<string, string> = {
     "Calories are the headline figure with a progress bar, followed by Protein, Carbs, Fat and Fiber. Each shows eaten vs target and the percentage reached, and the card appears once food is logged.",
   "guide.dashboard.i3.title": "Quick actions",
   "guide.dashboard.i3.body":
-    "Add Food opens the food search with the meal slot guessed from the current time. Add Water, Workout and Food Diary sit beside it.",
+    "Add Food opens the food search with the meal slot guessed from the current time. Add Water, Sleep and Weight sit in the row below.",
   "guide.dashboard.i4.title": "Water presets",
   "guide.dashboard.i4.body":
     "Cup 150 ml, Glass 250 ml, Bottle 500 ml or Large bottle 1 L in one tap — or type a custom amount in millilitres.",
@@ -90,9 +90,9 @@ export const guideEn: Record<string, string> = {
   "guide.dashboard.i7.title": "Today's meals",
   "guide.dashboard.i7.body":
     "Breakfast, Lunch, Dinner and Snacks each show their own kcal subtotal. Tap + on a meal to add food straight into that slot, and remove items with the trash icon.",
-  "guide.dashboard.i8.title": "Habit tiles",
+  "guide.dashboard.i8.title": "Today's workout",
   "guide.dashboard.i8.body":
-    "Water shows litres against your goal, Workout shows logged sessions or Planned, and Sleep shows hours against an 8-hour target.",
+    "Your scheduled session appears as a checklist you can expand — tick the exercises you finished and adjust sets, reps and weight. A badge and progress bar show how much is done, Rest day is shown when nothing is planned, and Save logs the session while Reset restores the plan.",
 
   // Tab 3 — Diet & meal logging
   "guide.diet.introTitle": "Log Any Meal in Seconds",
@@ -199,7 +199,7 @@ export const guideEn: Record<string, string> = {
   "guide.training.itemsHeading": "Workouts and coaching",
   "guide.training.i1.title": "Weekly workout builder",
   "guide.training.i1.body":
-    "Pick the weekdays you train and add a workout for each day; AI estimates the calories while rest days stay marked as Rest day.",
+    "Pick the weekdays you train and add a workout for each day, entering reps or seconds plus the weight (kg) you lift; AI estimates the calories while rest days stay marked as Rest day.",
   "guide.training.i2.title": "Preset splits",
   "guide.training.i2.body":
     "Start from 3-Day Full Body, 4-Day Upper/Lower or 6-Day PPL and edit from there.",
@@ -211,16 +211,19 @@ export const guideEn: Record<string, string> = {
     "Record the title, routine type, exercises and sets — weight × reps, or seconds for timed moves — and calories are estimated automatically.",
   "guide.training.i5.title": "Complete a planned workout",
   "guide.training.i5.body":
-    "When a plan is scheduled, tick the exercises you finished and adjust sets or reps; calories update from the completed work only.",
+    "When a plan is scheduled, tick the exercises you finished and adjust sets, reps and weight (kg); calories update from the completed work only.",
   "guide.training.i6.title": "Personal records",
   "guide.training.i6.body":
-    "Your best lifts are tracked automatically as PRs (weight × reps) with the date they were set.",
+    "Your best lifts are tracked automatically as PRs (weight × reps) with the date they were set. You can also add a PR by hand and delete the ones you added yourself.",
   "guide.training.i7.title": "Workout stats",
   "guide.training.i7.body":
-    "Stat cards summarise personal records, sessions in the last 30 days and estimated calories burned.",
+    "Stat cards summarise personal records, sessions in the last 30 days and estimated calories burned; the estimate factors in how much weight you lifted, so heavier sessions score higher.",
   "guide.training.i8.title": "AI Coach",
   "guide.training.i8.body":
-    "Analytics scores your week across Nutrition, Workouts, Recovery and Hydration, lists strengths and growth areas, gives a 7-day gameplan and answers questions in a chat that knows your logs.",
+    "Analytics scores your week across Nutrition, Workouts, Recovery and Hydration, then lists your strengths and growth areas alongside a 7-day gameplan.",
+  "guide.training.i9.title": "Edit & reorder your plan",
+  "guide.training.i9.body":
+    "Plans open read-only — tap Edit on any day to change its routine and exercises, and drag the grip handle to reorder them. Save the day, or pick a template to start fresh.",
 
   // Tab 7 — Progress & body analytics
   "guide.progress.introTitle": "See the Change Over Time",
@@ -347,7 +350,7 @@ export const guideBn: Record<string, string> = {
   // Tab 2 — Dashboard & habits
   "guide.dashboard.introTitle": "আপনার দৈনিক কমান্ড সেন্টার",
   "guide.dashboard.introBody":
-    "ড্যাশবোর্ড একটি স্ক্রল করা ওয়ার্কস্পেস: তারিখ নেভিগেশন, আজকের পুষ্টি, কুইক অ্যাকশন, আজকের খাবার এবং দৈনিক অভ্যাস।",
+    "ড্যাশবোর্ড একটি স্ক্রল করা ওয়ার্কস্পেস: তারিখ নেভিগেশন, আজকের পুষ্টি, কুইক অ্যাকশন, আজকের খাবার এবং আজকের ওয়ার্কআউট।",
   "guide.dashboard.itemsHeading": "প্রতিটি অংশ কী করে",
   "guide.dashboard.i1.title": "তারিখ নেভিগেশন",
   "guide.dashboard.i1.body":
@@ -357,7 +360,7 @@ export const guideBn: Record<string, string> = {
     "ক্যালরি প্রধান সংখ্যা, প্রগ্রেস বার সহ; এরপর প্রোটিন, কার্বস, ফ্যাট ও ফাইবার। প্রতিটিতে খাওয়া বনাম টার্গেট ও শতাংশ থাকে, আর খাবার লগ করলেই কার্ডটি দেখা যায়।",
   "guide.dashboard.i3.title": "কুইক অ্যাকশন",
   "guide.dashboard.i3.body":
-    "Add Food খুললে বর্তমান সময় অনুযায়ী বেলার স্লট আগেই বেছে নেওয়া থাকে। পাশে Add Water, Workout ও Food Diary আছে।",
+    "Add Food খুললে বর্তমান সময় অনুযায়ী বেলার স্লট আগেই বেছে নেওয়া থাকে। নিচের সারিতে Add Water, Sleep ও Weight আছে।",
   "guide.dashboard.i4.title": "পানির প্রিসেট",
   "guide.dashboard.i4.body":
     "এক ট্যাপে কাপ ১৫০ মিলি, গ্লাস ২৫০ মিলি, বোতল ৫০০ মিলি বা বড় বোতল ১ লিটার — অথবা নিজের মিলি লিখুন।",
@@ -370,9 +373,9 @@ export const guideBn: Record<string, string> = {
   "guide.dashboard.i7.title": "আজকের খাবার",
   "guide.dashboard.i7.body":
     "সকালের নাস্তা, দুপুর, রাত ও স্ন্যাকসের আলাদা kcal সাবটোটাল দেখা যায়। যেকোনো বেলায় + চেপে সেখানেই খাবার যোগ করুন, ট্র্যাশ আইকনে মুছুন।",
-  "guide.dashboard.i8.title": "অভ্যাস টাইল",
+  "guide.dashboard.i8.title": "আজকের ওয়ার্কআউট",
   "guide.dashboard.i8.body":
-    "Water-এ লক্ষ্যের বিপরীতে লিটার, Workout-এ লগ করা সেশন বা Planned, আর Sleep-এ ৮ ঘণ্টার টার্গেটের বিপরীতে ঘণ্টা দেখায়।",
+    "আপনার নির্ধারিত সেশন একটি চেকলিস্ট আকারে খুলে ফেলা যায় — শেষ করা ব্যায়ামে টিক দিন আর সেট, রেপ ও ওজন ঠিক করুন। ব্যাজ ও প্রগ্রেস বারে কতটা হয়েছে দেখা যায়, কিছু নির্ধারিত না থাকলে Rest day দেখায়, আর Save চেপে সেশন লগ হয়, Reset দিয়ে প্ল্যান আবার ফিরে আসে।",
 
   // Tab 3 — Diet & meal logging
   "guide.diet.introTitle": "সেকেন্ডেই যেকোনো খাবার লগ",
@@ -479,7 +482,7 @@ export const guideBn: Record<string, string> = {
   "guide.training.itemsHeading": "ওয়ার্কআউট ও কোচিং",
   "guide.training.i1.title": "সাপ্তাহিক ওয়ার্কআউট বিল্ডার",
   "guide.training.i1.body":
-    "কোন দিনগুলোতে ব্যায়াম করবেন বেছে নিয়ে প্রতিদিনের ওয়ার্কআউট যোগ করুন; এআই ক্যালরি হিসাব করে, আর বিশ্রামের দিন Rest day হিসেবে থাকে।",
+    "কোন দিনগুলোতে ব্যায়াম করবেন বেছে নিয়ে প্রতিদিনের ওয়ার্কআউট যোগ করুন — রেপ বা সেকেন্ডের সাথে আপনার তোলা ওজন (কেজি) লিখুন; এআই ক্যালরি হিসাব করে, আর বিশ্রামের দিন Rest day হিসেবে থাকে।",
   "guide.training.i2.title": "প্রিসেট স্প্লিট",
   "guide.training.i2.body":
     "৩-দিন ফুল বডি, ৪-দিন আপার/লোয়ার বা ৬-দিন PPL থেকে শুরু করে নিজের মতো এডিট করুন।",
@@ -491,16 +494,19 @@ export const guideBn: Record<string, string> = {
     "টাইটেল, রুটিনের ধরন, এক্সারসাইজ ও সেট লিখুন — ওজন × রেপ, বা সময়ভিত্তিক হলে সেকেন্ড — ক্যালরি এমনিতেই হিসাব হয়ে যায়।",
   "guide.training.i5.title": "পরিকল্পিত ওয়ার্কআউট সম্পূর্ণ করুন",
   "guide.training.i5.body":
-    "দিনের প্ল্যান থাকলে যেগুলো শেষ করেছেন টিক দিন, সেট ও রেপ ঠিক করুন; ক্যালরি কেবল সম্পন্ন কাজ থেকেই আপডেট হয়।",
+    "দিনের প্ল্যান থাকলে যেগুলো শেষ করেছেন টিক দিন, সেট, রেপ ও ওজন (কেজি) ঠিক করুন; ক্যালরি কেবল সম্পন্ন কাজ থেকেই আপডেট হয়।",
   "guide.training.i6.title": "পার্সোনাল রেকর্ড",
   "guide.training.i6.body":
-    "আপনার সেরা লিফটগুলো স্বয়ংক্রিয়ভাবে PR (ওজন × রেপ) হিসেবে তারিখসহ জমা থাকে।",
+    "আপনার সেরা লিফটগুলো স্বয়ংক্রিয়ভাবে PR (ওজন × রেপ) হিসেবে তারিখসহ জমা থাকে। চাইলে নিজেও একটি PR যোগ করতে পারেন, আর নিজের যোগ করা রেকর্ড মুছে ফেলতে পারেন।",
   "guide.training.i7.title": "ওয়ার্কআউট স্ট্যাটস",
   "guide.training.i7.body":
-    "স্ট্যাট কার্ডে পার্সোনাল রেকর্ড, শেষ ৩০ দিনের সেশন ও আনুমানিক পোড়া ক্যালরি দেখা যায়।",
+    "স্ট্যাট কার্ডে পার্সোনাল রেকর্ড, শেষ ৩০ দিনের সেশন ও আনুমানিক পোড়া ক্যালরি দেখা যায়; হিসাবে আপনি কত ওজন তুলেছেন সেটিও ধরা হয়, তাই ভারী ওয়ার্কআউটে সংখ্যা একটু বেশি হয়।",
   "guide.training.i8.title": "এআই কোচ",
   "guide.training.i8.body":
-    "অ্যানালিটিক্স নিউট্রিশন, ওয়ার্কআউট, রিকভারি ও হাইড্রেশনে সপ্তাহের স্কোর দেয়, শক্তি ও উন্নতির জায়গা দেখায়, ৭ দিনের গেমপ্ল্যান দেয় এবং আপনার লগ জানা চ্যাটে প্রশ্নের উত্তর দেয়।",
+    "অ্যানালিটিক্স নিউট্রিশন, ওয়ার্কআউট, রিকভারি ও হাইড্রেশনে সপ্তাহের স্কোর দেয়, তারপর শক্তি ও উন্নতির জায়গা দেখায় এবং ৭ দিনের গেমপ্ল্যান দেয়।",
+  "guide.training.i9.title": "প্ল্যান এডিট ও সাজান",
+  "guide.training.i9.body":
+    "প্ল্যান প্রথমে রিড-অনলি অবস্থায় খোলে — যেকোনো দিনে Edit চেপে তার রুটিন ও এক্সারসাইজ বদলান, আর গ্রিপ হ্যান্ডেল টেনে সেগুলো সাজান। দিনটি সেভ করুন, বা নতুন করে শুরু করতে একটি টেমপ্লেট বেছে নিন।",
 
   // Tab 7 — Progress & body analytics
   "guide.progress.introTitle": "সময়ের সাথে পরিবর্তন দেখুন",

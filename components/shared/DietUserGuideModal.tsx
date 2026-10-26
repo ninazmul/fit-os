@@ -450,6 +450,11 @@ const GUIDE_TABS: GuideTab[] = [
         titleKey: "guide.training.i8.title",
         bodyKey: "guide.training.i8.body",
       },
+      {
+        icon: ListOrdered,
+        titleKey: "guide.training.i9.title",
+        bodyKey: "guide.training.i9.body",
+      },
     ],
   },
   {
