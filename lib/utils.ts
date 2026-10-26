@@ -29,6 +29,23 @@ export function formatTime12h(time: string): string {
   return `${hour12}:${String(minute).padStart(2, "0")} ${suffix}`;
 }
 
+/** Split a total number of seconds into whole minutes and remainder seconds. */
+export function splitDuration(totalSeconds: number): {
+  minutes: number;
+  seconds: number;
+} {
+  const safe = Math.max(0, Math.floor(Number(totalSeconds) || 0));
+  return { minutes: Math.floor(safe / 60), seconds: safe % 60 };
+}
+
+/** Human-friendly duration label, e.g. 90 -> "1m 30s", 45 -> "45s", 120 -> "2m". */
+export function formatDuration(totalSeconds: number): string {
+  const { minutes, seconds } = splitDuration(totalSeconds);
+  if (minutes <= 0) return `${seconds}s`;
+  if (seconds <= 0) return `${minutes}m`;
+  return `${minutes}m ${seconds}s`;
+}
+
 /** Returns the local date string (YYYY-MM-DD) resetting exactly at 12:00 AM midnight */
 export function getLocalDateString(date: Date = new Date()): string {
   const year = date.getFullYear();

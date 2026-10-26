@@ -3,6 +3,7 @@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Minus, Plus } from "lucide-react";
 import type { TranslationVars } from "@/lib/i18n";
+import { formatDuration, splitDuration } from "@/lib/utils";
 
 /** A planned exercise row that the user can tick off and adjust. */
 export type ChecklistExercise = {
@@ -76,6 +77,7 @@ export function ExerciseChecklistItem({
   t: TranslateFn;
 }) {
   const isTime = exercise.trackingMode === "time";
+  const duration = splitDuration(exercise.seconds);
   return (
     <div
       className={`rounded-2xl border p-3 transition-colors ${
@@ -106,13 +108,19 @@ export function ExerciseChecklistItem({
           <p className="text-[11px] text-muted-foreground">
             {t("workout.completion.plannedSets", {
               sets: exercise.sets,
-              detail: isTime ? `${exercise.seconds}s` : `${exercise.reps} reps`,
+              detail: isTime
+                ? formatDuration(exercise.seconds)
+                : `${exercise.reps} reps`,
             })}
           </p>
         </div>
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-3 pl-7">
+      <div
+        className={`mt-3 grid gap-3 pl-7 ${
+          isTime ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-2"
+        }`}
+      >
         <div className="space-y-1">
           <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
             {t("workout.form.setsDone")}
@@ -126,28 +134,56 @@ export function ExerciseChecklistItem({
             onChange={(value) => onChange({ setsCompleted: value })}
           />
         </div>
-        <div className="space-y-1">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
-            {isTime
-              ? t("workout.form.secondsPerSet")
-              : t("workout.form.repsPerSet")}
-          </p>
-          <NumberStepper
-            value={isTime ? exercise.seconds : exercise.reps}
-            min={0}
-            max={isTime ? 600 : 100}
-            step={isTime ? 5 : 1}
-            disabled={!exercise.selected}
-            ariaLabel={
-              isTime
-                ? t("workout.form.secondsPerSet")
-                : t("workout.form.repsPerSet")
-            }
-            onChange={(value) =>
-              onChange(isTime ? { seconds: value } : { reps: value })
-            }
-          />
-        </div>
+
+        {isTime ? (
+          <>
+            <div className="space-y-1">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                {t("workout.form.minutes")}
+              </p>
+              <NumberStepper
+                value={duration.minutes}
+                min={0}
+                max={99}
+                disabled={!exercise.selected}
+                ariaLabel={t("workout.form.minutes")}
+                onChange={(value) =>
+                  onChange({ seconds: value * 60 + duration.seconds })
+                }
+              />
+            </div>
+            <div className="space-y-1">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                {t("workout.form.seconds")}
+              </p>
+              <NumberStepper
+                value={duration.seconds}
+                min={0}
+                max={59}
+                step={5}
+                disabled={!exercise.selected}
+                ariaLabel={t("workout.form.seconds")}
+                onChange={(value) =>
+                  onChange({ seconds: duration.minutes * 60 + value })
+                }
+              />
+            </div>
+          </>
+        ) : (
+          <div className="space-y-1">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+              {t("workout.form.repsPerSet")}
+            </p>
+            <NumberStepper
+              value={exercise.reps}
+              min={0}
+              max={100}
+              disabled={!exercise.selected}
+              ariaLabel={t("workout.form.repsPerSet")}
+              onChange={(value) => onChange({ reps: value })}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

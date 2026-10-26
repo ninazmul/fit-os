@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   completeWorkoutPlanDay,
   deleteWorkoutLog,
@@ -52,7 +52,7 @@ import {
   X,
 } from "lucide-react";
 import { Reorder, useDragControls } from "framer-motion";
-import { getLocalDateString } from "@/lib/utils";
+import { formatDuration, getLocalDateString, splitDuration } from "@/lib/utils";
 import type { TranslationVars } from "@/lib/i18n";
 import type {
   WorkoutType,
@@ -244,25 +244,47 @@ const saveDayCompletion = async (
   );
 };
 
+/** Tiny uppercase caption shown above each field in the compact plan row. */
+function FieldLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="block truncate text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+      {children}
+    </span>
+  );
+}
+
+const compactNumberInput =
+  "h-9 rounded-xl bg-background px-2 text-center text-sm font-bold tabular-nums";
+
+const compactSetInput =
+  "h-8 w-16 rounded-lg bg-background px-1 text-center text-xs font-bold tabular-nums";
+
 /**
  * One draggable exercise row inside a plan day editor. Dragging is limited to
- * the grip handle so the inputs stay usable on touch devices.
+ * the grip handle so the inputs stay usable on touch devices. Text/number
+ * inputs are uncontrolled and write straight to the draft ref, so typing never
+ * re-renders this framer-motion row (which would dismiss the mobile keyboard).
  */
 function PlanExerciseRow({
   exercise,
   canRemove,
   t,
   onChange,
+  onFieldChange,
+  onDurationChange,
   onRemove,
 }: {
   exercise: PlanExerciseEditor;
   canRemove: boolean;
   t: (key: string, vars?: TranslationVars) => string;
   onChange: (patch: Partial<PlanExerciseEditor>) => void;
+  onFieldChange: (patch: Partial<PlanExerciseEditor>) => void;
+  onDurationChange: (part: "min" | "sec", value: number) => void;
   onRemove: () => void;
 }) {
   const dragControls = useDragControls();
   const isTime = exercise.trackingMode === "time";
+  const duration = splitDuration(exercise.seconds);
 
   return (
     <Reorder.Item
@@ -270,70 +292,121 @@ function PlanExerciseRow({
       dragListener={false}
       dragControls={dragControls}
       style={{ position: "relative" }}
-      className="grid grid-cols-1 items-center gap-2 rounded-2xl border border-border/60 bg-background p-2 sm:grid-cols-[32px_1fr_104px_76px_88px_36px]"
+      className="flex flex-wrap items-end gap-2.5 rounded-2xl border border-border/60 bg-muted/20 p-2.5 transition-colors focus-within:border-primary/40"
     >
-      <button
-        type="button"
-        onPointerDown={(event) => dragControls.start(event)}
-        aria-label={t("workout.builder.dragHint")}
-        title={t("workout.builder.dragHint")}
-        className="flex h-8 w-8 cursor-grab touch-none items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-primary active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
-      >
-        <GripVertical className="h-4 w-4" />
-      </button>
+      <div className="flex w-full min-w-0 items-end gap-2 sm:w-auto sm:flex-1">
+        <button
+          type="button"
+          onPointerDown={(event) => dragControls.start(event)}
+          aria-label={t("workout.builder.dragHint")}
+          title={t("workout.builder.dragHint")}
+          className="flex h-9 w-8 shrink-0 cursor-grab touch-none items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-primary active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
 
-      <Input
-        value={exercise.exerciseName}
-        onChange={(event) => onChange({ exerciseName: event.target.value })}
-        placeholder={t("workout.form.planExercisePlaceholder")}
-        className="rounded-xl"
-      />
+        <div className="min-w-0 flex-1 space-y-1">
+          <FieldLabel>{t("workout.form.exercise")}</FieldLabel>
+          <Input
+            defaultValue={exercise.exerciseName}
+            onChange={(event) =>
+              onFieldChange({ exerciseName: event.target.value })
+            }
+            placeholder={t("workout.form.planExercisePlaceholder")}
+            className="h-9 rounded-xl font-semibold"
+          />
+        </div>
+      </div>
 
-      <Select
-        value={exercise.trackingMode}
-        onValueChange={(value) =>
-          onChange({
-            trackingMode: value as "reps" | "time",
-            reps: value === "time" ? 0 : exercise.reps || 10,
-            seconds: value === "time" ? exercise.seconds || 30 : 0,
-          })
-        }
-      >
-        <SelectTrigger className="rounded-xl">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="reps">{t("workout.form.reps")}</SelectItem>
-          <SelectItem value="time">{t("workout.form.time")}</SelectItem>
-        </SelectContent>
-      </Select>
+      <div className="w-[86px] space-y-1">
+        <FieldLabel>{t("workout.form.mode")}</FieldLabel>
+        <Select
+          value={exercise.trackingMode}
+          onValueChange={(value) =>
+            onChange({
+              trackingMode: value as "reps" | "time",
+              reps: value === "time" ? 0 : exercise.reps || 10,
+              seconds: value === "time" ? exercise.seconds || 30 : 0,
+            })
+          }
+        >
+          <SelectTrigger className="h-9 rounded-xl">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="reps">{t("workout.form.reps")}</SelectItem>
+            <SelectItem value="time">{t("workout.form.time")}</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-      <Input
-        type="number"
-        inputMode="numeric"
-        min={1}
-        value={exercise.sets}
-        onChange={(event) => onChange({ sets: Number(event.target.value) })}
-        placeholder={t("workout.form.sets")}
-        aria-label={t("workout.form.sets")}
-        className="rounded-xl"
-      />
+      <div className="w-[58px] space-y-1">
+        <FieldLabel>{t("workout.form.sets")}</FieldLabel>
+        <Input
+          key={`sets-${exercise.id}`}
+          type="number"
+          inputMode="numeric"
+          min={1}
+          defaultValue={exercise.sets}
+          onChange={(event) =>
+            onFieldChange({ sets: Number(event.target.value) })
+          }
+          aria-label={t("workout.form.sets")}
+          className={compactNumberInput}
+        />
+      </div>
 
-      <Input
-        type="number"
-        inputMode="numeric"
-        min={1}
-        value={isTime ? exercise.seconds : exercise.reps}
-        onChange={(event) =>
-          onChange(
-            isTime
-              ? { seconds: Number(event.target.value) }
-              : { reps: Number(event.target.value) },
-          )
-        }
-        placeholder={isTime ? t("workout.form.seconds") : t("workout.form.reps")}
-        className="rounded-xl"
-      />
+      {isTime ? (
+        <>
+          <div className="w-[58px] space-y-1">
+            <FieldLabel>{t("workout.form.minShort")}</FieldLabel>
+            <Input
+              key={`min-${exercise.id}`}
+              type="number"
+              inputMode="numeric"
+              min={0}
+              defaultValue={duration.minutes}
+              onChange={(event) =>
+                onDurationChange("min", Number(event.target.value))
+              }
+              aria-label={t("workout.form.minutes")}
+              className={compactNumberInput}
+            />
+          </div>
+          <div className="w-[58px] space-y-1">
+            <FieldLabel>{t("workout.form.secShort")}</FieldLabel>
+            <Input
+              key={`sec-${exercise.id}`}
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={59}
+              defaultValue={duration.seconds}
+              onChange={(event) =>
+                onDurationChange("sec", Number(event.target.value))
+              }
+              aria-label={t("workout.form.seconds")}
+              className={compactNumberInput}
+            />
+          </div>
+        </>
+      ) : (
+        <div className="w-[58px] space-y-1">
+          <FieldLabel>{t("workout.form.reps")}</FieldLabel>
+          <Input
+            key={`reps-${exercise.id}`}
+            type="number"
+            inputMode="numeric"
+            min={1}
+            defaultValue={exercise.reps}
+            onChange={(event) =>
+              onFieldChange({ reps: Number(event.target.value) })
+            }
+            aria-label={t("workout.form.reps")}
+            className={compactNumberInput}
+          />
+        </div>
+      )}
 
       <Button
         type="button"
@@ -341,7 +414,8 @@ function PlanExerciseRow({
         size="icon"
         onClick={onRemove}
         disabled={!canRemove}
-        className="rounded-xl text-muted-foreground hover:text-red-500"
+        className="h-9 w-9 rounded-xl text-muted-foreground hover:text-red-500"
+        aria-label={t("workout.actions.removeExercise")}
         title={t("workout.actions.removeExercise")}
       >
         <X className="w-4 h-4" />
@@ -356,7 +430,23 @@ export default function WorkoutPage() {
   const [workouts, setWorkouts] = useState<any[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [prs, setPrs] = useState<Record<string, any>>({});
-  const [planDays, setPlanDays] = useState<PlanDayEditor[]>([]);
+  const [planDays, setPlanDaysState] = useState<PlanDayEditor[]>([]);
+  /**
+   * Live mirror of the plan draft. Per-keystroke text edits write straight to
+   * this ref (no state update) so typing never re-renders a row. Re-rendering a
+   * framer-motion `Reorder.Item` makes it re-run its layout projection for the
+   * focused row on every character, which dismisses the mobile keyboard.
+   */
+  const planDaysRef = useRef<PlanDayEditor[]>([]);
+
+  /** Single entry point for draft changes: keeps the ref and state in sync. */
+  const setPlanDays = (
+    next: PlanDayEditor[] | ((prev: PlanDayEditor[]) => PlanDayEditor[]),
+  ) => {
+    planDaysRef.current =
+      typeof next === "function" ? next(planDaysRef.current) : next;
+    setPlanDaysState(planDaysRef.current);
+  };
   const [savedPlanDays, setSavedPlanDays] = useState<IWorkoutPlanDay[]>([]);
   // Index of the single day currently open for inline editing (null = plan view).
   const [editingDayIndex, setEditingDayIndex] = useState<number | null>(null);
@@ -399,7 +489,7 @@ export default function WorkoutPage() {
     },
   ]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const [history, prData, plan] = await Promise.all([
@@ -426,11 +516,11 @@ export default function WorkoutPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   useDataUpdateListener((category) => {
     if (category === "workout" || category === "all") {
@@ -445,6 +535,14 @@ export default function WorkoutPage() {
   const todaySelectedCount = todayChecklist.filter(
     (item) => item.selected && item.setsCompleted > 0,
   ).length;
+  const todayProgress =
+    todayChecklist.length > 0
+      ? Math.round((todaySelectedCount / todayChecklist.length) * 100)
+      : 0;
+  const todayTotalSets = todayChecklist.reduce(
+    (sum, item) => sum + (item.selected ? item.setsCompleted : 0),
+    0,
+  );
 
   const resetTodayChecklist = () => {
     setTodayChecklist(
@@ -498,7 +596,7 @@ export default function WorkoutPage() {
 
   const handleCancelDayEdit = () => {
     const index = editingDayIndex;
-    const draft = index === null ? null : planDays[index];
+    const draft = index === null ? null : planDaysRef.current[index];
     if (draft && !draft._id) {
       // A brand-new day that was never persisted — drop it entirely.
       setPlanDays((prev) => prev.filter((_, itemIndex) => itemIndex !== index));
@@ -539,13 +637,46 @@ export default function WorkoutPage() {
     ]);
   };
 
+  /** Update one set's duration from either its minutes or seconds field. */
+  const handleSetDurationChange = (
+    exerciseIndex: number,
+    setIndex: number,
+    part: "min" | "sec",
+    raw: number,
+  ) => {
+    const safe = Math.max(0, Math.floor(Number(raw) || 0));
+    setExercises((prev) =>
+      prev.map((exercise, exIndex) => {
+        if (exIndex !== exerciseIndex) return exercise;
+        const sets = exercise.sets.map((set, sIndex) => {
+          if (sIndex !== setIndex) return set;
+          const { minutes, seconds: secs } = splitDuration(
+            set.durationSeconds ?? exercise.seconds ?? 0,
+          );
+          const next =
+            part === "min"
+              ? safe * 60 + secs
+              : minutes * 60 + Math.min(59, safe);
+          return { ...set, durationSeconds: next };
+        });
+        const firstDuration = sets[0]?.durationSeconds;
+        return {
+          ...exercise,
+          sets,
+          seconds: firstDuration ?? exercise.seconds,
+        };
+      }),
+    );
+  };
+
   /** Append a fresh day and open it straight away for editing. */
   const handleAddPlanDay = () => {
-    const usedDays = new Set(planDays.map((day) => day.dayOfWeek));
-    const nextDay = planDays.length
+    const current = planDaysRef.current;
+    const usedDays = new Set(current.map((day) => day.dayOfWeek));
+    const nextDay = current.length
       ? (weekDays.find((day) => !usedDays.has(day.value))?.value ?? 0)
       : todayDow;
-    const nextDraft = sortPlanDraft([...planDays, createPlanDay(nextDay)]);
+    const nextDraft = sortPlanDraft([...current, createPlanDay(nextDay)]);
     setPlanDays(nextDraft);
     startEditingDay(nextDraft.length - 1);
   };
@@ -559,10 +690,22 @@ export default function WorkoutPage() {
     dayIndex: number,
     patch: Partial<PlanDayEditor>,
   ) => {
-    setPlanDays(
-      planDays.map((day, index) =>
+    setPlanDays((prev) =>
+      prev.map((day, index) =>
         index === dayIndex ? { ...day, ...patch } : day,
       ),
+    );
+  };
+
+  /**
+   * Ref-only title edit (no re-render) so the focused input keeps the mobile
+   * keyboard open while typing.
+   */
+  const handlePlanDayTitleChange = (dayIndex: number, title: string) => {
+    const days = planDaysRef.current;
+    if (!days[dayIndex]) return;
+    planDaysRef.current = days.map((day, index) =>
+      index === dayIndex ? { ...day, title } : day,
     );
   };
 
@@ -571,8 +714,8 @@ export default function WorkoutPage() {
     exerciseIndex: number,
     patch: Partial<PlanExerciseEditor>,
   ) => {
-    setPlanDays(
-      planDays.map((day, index) => {
+    setPlanDays((prev) =>
+      prev.map((day, index) => {
         if (index !== dayIndex) return day;
         return {
           ...day,
@@ -584,11 +727,68 @@ export default function WorkoutPage() {
     );
   };
 
+  /**
+   * Ref-only field edit (no re-render) for the per-keystroke text and number
+   * inputs inside the draggable rows.
+   */
+  const handlePlanExerciseFieldChange = (
+    dayIndex: number,
+    exerciseIndex: number,
+    patch: Partial<PlanExerciseEditor>,
+  ) => {
+    const days = planDaysRef.current;
+    const day = days[dayIndex];
+    if (!day) return;
+    planDaysRef.current = days.map((item, index) =>
+      index !== dayIndex
+        ? item
+        : {
+            ...item,
+            exercises: item.exercises.map((exercise, exIndex) =>
+              exIndex === exerciseIndex ? { ...exercise, ...patch } : exercise,
+            ),
+          },
+    );
+  };
+
+  /**
+   * Ref-only duration edit (no re-render). The UI splits a duration into a
+   * minutes field and a seconds field; both write back a single total in
+   * seconds so the stored value stays canonical.
+   */
+  const handlePlanExerciseDurationChange = (
+    dayIndex: number,
+    exerciseIndex: number,
+    part: "min" | "sec",
+    raw: number,
+  ) => {
+    const days = planDaysRef.current;
+    const exercise = days[dayIndex]?.exercises[exerciseIndex];
+    if (!exercise) return;
+    const { minutes, seconds } = splitDuration(exercise.seconds);
+    const safe = Math.max(0, Math.floor(Number(raw) || 0));
+    const next =
+      part === "min" ? safe * 60 + seconds : minutes * 60 + Math.min(59, safe);
+    planDaysRef.current = days.map((item, index) =>
+      index !== dayIndex
+        ? item
+        : {
+            ...item,
+            exercises: item.exercises.map((ex, exIndex) =>
+              exIndex === exerciseIndex ? { ...ex, seconds: next } : ex,
+            ),
+          },
+    );
+  };
+
   const handleAddPlanExercise = (dayIndex: number) => {
-    setPlanDays(
-      planDays.map((day, index) =>
+    setPlanDays((prev) =>
+      prev.map((day, index) =>
         index === dayIndex
-          ? { ...day, exercises: [...day.exercises, createPlanExercise("New Exercise")] }
+          ? {
+              ...day,
+              exercises: [...day.exercises, createPlanExercise("New Exercise")],
+            }
           : day,
       ),
     );
@@ -617,8 +817,8 @@ export default function WorkoutPage() {
     dayIndex: number,
     exerciseIndex: number,
   ) => {
-    setPlanDays(
-      planDays.map((day, index) => {
+    setPlanDays((prev) =>
+      prev.map((day, index) => {
         if (index !== dayIndex || day.exercises.length <= 1) return day;
         return {
           ...day,
@@ -665,13 +865,14 @@ export default function WorkoutPage() {
   };
 
   const handleSavePlanDay = async (dayIndex: number) => {
-    const day = planDays[dayIndex];
+    const days = planDaysRef.current;
+    const day = days[dayIndex];
     if (!day) return;
     if (!day.title.trim()) {
       toast.error(t("workout.builder.nameRequired"));
       return;
     }
-    if (await persistPlan(planDays)) stopEditingDay();
+    if (await persistPlan(days)) stopEditingDay();
   };
 
   /** Templates replace the whole week, so confirm before wiping a live plan. */
@@ -807,14 +1008,14 @@ export default function WorkoutPage() {
       />
 
       {/* Today's Workout — inline checklist */}
-      <section className="glass-card rounded-3xl border border-primary/20 p-5 sm:p-6 space-y-5 bg-gradient-to-br from-primary/5 via-background to-emerald-500/5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="space-y-1.5">
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-primary">
-              <Calendar className="h-3.5 w-3.5" />
+      <section className="glass-card space-y-4 rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/5 via-background to-emerald-500/5 p-4 sm:p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 space-y-1.5">
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-primary">
+              <Calendar className="h-3 w-3" />
               {t("workout.today.badge")} · {t(`workout.weekday.${todayDow}`)}
             </div>
-            <h2 className="text-xl font-black tracking-tight">
+            <h2 className="truncate text-lg font-black tracking-tight sm:text-xl">
               {todayPlanDay ? todayPlanDay.title : t("workout.today.restTitle")}
             </h2>
             <p className="max-w-xl text-xs text-muted-foreground">
@@ -822,25 +1023,28 @@ export default function WorkoutPage() {
                 ? t("workout.today.subtitle")
                 : t("workout.today.restDescription")}
             </p>
-          </div>
 
-          {todayPlanDay && (
-            <div className="flex flex-col items-start gap-2 sm:items-end">
-              <div className="flex flex-wrap gap-2">
-                <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-card/70 px-2.5 py-1 text-[10px] font-bold text-muted-foreground">
+            {todayPlanDay && (
+              <div className="flex flex-wrap gap-2 pt-0.5">
+                <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-card/70 px-2.5 py-1 text-[10px] font-bold tabular-nums text-muted-foreground">
                   <Clock className="h-3 w-3" />
                   {todayPlanDay.estimatedDurationMinutes} min
                 </span>
-                <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-card/70 px-2.5 py-1 text-[10px] font-bold text-muted-foreground">
+                <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-card/70 px-2.5 py-1 text-[10px] font-bold tabular-nums text-muted-foreground">
                   <Flame className="h-3 w-3 text-amber-500" />
                   {todayPlanDay.estimatedCaloriesBurned} kcal
                 </span>
               </div>
-              <span className="text-xs font-bold text-primary">
-                {t("workout.today.progress", {
-                  done: todaySelectedCount,
-                  total: todayChecklist.length,
-                })}
+            )}
+          </div>
+
+          {todayPlanDay && (
+            <div className="flex shrink-0 flex-col items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 px-3 py-2 text-primary">
+              <span className="text-base font-black leading-none tabular-nums">
+                {todayProgress}%
+              </span>
+              <span className="mt-1 text-[9px] font-bold uppercase tracking-wider">
+                {t("workout.today.progressLabel")}
               </span>
             </div>
           )}
@@ -848,6 +1052,33 @@ export default function WorkoutPage() {
 
         {todayPlanDay ? (
           <>
+            <div className="space-y-1.5">
+              <div
+                role="progressbar"
+                aria-valuenow={todayProgress}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label={t("workout.today.progressLabel")}
+                className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
+              >
+                <div
+                  className="h-full rounded-full bg-primary transition-all duration-500"
+                  style={{ width: `${todayProgress}%` }}
+                />
+              </div>
+              <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                <span>
+                  {t("workout.today.progress", {
+                    done: todaySelectedCount,
+                    total: todayChecklist.length,
+                  })}
+                </span>
+                <span className="tabular-nums">
+                  {todayTotalSets} {t("workout.form.sets")}
+                </span>
+              </div>
+            </div>
+
             <div className="space-y-2.5">
               {todayChecklist.map((exercise, index) => (
                 <ExerciseChecklistItem
@@ -933,18 +1164,18 @@ export default function WorkoutPage() {
         />
       </div>
 
-      <div className="glass-card p-5 sm:p-6 rounded-3xl border border-primary/20 space-y-5 bg-gradient-to-br from-primary/5 via-background to-amber-500/5">
-        <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+      <div className="glass-card space-y-4 rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/5 via-background to-amber-500/5 p-4 sm:p-5">
+        <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-start">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5" />
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-primary">
+              <Sparkles className="w-3 h-3" />
               {t("workout.builder.badge")}
             </div>
             <div>
-              <h2 className="text-xl font-black tracking-tight">
+              <h2 className="text-lg font-black tracking-tight sm:text-xl">
                 {t("workout.plan.heading")}
               </h2>
-              <p className="text-xs text-muted-foreground max-w-2xl">
+              <p className="max-w-2xl text-xs text-muted-foreground">
                 {t("workout.plan.description")}
               </p>
             </div>
@@ -955,14 +1186,14 @@ export default function WorkoutPage() {
             variant="outline"
             onClick={handleAddPlanDay}
             disabled={planDays.length >= 7 || editingDayIndex !== null}
-            className="rounded-xl text-xs font-bold gap-1 self-start"
+            className="self-start rounded-xl text-xs font-bold gap-1"
           >
             <Plus className="w-3.5 h-3.5" />
             {t("workout.actions.addDay")}
           </Button>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+        <div className="grid grid-cols-4 gap-1.5 sm:gap-2 lg:grid-cols-7">
           {weekDays.map((day) => {
             const planDay = savedPlanDays.find(
               (item) => item.dayOfWeek === day.value,
@@ -971,16 +1202,16 @@ export default function WorkoutPage() {
             return (
               <div
                 key={day.value}
-                className={`rounded-2xl border p-3 min-h-24 ${
+                className={`flex min-h-[76px] flex-col rounded-2xl border p-2.5 ${
                   planDay
-                    ? "bg-emerald-500/10 border-emerald-500/25"
-                    : "bg-muted/20 border-border/50"
+                    ? "border-emerald-500/25 bg-emerald-500/10"
+                    : "border-border/50 bg-muted/20"
                 } ${isToday ? "ring-2 ring-primary/30" : ""}`}
               >
-                <p className="text-xs font-black">
+                <p className="text-[11px] font-black uppercase tracking-wide">
                   {t(`workout.weekdayShort.${day.value}`)}
                 </p>
-                <p className="text-[11px] text-muted-foreground mt-1 truncate">
+                <p className="mt-0.5 line-clamp-2 text-[10px] font-semibold text-muted-foreground">
                   {planDay?.title || t("workout.builder.restDay")}
                 </p>
                 {planDay && (
@@ -988,7 +1219,7 @@ export default function WorkoutPage() {
                     type="button"
                     onClick={() => openCompletionDialog(planDay)}
                     disabled={completingDayId === planDay._id}
-                    className="mt-3 inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline disabled:opacity-60"
+                    className="mt-auto inline-flex items-center gap-1 pt-1.5 text-[10px] font-bold text-emerald-600 hover:underline disabled:opacity-60 dark:text-emerald-400"
                   >
                     <CheckCircle2 className="w-3 h-3" />
                     {completingDayId === planDay._id
@@ -1040,9 +1271,9 @@ export default function WorkoutPage() {
               return editingDayIndex === dayIndex ? (
                 <div
                   key={`${day.dayOfWeek}-${dayIndex}`}
-                  className="rounded-2xl border border-primary/40 bg-card p-4 space-y-4 shadow-sm ring-1 ring-primary/10"
+                  className="space-y-3.5 rounded-2xl border border-primary/40 bg-card p-3.5 ring-1 ring-primary/10"
                 >
-                  <div className="grid grid-cols-1 md:grid-cols-[160px_1fr_auto] gap-3">
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-[160px_1fr_auto]">
                     <div className="space-y-1">
                       <Label className="text-xs">
                         {t("workout.form.trainingDay")}
@@ -1076,11 +1307,9 @@ export default function WorkoutPage() {
                         {t("workout.form.workoutName")}
                       </Label>
                       <Input
-                        value={day.title}
+                        defaultValue={day.title}
                         onChange={(e) =>
-                          handlePlanDayChange(dayIndex, {
-                            title: e.target.value,
-                          })
+                          handlePlanDayTitleChange(dayIndex, e.target.value)
                         }
                         placeholder={t("workout.form.workoutNamePlaceholder")}
                         className="rounded-xl font-bold"
@@ -1119,6 +1348,21 @@ export default function WorkoutPage() {
                             dayIndex,
                             exerciseIndex,
                             patch,
+                          )
+                        }
+                        onFieldChange={(patch) =>
+                          handlePlanExerciseFieldChange(
+                            dayIndex,
+                            exerciseIndex,
+                            patch,
+                          )
+                        }
+                        onDurationChange={(part, value) =>
+                          handlePlanExerciseDurationChange(
+                            dayIndex,
+                            exerciseIndex,
+                            part,
+                            value,
                           )
                         }
                         onRemove={() =>
@@ -1167,15 +1411,15 @@ export default function WorkoutPage() {
               ) : (
                 <div
                   key={`${day.dayOfWeek}-${dayIndex}`}
-                  className="rounded-2xl border border-border/60 bg-card/70 p-4 space-y-3"
+                  className="space-y-2.5 rounded-2xl border border-border/60 bg-card/70 p-3.5"
                 >
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-primary">
+                    <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-primary">
                       {t(`workout.weekdayShort.${day.dayOfWeek}`)}
                     </span>
                     <p className="text-sm font-bold">{day.title}</p>
                     {savedDay?.estimatedDurationMinutes ? (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-muted-foreground">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold tabular-nums text-muted-foreground">
                         <Clock className="h-3 w-3" />
                         {savedDay.estimatedDurationMinutes} min
                       </span>
@@ -1197,16 +1441,16 @@ export default function WorkoutPage() {
                     {day.exercises.map((exercise, exerciseIndex) => (
                       <span
                         key={exercise.id}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 bg-background px-2.5 py-1 text-[11px] font-semibold"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 bg-background px-2 py-0.5 text-[10px] font-semibold"
                       >
                         <span className="tabular-nums text-muted-foreground">
                           {exerciseIndex + 1}.
                         </span>
                         {exercise.exerciseName}
-                        <span className="text-muted-foreground">
+                        <span className="tabular-nums text-muted-foreground">
                           {exercise.sets}×
                           {exercise.trackingMode === "time"
-                            ? `${exercise.seconds}s`
+                            ? formatDuration(exercise.seconds)
                             : exercise.reps}
                         </span>
                       </span>
@@ -1270,23 +1514,25 @@ export default function WorkoutPage() {
         {workouts.map((w) => (
           <div
             key={w._id}
-            className="glass-card p-6 rounded-3xl border border-border/50 space-y-4"
+            className="glass-card space-y-3 rounded-2xl border border-border/50 p-4 sm:p-5"
           >
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary">
-                  {w.workoutType}
-                </span>
-                <h3 className="text-lg font-bold mt-1">{w.title}</h3>
-                <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
-                  <span className="flex items-center gap-1">
-                    <Calendar className="w-3.5 h-3.5" /> {w.date}
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-primary">
+                    {w.workoutType}
                   </span>
+                  <h3 className="truncate text-base font-bold">{w.title}</h3>
+                </div>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-semibold text-muted-foreground">
                   <span className="flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5" /> {w.durationMinutes} mins
+                    <Calendar className="h-3.5 w-3.5" /> {w.date}
                   </span>
-                  <span className="flex items-center gap-1">
-                    <Flame className="w-3.5 h-3.5 text-amber-500" />{" "}
+                  <span className="flex items-center gap-1 tabular-nums">
+                    <Clock className="h-3.5 w-3.5" /> {w.durationMinutes} min
+                  </span>
+                  <span className="flex items-center gap-1 tabular-nums">
+                    <Flame className="h-3.5 w-3.5 text-amber-500" />{" "}
                     {w.caloriesBurned} kcal
                   </span>
                 </div>
@@ -1296,32 +1542,34 @@ export default function WorkoutPage() {
                 variant="ghost"
                 size="icon"
                 onClick={() => handleDeleteWorkout(w._id)}
-                className="h-8 w-8 text-muted-foreground hover:text-red-500 rounded-xl"
+                aria-label={t("workout.actions.deleteWorkout")}
+                title={t("workout.actions.deleteWorkout")}
+                className="h-8 w-8 shrink-0 rounded-xl text-muted-foreground hover:text-red-500"
               >
                 <Trash2 className="w-4 h-4" />
               </Button>
             </div>
 
             {/* Exercises table */}
-            <div className="space-y-2 pt-2 border-t border-border/40">
+            <div className="space-y-2 border-t border-border/40 pt-3">
               {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               {w.exercises.map((ex: any, idx: number) => (
                 <div
                   key={idx}
-                  className="p-3 rounded-2xl bg-muted/40 text-xs space-y-1.5"
+                  className="space-y-1.5 rounded-xl bg-muted/30 p-3"
                 >
-                  <p className="font-semibold text-sm">{ex.exerciseName}</p>
-                  <div className="flex flex-wrap gap-2">
+                  <p className="text-xs font-bold">{ex.exerciseName}</p>
+                  <div className="flex flex-wrap gap-1.5">
                     {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                     {ex.sets.map((set: any, sIdx: number) => (
                       <span
                         key={sIdx}
-                        className="px-2.5 py-1 rounded-lg bg-background border border-border/50 text-[11px] font-bold"
+                        className="rounded-lg border border-border/50 bg-background px-2 py-1 text-[10px] font-bold tabular-nums"
                       >
                         {t("workout.form.set", { number: set.setNumber })}:{" "}
                         {set.durationSeconds
-                          ? `${set.durationSeconds}s`
-                          : `${set.weight ? `${set.weight}kg x ` : ""}${set.reps} reps`}
+                          ? formatDuration(set.durationSeconds)
+                          : `${set.weight ? `${set.weight}kg × ` : ""}${set.reps} reps`}
                       </span>
                     ))}
                   </div>
@@ -1333,7 +1581,7 @@ export default function WorkoutPage() {
       </div>
 
       <Dialog open={completionOpen} onOpenChange={setCompletionOpen}>
-        <DialogContent className="sm:max-w-lg rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] overflow-y-auto rounded-3xl p-5 sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold">
               {t("workout.completion.title")}
@@ -1379,7 +1627,7 @@ export default function WorkoutPage() {
 
       {/* Log Workout Dialog */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="sm:max-w-xl rounded-2xl p-6 max-h-[90vh] overflow-y-auto space-y-4">
+        <DialogContent className="max-h-[90vh] space-y-4 overflow-y-auto rounded-3xl p-5 sm:max-w-xl">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold">
               {t("workout.quickAdd.title")}
@@ -1442,9 +1690,9 @@ export default function WorkoutPage() {
               {exercises.map((ex, exIdx) => (
                 <div
                   key={exIdx}
-                  className="p-4 rounded-2xl bg-muted/40 border border-border/40 space-y-3"
+                  className="space-y-2.5 rounded-2xl border border-border/40 bg-muted/30 p-3"
                 >
-                  <div className="grid grid-cols-1 sm:grid-cols-[1fr_120px] gap-2">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_120px]">
                     <Input
                       placeholder={t("workout.form.exerciseNamePlaceholder")}
                       value={ex.exerciseName}
@@ -1453,7 +1701,7 @@ export default function WorkoutPage() {
                         updated[exIdx].exerciseName = e.target.value;
                         setExercises(updated);
                       }}
-                      className="rounded-xl font-bold text-sm bg-background"
+                      className="rounded-xl bg-background text-sm font-bold"
                     />
                     <Select
                       value={ex.trackingMode}
@@ -1491,43 +1739,97 @@ export default function WorkoutPage() {
 
                   {/* Sets */}
                   <div className="space-y-2">
-                    {ex.sets.map((set, setIdx) => (
-                      <div key={setIdx} className="flex items-center gap-2">
-                        <span className="w-12 text-[11px] font-semibold text-muted-foreground">
-                          {t("workout.form.set", { number: set.setNumber })}
-                        </span>
-                        <Input
-                          type="number"
-                          placeholder={
-                            ex.trackingMode === "time"
-                              ? t("workout.form.seconds")
-                              : t("workout.form.reps")
-                          }
-                          value={
-                            ex.trackingMode === "time"
-                              ? set.durationSeconds || ex.seconds
-                              : set.reps
-                          }
-                          onChange={(e) => {
-                            const updated = [...exercises];
-                            if (updated[exIdx].trackingMode === "time") {
-                              updated[exIdx].sets[setIdx].durationSeconds =
-                                Number(e.target.value);
-                              updated[exIdx].seconds = Number(e.target.value);
-                            } else {
-                              updated[exIdx].sets[setIdx].reps = Number(
-                                e.target.value,
-                              );
-                            }
-                            setExercises(updated);
-                          }}
-                          className="rounded-xl h-8 text-xs bg-background"
-                        />
-                        <span className="text-[10px] text-muted-foreground">
-                          {ex.trackingMode === "time" ? "sec" : "reps"}
-                        </span>
-                      </div>
-                    ))}
+                    {ex.sets.map((set, setIdx) => {
+                      const setDuration = splitDuration(
+                        set.durationSeconds ?? ex.seconds ?? 0,
+                      );
+                      const isTimeEx = ex.trackingMode === "time";
+                      return (
+                        <div
+                          key={setIdx}
+                          className="flex flex-wrap items-center gap-2 rounded-xl border border-border/50 bg-background/60 px-2.5 py-1.5"
+                        >
+                          <span className="w-12 shrink-0 text-[11px] font-bold text-muted-foreground">
+                            {t("workout.form.set", { number: set.setNumber })}
+                          </span>
+
+                          {isTimeEx ? (
+                            <div className="flex items-center gap-1.5">
+                              <Input
+                                type="number"
+                                inputMode="numeric"
+                                min={0}
+                                aria-label={t("workout.form.minutes")}
+                                value={setDuration.minutes}
+                                onChange={(e) =>
+                                  handleSetDurationChange(
+                                    exIdx,
+                                    setIdx,
+                                    "min",
+                                    Number(e.target.value),
+                                  )
+                                }
+                                className={compactSetInput}
+                              />
+                              <span className="text-[10px] font-semibold text-muted-foreground">
+                                {t("workout.form.minShort")}
+                              </span>
+                              <Input
+                                type="number"
+                                inputMode="numeric"
+                                min={0}
+                                max={59}
+                                aria-label={t("workout.form.seconds")}
+                                value={setDuration.seconds}
+                                onChange={(e) =>
+                                  handleSetDurationChange(
+                                    exIdx,
+                                    setIdx,
+                                    "sec",
+                                    Number(e.target.value),
+                                  )
+                                }
+                                className={compactSetInput}
+                              />
+                              <span className="text-[10px] font-semibold text-muted-foreground">
+                                {t("workout.form.secShort")}
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5">
+                              <Input
+                                type="number"
+                                inputMode="numeric"
+                                min={0}
+                                aria-label={t("workout.form.reps")}
+                                value={set.reps}
+                                onChange={(e) => {
+                                  const value = Number(e.target.value);
+                                  setExercises((prev) =>
+                                    prev.map((item, i) =>
+                                      i !== exIdx
+                                        ? item
+                                        : {
+                                            ...item,
+                                            sets: item.sets.map((s, j) =>
+                                              j === setIdx
+                                                ? { ...s, reps: value }
+                                                : s,
+                                            ),
+                                          },
+                                    ),
+                                  );
+                                }}
+                                className={compactSetInput}
+                              />
+                              <span className="text-[10px] font-semibold text-muted-foreground">
+                                {t("workout.form.reps")}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
 
                   <Button

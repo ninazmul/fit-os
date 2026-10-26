@@ -28,6 +28,7 @@ export const workoutEn: Record<string, string> = {
   "workout.actions.saveSession": "Save Workout Session 🎉",
   "workout.actions.editPlan": "Edit Plan",
   "workout.actions.cancelEdit": "Cancel",
+  "workout.actions.deleteWorkout": "Delete workout",
   // Today's workout
   "workout.today.badge": "Today's Workout",
   "workout.today.subtitle":
@@ -36,6 +37,7 @@ export const workoutEn: Record<string, string> = {
   "workout.today.restDescription":
     "No workout is planned for today. Create a weekly plan to get a ready-made checklist here.",
   "workout.today.progress": "{done}/{total} done",
+  "workout.today.progressLabel": "Progress",
   "workout.today.save": "Save Today's Workout",
   "workout.today.reset": "Reset",
   "workout.today.createPlan": "Create Weekly Plan",
@@ -92,6 +94,8 @@ export const workoutEn: Record<string, string> = {
   // Form labels & placeholders
   "workout.form.trainingDay": "Training Day",
   "workout.form.workoutName": "Workout Name",
+  "workout.form.exercise": "Exercise",
+  "workout.form.mode": "Mode",
   "workout.form.workoutNamePlaceholder": "e.g. Push Day / Upper Strength",
   "workout.form.planExercisePlaceholder": "Workout name",
   "workout.form.exerciseNamePlaceholder": "Exercise Name (e.g. Squat, Plank)",
@@ -99,6 +103,10 @@ export const workoutEn: Record<string, string> = {
   "workout.form.time": "Time",
   "workout.form.sets": "Sets",
   "workout.form.seconds": "Seconds",
+  "workout.form.minutes": "Minutes",
+  "workout.form.minShort": "min",
+  "workout.form.secShort": "sec",
+  "workout.form.duration": "Duration",
   "workout.form.title": "Workout Title",
   "workout.form.titlePlaceholder": "e.g. Chest & Triceps Blast",
   "workout.form.routineType": "Routine Type",
@@ -169,6 +177,7 @@ export const workoutBn: Record<string, string> = {
   "workout.actions.saveSession": "ওয়ার্কআউট সেশন সংরক্ষণ করুন 🎉",
   "workout.actions.editPlan": "প্ল্যান সম্পাদনা",
   "workout.actions.cancelEdit": "বাতিল",
+  "workout.actions.deleteWorkout": "ওয়ার্কআউট মুছুন",
   // Today's workout
   "workout.today.badge": "আজকের ওয়ার্কআউট",
   "workout.today.subtitle":
@@ -177,6 +186,7 @@ export const workoutBn: Record<string, string> = {
   "workout.today.restDescription":
     "আজকের জন্য কোনো ওয়ার্কআউট পরিকল্পনা নেই। এখানে রেডিমেড চেকলিস্ট পেতে একটি সাপ্তাহিক প্ল্যান তৈরি করুন।",
   "workout.today.progress": "{done}/{total} সম্পন্ন",
+  "workout.today.progressLabel": "অগ্রগতি",
   "workout.today.save": "আজকের ওয়ার্কআউট সংরক্ষণ করুন",
   "workout.today.reset": "রিসেট",
   "workout.today.createPlan": "সাপ্তাহিক প্ল্যান তৈরি করুন",
@@ -234,6 +244,8 @@ export const workoutBn: Record<string, string> = {
   // Form labels & placeholders
   "workout.form.trainingDay": "ট্রেনিং ডে",
   "workout.form.workoutName": "ওয়ার্কআউটের নাম",
+  "workout.form.exercise": "ব্যায়াম",
+  "workout.form.mode": "ধরন",
   "workout.form.workoutNamePlaceholder": "যেমন: পুশ ডে / আপার স্ট্রেংথ",
   "workout.form.planExercisePlaceholder": "ওয়ার্কআউটের নাম",
   "workout.form.exerciseNamePlaceholder":
@@ -242,6 +254,10 @@ export const workoutBn: Record<string, string> = {
   "workout.form.time": "সময়",
   "workout.form.sets": "সেট",
   "workout.form.seconds": "সেকেন্ড",
+  "workout.form.minutes": "মিনিট",
+  "workout.form.minShort": "মিনিট",
+  "workout.form.secShort": "সেকেন্ড",
+  "workout.form.duration": "সময়কাল",
   "workout.form.title": "ওয়ার্কআউটের শিরোনাম",
   "workout.form.titlePlaceholder": "যেমন: চেস্ট ও ট্রাইসেপ ব্লাস্ট",
   "workout.form.routineType": "রুটিনের ধরন",
