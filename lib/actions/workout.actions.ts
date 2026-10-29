@@ -265,37 +265,37 @@ export async function saveWorkoutPlan(formData: WorkoutPlanFormValues) {
     | IUserProfile
     | null;
 
-  const days = await Promise.all(
-    validated.days.map(async (day) => {
-      const estimate = await estimateWorkoutCaloriesWithAI(
-        day.title,
-        day.exercises,
-        profile,
-      );
-      const caloriesPerSetTotal = day.exercises.reduce(
-        (sum, ex) => sum + Number(ex.sets || 0),
-        0,
-      );
+  const days = validated.days.map((day) => {
+    // Plan edits should not depend on an external AI request. The local
+    // MET-based estimate is immediate and remains available when Gemini is
+    // slow, rate-limited, or unavailable.
+    const estimate = {
+      durationMinutes: estimateWorkoutDuration(day.exercises),
+      caloriesBurned: fallbackWorkoutCalories(day.exercises, profile),
+    };
+    const caloriesPerSetTotal = day.exercises.reduce(
+      (sum, ex) => sum + Number(ex.sets || 0),
+      0,
+    );
 
-      return {
-        dayOfWeek: day.dayOfWeek,
-        title: day.title,
-        estimatedDurationMinutes: estimate.durationMinutes,
-        estimatedCaloriesBurned: estimate.caloriesBurned,
-        exercises: day.exercises.map((ex) => ({
-          exerciseName: ex.exerciseName.trim(),
-          trackingMode: ex.trackingMode,
-          sets: ex.sets,
-          reps: ex.reps,
-          seconds: ex.seconds,
-          weight: ex.weight,
-          caloriesBurned: caloriesPerSetTotal
-            ? Math.round((estimate.caloriesBurned * ex.sets) / caloriesPerSetTotal)
-            : 0,
-        })),
-      };
-    }),
-  );
+    return {
+      dayOfWeek: day.dayOfWeek,
+      title: day.title,
+      estimatedDurationMinutes: estimate.durationMinutes,
+      estimatedCaloriesBurned: estimate.caloriesBurned,
+      exercises: day.exercises.map((ex) => ({
+        exerciseName: ex.exerciseName.trim(),
+        trackingMode: ex.trackingMode,
+        sets: ex.sets,
+        reps: ex.reps,
+        seconds: ex.seconds,
+        weight: ex.weight,
+        caloriesBurned: caloriesPerSetTotal
+          ? Math.round((estimate.caloriesBurned * ex.sets) / caloriesPerSetTotal)
+          : 0,
+      })),
+    };
+  });
 
   const plan = await WorkoutPlan.findOneAndUpdate(
     { clerkId: user.id },

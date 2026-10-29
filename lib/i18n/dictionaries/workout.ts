@@ -155,7 +155,7 @@ export const workoutEn: Record<string, string> = {
   "workout.quickAdd.description":
     "Add workout names, sets, and reps. Calories are estimated automatically.",
   // Toasts
-  "workout.toast.planSaved": "Workout plan saved with AI calorie estimates",
+  "workout.toast.planSaved": "Workout plan saved",
   "workout.toast.planSaveFailed": "Failed to save workout plan",
   "workout.toast.dayCompleted": "{title} completed",
   "workout.toast.dayCompleteFailed": "Failed to complete workout plan",
@@ -325,7 +325,7 @@ export const workoutBn: Record<string, string> = {
     "ওয়ার্কআউটের নাম, সেট ও রেপ যোগ করুন। ক্যালোরি স্বয়ংক্রিয়ভাবে হিসাব করা হয়।",
   // Toasts
   "workout.toast.planSaved":
-    "এআই ক্যালোরি হিসাবসহ ওয়ার্কআউট প্ল্যান সংরক্ষিত হয়েছে",
+    "ওয়ার্কআউট প্ল্যান সংরক্ষিত হয়েছে",
   "workout.toast.planSaveFailed": "ওয়ার্কআউট প্ল্যান সংরক্ষণ করা যায়নি",
   "workout.toast.dayCompleted": "{title} সম্পন্ন হয়েছে",
   "workout.toast.dayCompleteFailed": "ওয়ার্কআউট প্ল্যান সম্পন্ন করা যায়নি",

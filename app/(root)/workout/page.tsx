@@ -474,6 +474,7 @@ export default function WorkoutPage() {
     setPlanDaysState(planDaysRef.current);
   };
   const [savedPlanDays, setSavedPlanDays] = useState<IWorkoutPlanDay[]>([]);
+  const skipNextWorkoutRefreshRef = useRef(false);
   // Index of the single day currently open for inline editing (null = plan view).
   const [editingDayIndex, setEditingDayIndex] = useState<number | null>(null);
   // Mirrors editingDayIndex so background refreshes never clobber an open draft.
@@ -526,11 +527,9 @@ export default function WorkoutPage() {
   });
 
   /**
-   * Load the latest workouts/PRs/plan. Pass `syncPlan` after a successful plan
-   * save so the draft picks up server-derived fields (new day ids, AI duration
-   * and calorie estimates) without a manual reload.
+   * Load the latest workouts/PRs/plan.
    */
-  const fetchData = useCallback(async (options?: { syncPlan?: boolean }) => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const [history, prData, plan] = await Promise.all([
@@ -543,7 +542,7 @@ export default function WorkoutPage() {
       const days = (plan?.days || []) as IWorkoutPlanDay[];
       setSavedPlanDays(days);
       // Keep an open day draft intact; otherwise mirror the saved plan.
-      if (options?.syncPlan || editingDayIndexRef.current === null) {
+      if (editingDayIndexRef.current === null) {
         setPlanDays(sortPlanDraft(days.map(toPlanDayEditor)));
       }
       const todayPlan = days.find(
@@ -565,6 +564,10 @@ export default function WorkoutPage() {
 
   useDataUpdateListener((category) => {
     if (category === "workout" || category === "all") {
+      if (skipNextWorkoutRefreshRef.current) {
+        skipNextWorkoutRefreshRef.current = false;
+        return;
+      }
       fetchData();
     }
   });
@@ -877,7 +880,7 @@ export default function WorkoutPage() {
   const persistPlan = async (days: PlanDayEditor[]) => {
     try {
       setPlanSaving(true);
-      await saveWorkoutPlan({
+      const savedPlan = await saveWorkoutPlan({
         days: days.map((day) => ({
           _id: day._id,
           dayOfWeek: day.dayOfWeek,
@@ -899,11 +902,14 @@ export default function WorkoutPage() {
           })),
         })),
       });
+      const savedDays = (savedPlan?.days || []) as IWorkoutPlanDay[];
+      setSavedPlanDays(savedDays);
+      setPlanDays(sortPlanDraft(savedDays.map(toPlanDayEditor)));
       toast.success(t("workout.toast.planSaved"));
+      // This page already has the saved plan returned by the action. Keep the
+      // event for other mounted views without fetching the same data again here.
+      skipNextWorkoutRefreshRef.current = true;
       notifyDataUpdated("workout");
-      // Force the draft to mirror the saved plan so newly created days show
-      // their server ids + AI estimates immediately (no manual reload).
-      await fetchData({ syncPlan: true });
       return true;
     } catch {
       toast.error(t("workout.toast.planSaveFailed"));
