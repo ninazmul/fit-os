@@ -72,9 +72,8 @@ export async function addWater(amountMl: number, date?: string, time?: string) {
   );
 
   revalidatePath("/");
-  revalidatePath("/progress");
   revalidatePath("/diet");
-  revalidatePath("/analytics");
+  revalidatePath("/profile");
   return { date: useDate, entries, ...totals };
 }
 
@@ -106,9 +105,8 @@ export async function removeWaterEntry(entryIndex: number, date?: string) {
   }
 
   revalidatePath("/");
-  revalidatePath("/progress");
   revalidatePath("/diet");
-  revalidatePath("/analytics");
+  revalidatePath("/profile");
   return { date: useDate, entries, ...totals };
 }
 
@@ -202,8 +200,7 @@ export async function addSleepSession(
   );
 
   revalidatePath("/");
-  revalidatePath("/progress");
-  revalidatePath("/analytics");
+  revalidatePath("/profile");
   return { date: useDate, sessions, ...totals };
 }
 
@@ -236,8 +233,7 @@ export async function removeSleepSession(sessionIndex: number, date?: string) {
   }
 
   revalidatePath("/");
-  revalidatePath("/progress");
-  revalidatePath("/analytics");
+  revalidatePath("/profile");
   return { date: useDate, sessions, ...totals };
 }
 

@@ -5,6 +5,7 @@ import UserProfile from "@/lib/database/models/user-profile.model";
 import BodyMeasurement from "@/lib/database/models/body-measurement.model";
 import WeightLog from "@/lib/database/models/weight-log.model";
 import MealLog from "@/lib/database/models/meal-log.model";
+import WorkoutLog from "@/lib/database/models/workout-log.model";
 import { currentUser } from "@clerk/nextjs/server";
 import { getLocalDateString } from "@/lib/utils";
 import type { IUserProfile, IBodyMeasurement, IWeightLog } from "@/types/fitness";
@@ -74,6 +75,49 @@ export interface AIProfileAssessmentData {
   };
   isAIGenerated: boolean;
 }
+
+/** Compact slice of a logged workout used to ground the AI assessment. */
+type WorkoutHistoryItem = {
+  date: string;
+  title: string;
+  durationMinutes?: number;
+  caloriesBurned?: number;
+  exercises?: { exerciseName: string }[];
+};
+
+/** Cached AI coach assessment persisted on the user profile for staleness tracking. */
+type AICoachAssessmentCache = {
+  assessment: AIProfileAssessmentData;
+  inputs: {
+    weight?: number;
+    date?: string;
+    measurements?: { waist?: number; neck?: number; hip?: number };
+    goal?: string;
+    activityLevel?: string;
+    workoutCount?: number;
+  };
+  generatedAt?: Date;
+};
+
+/** Shape of the JSON returned by the Gemini assessment prompt. */
+type AIParsedResponse = {
+  metabolicSummary?: string;
+  metabolicOptimizationTip?: string;
+  macroTiming?: { preworkout?: string; postworkout?: string; lastMeal?: string };
+  macroRationale?: string;
+  weeklyAdjustmentTip?: string;
+  workoutSplit?: string;
+  weeklyStructure?: string[];
+  priorityMovements?: string[];
+  cardioRecommendation?: string;
+  phaseLabel?: string;
+  cardiovascularRiskLevel?: "Low" | "Moderate" | "Borderline" | "Elevated";
+  cardiovascularRiskDisclaimer?: string;
+  primaryRiskFactors?: string[];
+  preventiveHabits?: string[];
+  wellnessGoal?: string;
+  lifespan?: string;
+};
 
 /** Localized protein options available across Bangladesh */
 const BD_LOCAL_PROTEIN_SOURCES = [
@@ -235,27 +279,71 @@ export async function generateAIProfileAssessment(
 
   const profile = (await UserProfile.findOne({
     clerkId: user.id,
-  }).lean()) as (IUserProfile & { aiCoachAssessment?: any }) | null;
+  }).lean()) as (IUserProfile & {
+    aiCoachAssessment?: AICoachAssessmentCache;
+  }) | null;
   if (!profile) throw new Error("Profile not found");
 
-  const [latestMeasurement, latestWeightDoc, firstWeightDoc, recentMeals] =
-    await Promise.all([
-      BodyMeasurement.findOne({ clerkId: user.id })
-        .sort({ date: -1 })
-        .lean() as Promise<IBodyMeasurement | null>,
-      WeightLog.findOne({ clerkId: user.id })
-        .sort({ date: -1 })
-        .lean() as Promise<IWeightLog | null>,
-      WeightLog.findOne({ clerkId: user.id })
-        .sort({ date: 1 })
-        .lean() as Promise<IWeightLog | null>,
-      MealLog.find({
-        clerkId: user.id,
-        date: {
-          $gte: getLocalDateString(new Date(Date.now() - 7 * 86400000)),
-        },
-      }).lean(),
-    ]);
+  const [
+    latestMeasurement,
+    latestWeightDoc,
+    firstWeightDoc,
+    recentMeals,
+    recentWorkouts,
+  ] = await Promise.all([
+    BodyMeasurement.findOne({ clerkId: user.id })
+      .sort({ date: -1 })
+      .lean() as Promise<IBodyMeasurement | null>,
+    WeightLog.findOne({ clerkId: user.id })
+      .sort({ date: -1 })
+      .lean() as Promise<IWeightLog | null>,
+    WeightLog.findOne({ clerkId: user.id })
+      .sort({ date: 1 })
+      .lean() as Promise<IWeightLog | null>,
+    MealLog.find({
+      clerkId: user.id,
+      date: {
+        $gte: getLocalDateString(new Date(Date.now() - 7 * 86400000)),
+      },
+    }).lean(),
+    WorkoutLog.find({
+      clerkId: user.id,
+      date: {
+        $gte: getLocalDateString(new Date(Date.now() - 28 * 86400000)),
+      },
+    })
+      .sort({ date: -1 })
+      .limit(30)
+      .select("date title durationMinutes caloriesBurned exercises.exerciseName")
+      .lean(),
+  ]);
+
+  // Compact workout history to ground the AI assessment in actual training data.
+  const workoutHistory: WorkoutHistoryItem[] = recentWorkouts.map((w) => ({
+    date: w.date,
+    title: w.title,
+    durationMinutes: w.durationMinutes,
+    caloriesBurned: w.caloriesBurned,
+    exercises: (w.exercises || []).map((ex: { exerciseName: string }) => ({
+      exerciseName: ex.exerciseName,
+    })),
+  }));
+
+  const distinctExercises = Array.from(
+    new Set(
+      workoutHistory.flatMap((w) =>
+        (w.exercises || []).map((ex) => ex.exerciseName.trim()),
+      ),
+    ),
+  ).filter(Boolean);
+  const totalWorkoutMinutes = workoutHistory.reduce(
+    (sum, w) => sum + (w.durationMinutes || 0),
+    0,
+  );
+  const totalWorkoutCalories = workoutHistory.reduce(
+    (sum, w) => sum + (w.caloriesBurned || 0),
+    0,
+  );
 
   const currentWeight = latestWeightDoc?.weight || profile.currentWeight || 70;
   const startWeight = firstWeightDoc?.weight || profile.currentWeight || currentWeight;
@@ -300,8 +388,17 @@ export async function generateAIProfileAssessment(
       (latestMeasurement?.waist || undefined);
     const goalSame = cachedInputs.goal === profile.goal;
     const activitySame = cachedInputs.activityLevel === profile.activityLevel;
+    const workoutSame =
+      typeof cachedInputs.workoutCount !== "number" ||
+      cachedInputs.workoutCount === workoutHistory.length;
 
-    const isStale = !(weightSame && waistSame && goalSame && activitySame);
+    const isStale = !(
+      weightSame &&
+      waistSame &&
+      goalSame &&
+      activitySame &&
+      workoutSame
+    );
 
     // Return cached with updated staleness flag
     const cachedAssessment = cached.assessment as AIProfileAssessmentData;
@@ -347,6 +444,7 @@ export async function generateAIProfileAssessment(
               },
               goal: profile.goal,
               activityLevel: profile.activityLevel,
+              workoutCount: workoutHistory.length,
             },
             generatedAt: new Date(),
           },
@@ -383,6 +481,25 @@ PRE-CALCULATED USER METRICS (USE EXACTLY AS PROVIDED):
 - Workout Frequency: ${profile.workoutDaysPerWeek} days/week
 
 Recent meals in past 7 days: ${recentMeals.length} logged.
+
+ACTUAL WORKOUT HISTORY (last 28 days) — analyze real training habits and reference these specifics:
+- Sessions logged: ${workoutHistory.length}
+- Total training time: ${totalWorkoutMinutes} minutes, total estimated burn: ${totalWorkoutCalories} kcal
+- Distinct exercises performed: ${distinctExercises.length > 0 ? distinctExercises.slice(0, 15).join(", ") : "None logged"}
+- Recent sessions (most recent first): ${
+      workoutHistory.length > 0
+        ? workoutHistory
+            .slice(0, 10)
+            .map(
+              (w) =>
+                `${w.date} "${w.title}" (${w.durationMinutes || 0} min, ${w.caloriesBurned || 0} kcal; exercises: ${
+                  (w.exercises || []).map((e) => e.exerciseName).slice(0, 6).join(", ") || "n/a"
+                })`,
+            )
+            .join(" | ")
+        : "None logged in the last 28 days"
+    }
+Assess their ACTUAL training frequency and movement selection against the recommended split — praise consistency or flag gaps (e.g. missing pull/hinge movements, low weekly frequency, or stalled volume). Ground workoutSplit/weeklyStructure/priorityMovements advice in what they are ALREADY doing rather than a generic template.
 
 Output strictly valid JSON matching this schema:
 {
@@ -423,7 +540,7 @@ Output strictly valid JSON matching this schema:
       },
     );
 
-    let parsed: any = {};
+    let parsed: AIParsedResponse = {};
     if (res.ok) {
       const data = await res.json();
       parsed = JSON.parse(
@@ -588,6 +705,7 @@ Output strictly valid JSON matching this schema:
               },
               goal: profile.goal,
               activityLevel: profile.activityLevel,
+              workoutCount: workoutHistory.length,
             },
             generatedAt: new Date(),
           },

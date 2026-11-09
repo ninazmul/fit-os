@@ -13,8 +13,6 @@ export default function robots(): MetadataRoute.Robots {
           "/settings",
           "/diet",
           "/workout",
-          "/progress",
-          "/analytics",
         ],
       },
     ],

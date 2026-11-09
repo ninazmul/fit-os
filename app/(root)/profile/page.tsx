@@ -21,6 +21,8 @@ import OnboardingModal from "@/components/shared/OnboardingModal";
 import BodyMeasurementModal from "@/components/shared/BodyMeasurementModal";
 import GoalTargetsEditorModal from "@/components/profile/GoalTargetsEditorModal";
 import GoalCelebrationModal from "@/components/profile/GoalCelebrationModal";
+import ProgressSection from "@/components/profile/ProgressSection";
+import AnalyticsSection from "@/components/profile/AnalyticsSection";
 import StatCard from "@/components/shared/StatCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -38,6 +40,7 @@ import {
   Heart,
   TrendingUp,
   TrendingDown,
+  BarChart3,
   Minus,
   Plus,
   Info,
@@ -66,7 +69,14 @@ const AdUnit = dynamic(() => import("@/components/shared/AdUnit"), {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type HealthData = any;
 
-type ProfileTab = "overview" | "targets" | "measurements" | "ai" | "milestones";
+type ProfileTab =
+  | "overview"
+  | "targets"
+  | "measurements"
+  | "progress"
+  | "analytics"
+  | "ai"
+  | "milestones";
 
 const MEASUREMENT_CONFIG: {
   key: keyof Omit<IBodyMeasurement, "_id" | "clerkId" | "date">;
@@ -275,6 +285,19 @@ export default function ProfilePage() {
       shortLabel: isBn ? "মাপ" : "Body",
       icon: Ruler,
       count: latest ? Object.keys(latest).filter((k) => k !== "_id" && k !== "clerkId" && k !== "date").length : undefined,
+    },
+    {
+      id: "progress" as ProfileTab,
+      label: isBn ? "প্রগতি ও শরীর" : "Progress & Body",
+      shortLabel: isBn ? "প্রগতি" : "Progress",
+      icon: TrendingUp,
+    },
+    {
+      id: "analytics" as ProfileTab,
+      label: isBn ? "স্বাস্থ্য বিশ্লেষণ" : "Health Analytics",
+      shortLabel: isBn ? "বিশ্লেষণ" : "Analytics",
+      icon: BarChart3,
+      hasGemini: true,
     },
     {
       id: "ai" as ProfileTab,
@@ -828,7 +851,7 @@ export default function ProfilePage() {
                     {data.workoutStatus.scheduledDays} Workouts Planned This Week
                   </p>
                   <p className="text-[11px] text-amber-700/80 dark:text-amber-300/80">
-                    You haven't logged any sessions yet this week. Remember to log your workouts to maintain your consistency streak!
+                    You haven&apos;t logged any sessions yet this week. Remember to log your workouts to maintain your consistency streak!
                   </p>
                 </div>
               </div>
@@ -1253,7 +1276,17 @@ export default function ProfilePage() {
       )}
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* TAB 4: AI COACH ASSESSMENT                                    */}
+      {/* TAB: PROGRESS & BODY                                          */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {activeTab === "progress" && <ProgressSection />}
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* TAB: HEALTH ANALYTICS                                         */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {activeTab === "analytics" && <AnalyticsSection />}
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* TAB: AI COACH ASSESSMENT                                      */}
       {/* ───────────────────────────────────────────────────────────── */}
       {activeTab === "ai" && (
         <div className="space-y-4 sm:space-y-6">

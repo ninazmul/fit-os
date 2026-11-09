@@ -81,7 +81,6 @@ export async function logWeight(formData: WeightLogFormValues) {
   }
 
   revalidatePath("/");
-  revalidatePath("/progress");
   revalidatePath("/profile");
   return JSON.parse(JSON.stringify({ weight, adaptiveUpdate }));
 }
@@ -193,5 +192,5 @@ export async function deleteWeightLog(logId: string) {
 
   await WeightLog.findOneAndDelete({ _id: logId, clerkId: user.id });
   revalidatePath("/");
-  revalidatePath("/progress");
+  revalidatePath("/profile");
 }

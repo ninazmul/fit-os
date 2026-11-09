@@ -10,9 +10,7 @@ import {
   LayoutDashboard,
   UtensilsCrossed,
   Dumbbell,
-  TrendingUp,
   User,
-  BarChart3,
   Settings,
   Heart,
   BookOpen,
@@ -41,13 +39,6 @@ export const navGroups = [
       { href: "/", labelKey: "nav.dashboard", icon: LayoutDashboard },
       { href: "/diet", labelKey: "nav.diet", icon: UtensilsCrossed },
       { href: "/workout", labelKey: "nav.workout", icon: Dumbbell },
-    ],
-  },
-  {
-    labelKey: "nav.group.tracking",
-    items: [
-      { href: "/progress", labelKey: "nav.progress", icon: TrendingUp },
-      { href: "/analytics", labelKey: "nav.analytics", icon: BarChart3 },
     ],
   },
   {

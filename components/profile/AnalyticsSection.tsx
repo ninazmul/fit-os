@@ -8,8 +8,6 @@ import {
   type AIAnalyticsData,
 } from "@/lib/actions/ai-analytics.actions";
 import { Button } from "@/components/ui/button";
-import PageHeader from "@/components/shared/PageHeader";
-import dynamic from "next/dynamic";
 import toast from "react-hot-toast";
 import {
   Sparkles,
@@ -18,7 +16,6 @@ import {
   Info,
   Lightbulb,
   ArrowRight,
-  Brain,
   RefreshCw,
   Trophy,
   TrendingUp,
@@ -37,10 +34,6 @@ import type { AIInsight } from "@/types/fitness";
 import Link from "next/link";
 import { useI18n } from "@/components/shared/I18nProvider";
 import { useDynamicTranslation } from "@/lib/i18n/use-dynamic-translation";
-
-const AdUnit = dynamic(() => import("@/components/shared/AdUnit"), {
-  ssr: false,
-});
 
 const CATEGORY_FILTERS = [
   "all",
@@ -138,7 +131,7 @@ function ScoreRing({
   );
 }
 
-export default function AnalyticsPage() {
+export default function AnalyticsSection() {
   const { t } = useI18n();
 
   const [insights, setInsights] = useState<AIInsight[]>([]);
@@ -207,25 +200,21 @@ export default function AnalyticsPage() {
 
   return (
     <div className="space-y-6 pb-8">
-      {/* Header */}
-      <PageHeader
-        icon={Brain}
-        title={t("analytics.title")}
-        subtitle={t("analytics.subtitle")}
-        actions={
-          <Button
-            onClick={refreshAI}
-            size="sm"
-            disabled={aiLoading}
-            className="rounded-xl gap-1.5 text-xs font-bold"
-          >
-            <RefreshCw
-              className={`w-3.5 h-3.5 ${aiLoading ? "animate-spin" : ""}`}
-            />
-            {aiLoading ? t("analytics.analysing") : t("analytics.refresh")}
-          </Button>
-        }
-      />
+      {/* Section toolbar: AI analysis refresh (relocated from the old page header) */}
+      <div className="flex items-center justify-end">
+        <Button
+          onClick={refreshAI}
+          size="sm"
+          variant="outline"
+          disabled={aiLoading}
+          className="rounded-xl gap-1.5 text-xs font-bold"
+        >
+          <RefreshCw
+            className={`w-3.5 h-3.5 ${aiLoading ? "animate-spin" : ""}`}
+          />
+          {aiLoading ? t("analytics.analysing") : t("analytics.refresh")}
+        </Button>
+      </div>
 
       {/* Health Score Banner */}
       {loading ? (
@@ -609,8 +598,6 @@ export default function AnalyticsPage() {
           </div>
         </div>
       </div>
-
-      <AdUnit size="auto" maxWidth="970px" />
     </div>
   );
 }

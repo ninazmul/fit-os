@@ -19,7 +19,6 @@ import {
 } from "@/lib/actions/ai-progress.actions";
 import StatCard from "@/components/shared/StatCard";
 import BodyMeasurementModal from "@/components/shared/BodyMeasurementModal";
-import PageHeader from "@/components/shared/PageHeader";
 import { useI18n } from "@/components/shared/I18nProvider";
 import { useDynamicTranslation } from "@/lib/i18n/use-dynamic-translation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -47,7 +46,6 @@ import {
   Dumbbell,
   ChevronRight,
   Sparkles,
-  Activity,
 } from "lucide-react";
 import { formatTime12h, getLocalDateString } from "@/lib/utils";
 import {
@@ -62,12 +60,7 @@ import {
   BarChart,
   Bar,
 } from "recharts";
-import dynamic from "next/dynamic";
 import toast from "react-hot-toast";
-
-const AdUnit = dynamic(() => import("@/components/shared/AdUnit"), {
-  ssr: false,
-});
 
 type SleepLogItem = Partial<{
   clerkId: string;
@@ -90,7 +83,7 @@ type SleepLogItem = Partial<{
   avgQuality: number;
 };
 
-export default function ProgressPage() {
+export default function ProgressSection() {
   const { t } = useI18n();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [weightHistory, setWeightHistory] = useState<any[]>([]);
@@ -255,27 +248,23 @@ export default function ProgressPage() {
 
   return (
     <div className="space-y-6">
-      {/* Title */}
-      <PageHeader
-        icon={Activity}
-        title={t("progress.title")}
-        subtitle={t("progress.subtitle")}
-        actions={
-          <Button
-            onClick={refreshAIProgress}
-            size="sm"
-            disabled={aiProgressLoading}
-            className="rounded-xl gap-1.5 text-xs font-bold"
-          >
-            <RefreshCw
-              className={`w-3.5 h-3.5 ${aiProgressLoading ? "animate-spin" : ""}`}
-            />
-            {aiProgressLoading
-              ? t("progress.actions.analysing")
-              : t("progress.actions.refreshAudit")}
-          </Button>
-        }
-      />
+      {/* Section toolbar: AI audit refresh (relocated from the old page header) */}
+      <div className="flex items-center justify-end">
+        <Button
+          onClick={refreshAIProgress}
+          size="sm"
+          variant="outline"
+          disabled={aiProgressLoading}
+          className="rounded-xl gap-1.5 text-xs font-bold"
+        >
+          <RefreshCw
+            className={`w-3.5 h-3.5 ${aiProgressLoading ? "animate-spin" : ""}`}
+          />
+          {aiProgressLoading
+            ? t("progress.actions.analysing")
+            : t("progress.actions.refreshAudit")}
+        </Button>
+      </div>
 
       {/* AI Progress Banner */}
       {aiProgressData && (
@@ -1371,9 +1360,6 @@ export default function ProgressPage() {
           </form>
         </DialogContent>
       </Dialog>
-
-      {/* Footer Ad Slot */}
-      <AdUnit size="auto" maxWidth="970px" />
     </div>
   );
 }

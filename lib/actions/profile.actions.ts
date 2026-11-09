@@ -593,7 +593,6 @@ export async function updateNutritionTargets(targets: TargetUpdateValues) {
   revalidatePath("/");
   revalidatePath("/profile");
   revalidatePath("/diet");
-  revalidatePath("/analytics");
 
   return JSON.parse(JSON.stringify(profile));
 }
@@ -638,6 +637,5 @@ export async function createOrUpdateProfile(formData: ProfileFormValues) {
   revalidatePath("/");
   revalidatePath("/profile");
   revalidatePath("/diet");
-  revalidatePath("/analytics");
   return JSON.parse(JSON.stringify(profile));
 }

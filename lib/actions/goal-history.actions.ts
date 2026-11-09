@@ -250,8 +250,6 @@ export async function completeAndArchiveGoal(
   revalidatePath("/");
   revalidatePath("/profile");
   revalidatePath("/diet");
-  revalidatePath("/analytics");
-  revalidatePath("/progress");
 }
 
 // ────────────────────────────────────────────────────────────

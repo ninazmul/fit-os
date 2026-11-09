@@ -28,7 +28,6 @@ export async function logBodyMeasurement(data: BodyMeasurementFormValues) {
     { new: true, upsert: true }
   );
 
-  revalidatePath("/progress");
   revalidatePath("/profile");
   return JSON.parse(JSON.stringify(measurement));
 }
@@ -68,6 +67,5 @@ export async function deleteBodyMeasurement(measurementId: string) {
     clerkId: user.id,
   });
 
-  revalidatePath("/progress");
   revalidatePath("/profile");
 }
