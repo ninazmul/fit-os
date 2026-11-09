@@ -10,8 +10,12 @@ export async function getRecentFoods(limit: number = 8): Promise<IMealItem[]> {
   const user = await currentUser();
   if (!user) return [];
 
+  // Sort by createdAt only so the compound index {clerkId:1, createdAt:-1}
+  // serves the query directly — a secondary `date` sort key would force an
+  // in-memory sort. Only `items` is read, so project it.
   const recentLogs = await MealLog.find({ clerkId: user.id })
-    .sort({ createdAt: -1, date: -1 })
+    .select("items")
+    .sort({ createdAt: -1 })
     .limit(20)
     .lean();
 

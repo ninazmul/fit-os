@@ -18,14 +18,16 @@ export async function logWeight(formData: WeightLogFormValues) {
 
   const validated = weightLogSchema.parse(formData);
 
-  const weight = await WeightLog.findOneAndUpdate(
-    { clerkId: user.id, date: validated.date },
-    { ...validated, clerkId: user.id },
-    { new: true, upsert: true }
-  );
-
-  // Fetch current user profile to recalculate adaptive goals
-  const existingProfile = await UserProfile.findOne({ clerkId: user.id }).lean() as IUserProfile | null;
+  // The weight upsert and the profile read are independent — run them in
+  // parallel to save a database round-trip on this hot write path.
+  const [weight, existingProfile] = await Promise.all([
+    WeightLog.findOneAndUpdate(
+      { clerkId: user.id, date: validated.date },
+      { ...validated, clerkId: user.id },
+      { new: true, upsert: true },
+    ),
+    UserProfile.findOne({ clerkId: user.id }).lean() as Promise<IUserProfile | null>,
+  ]);
 
   let adaptiveUpdate = null;
 

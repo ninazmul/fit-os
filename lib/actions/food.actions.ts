@@ -149,6 +149,10 @@ export async function deleteCustomFood(foodId: string) {
 
 export async function seedFoods() {
   await connectToDatabase();
+  // Server actions are reachable as HTTP endpoints — require an authenticated
+  // caller so this bulk-write path can't be invoked anonymously.
+  const user = await currentUser();
+  if (!user) return { message: "Unauthorized", count: 0 };
 
   const existingCount = await Food.countDocuments({ isCustom: false });
   if (existingCount >= defaultFoods.length) {

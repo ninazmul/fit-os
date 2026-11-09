@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { currentUser } from "@clerk/nextjs/server";
 import { OpenFoodFacts } from "@openfoodfacts/openfoodfacts-nodejs";
 
 interface OpenFoodFactsProduct {
@@ -40,6 +41,13 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ barcode: string }> },
 ) {
+  // Require an authenticated caller so this endpoint can't be used as an
+  // open proxy to the Open Food Facts API.
+  const user = await currentUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { barcode } = await params;
   const cleanCode = barcode.trim();
 

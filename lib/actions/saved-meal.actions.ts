@@ -55,12 +55,14 @@ export async function logSavedMeal(savedMealId: string, date: string, mealType: 
   const user = await currentUser();
   if (!user) throw new Error("Unauthorized");
 
-  const savedMeal = await SavedMeal.findOne({ _id: savedMealId, clerkId: user.id });
+  // Fetch the template and bump its usage count in one atomic operation
+  // (instead of findOne + save + $inc), avoiding a round-trip and races.
+  const savedMeal = (await SavedMeal.findOneAndUpdate(
+    { _id: savedMealId, clerkId: user.id },
+    { $inc: { usageCount: 1 } },
+    { new: true },
+  ).lean()) as { items: IMealItem[] } | null;
   if (!savedMeal) throw new Error("Saved meal template not found");
-
-  // Increment usage count
-  savedMeal.usageCount += 1;
-  await savedMeal.save();
 
   // Find existing meal log or create new
   const existingMeal = await MealLog.findOne({

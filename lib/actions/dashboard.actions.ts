@@ -256,14 +256,17 @@ export async function getDashboardData(dateStr?: string) {
       clerkId: user.id,
       date: { $gte: weekDates[0], $lte: weekDates[6] },
     }).lean(),
-    WorkoutLog.find(
-      { clerkId: user.id, date: { $gte: oneYearAgoStr } },
-      { date: 1 },
-    ).lean(),
-    MealLog.find(
-      { clerkId: user.id, date: { $gte: oneYearAgoStr } },
-      { date: 1 },
-    ).lean(),
+    // Streak only needs the set of active days — `.distinct` returns unique
+    // date strings (leveraging the {clerkId, date} index) instead of streaming
+    // up to a year of full documents just to build a Set.
+    WorkoutLog.distinct("date", {
+      clerkId: user.id,
+      date: { $gte: oneYearAgoStr },
+    }),
+    MealLog.distinct("date", {
+      clerkId: user.id,
+      date: { $gte: oneYearAgoStr },
+    }),
     WeightLog.find({
       clerkId: user.id,
       date: { $gte: thirtyStr },
@@ -304,9 +307,8 @@ export async function getDashboardData(dateStr?: string) {
   }));
 
   // DSA Hash Set for O(1) workout & meal streak calculation
-  const activeDatesSet = new Set<string>();
-  for (const w of activeWorkoutDates) activeDatesSet.add(w.date);
-  for (const m of activeMealDates) activeDatesSet.add(m.date);
+  const activeDatesSet = new Set<string>(activeWorkoutDates as string[]);
+  for (const date of activeMealDates as string[]) activeDatesSet.add(date);
 
   let streak = 0;
   const checkDate = new Date();
