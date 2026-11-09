@@ -489,6 +489,10 @@ export default function WorkoutPage() {
   const [completionExercises, setCompletionExercises] = useState<
     ChecklistExercise[]
   >([]);
+  // Synchronous in-flight guards: the saving state flags can lag behind a fast
+  // double-tap, letting two saves create duplicate logs for the same day.
+  const savingTodayRef = useRef(false);
+  const completingDayRef = useRef(false);
 
   // Today's inline workout checklist
   const [todayChecklist, setTodayChecklist] = useState<
@@ -606,6 +610,7 @@ export default function WorkoutPage() {
   };
 
   const handleSaveTodayWorkout = async () => {
+    if (savingTodayRef.current) return;
     if (!todayPlanDay?._id) return;
     const completed = todayChecklist.filter(
       (item) => item.selected && item.setsCompleted > 0,
@@ -615,6 +620,7 @@ export default function WorkoutPage() {
       return;
     }
     try {
+      savingTodayRef.current = true;
       setSavingToday(true);
       await saveDayCompletion(todayPlanDay._id, completed);
       toast.success(t("workout.today.saved"));
@@ -623,6 +629,7 @@ export default function WorkoutPage() {
     } catch {
       toast.error(t("workout.toast.dayCompleteFailed"));
     } finally {
+      savingTodayRef.current = false;
       setSavingToday(false);
     }
   };
@@ -967,9 +974,11 @@ export default function WorkoutPage() {
   };
 
   const handleCompleteSavedDay = async () => {
+    if (completingDayRef.current) return;
     if (!completionDay?._id) return;
 
     try {
+      completingDayRef.current = true;
       setCompletingDayId(completionDay._id);
       await saveDayCompletion(
         completionDay._id,
@@ -986,6 +995,7 @@ export default function WorkoutPage() {
     } catch {
       toast.error(t("workout.toast.dayCompleteFailed"));
     } finally {
+      completingDayRef.current = false;
       setCompletingDayId(null);
     }
   };

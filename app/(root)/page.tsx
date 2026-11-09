@@ -142,6 +142,10 @@ export default function DashboardPage() {
   // actually changes, never on background refreshes.
   const seededPlanKeyRef = useRef<string>("");
 
+  // Synchronous in-flight guard: the `savingWorkout` state flag can lag behind
+  // a fast double-tap, letting two saves create duplicate logs for the same day.
+  const savingWorkoutRef = useRef(false);
+
   const isToday = selectedDateStr === getLocalDateString();
 
   // Fetch only the selected date's data directly from the DB
@@ -246,6 +250,7 @@ export default function DashboardPage() {
   };
 
   const handleSaveTodayWorkout = async () => {
+    if (savingWorkoutRef.current) return;
     if (!todayWorkoutPlan?._id) return;
 
     const completed = workoutChecklist.filter(
@@ -257,6 +262,7 @@ export default function DashboardPage() {
     }
 
     try {
+      savingWorkoutRef.current = true;
       setSavingWorkout(true);
       await completeWorkoutPlanDay(
         selectedDateStr,
@@ -281,6 +287,7 @@ export default function DashboardPage() {
     } catch {
       toast.error(t("dashboard.toast.completeWorkoutFailed"));
     } finally {
+      savingWorkoutRef.current = false;
       setSavingWorkout(false);
     }
   };

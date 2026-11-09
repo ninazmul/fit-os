@@ -385,25 +385,35 @@ export async function completeWorkoutPlanDay(
     throw new Error("Select at least one completed set");
   }
 
-  const profile = (await UserProfile.findOne({ clerkId: user.id }).lean()) as
-    | IUserProfile
-    | null;
-  const estimate = await estimateWorkoutCaloriesWithAI(
-    day.title,
-    completed.map((exercise) => ({
-      exerciseName: exercise.exerciseName,
-      trackingMode: exercise.trackingMode,
-      sets: exercise.setsCompleted,
-      reps: exercise.reps,
-      seconds: exercise.seconds,
-      weight: exercise.weight || 0,
-    })),
-    profile,
-  );
   const totalSets = completed.reduce(
     (sum, ex) => sum + Number(ex.setsCompleted || 0),
     0,
   );
+  const plannedSets = (day.exercises || []).reduce(
+    (sum, exercise) => sum + Number(exercise.sets || 0),
+    0,
+  );
+  // Reuse the estimate already stored on the plan day instead of awaiting the
+  // AI: the save must return instantly, and the logged burn then matches what
+  // the plan showed. A partial session scales down proportionally.
+  const completionRatio =
+    plannedSets > 0 ? Math.min(1, totalSets / plannedSets) : 1;
+  const estimate = {
+    durationMinutes: Math.max(
+      1,
+      Math.round(
+        (Number(day.estimatedDurationMinutes) ||
+          estimateWorkoutDuration(day.exercises)) * completionRatio,
+      ),
+    ),
+    caloriesBurned: Math.max(
+      1,
+      Math.round(
+        (Number(day.estimatedCaloriesBurned) ||
+          fallbackWorkoutCalories(day.exercises)) * completionRatio,
+      ),
+    ),
+  };
 
   const workout = await WorkoutLog.create({
     clerkId: user.id,
