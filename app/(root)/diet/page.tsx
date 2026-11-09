@@ -1700,7 +1700,7 @@ export default function DietPage() {
         open={saveTemplateModalOpen}
         onOpenChange={setSaveTemplateModalOpen}
       >
-        <DialogContent className="w-[calc(100vw-1.5rem)] sm:w-full sm:max-w-md rounded-3xl p-4 sm:p-6 gap-3.5 sm:gap-4 max-h-[88dvh] sm:max-h-[85vh] overflow-y-auto overflow-x-hidden no-scrollbar overscroll-contain">
+        <DialogContent className="w-[calc(100vw-1rem)] sm:w-full sm:max-w-md rounded-3xl p-4 sm:p-6 gap-3.5 sm:gap-4 max-h-[88dvh] sm:max-h-[85vh] overflow-y-auto overflow-x-hidden no-scrollbar overscroll-contain box-border min-w-0">
           <DialogHeader className="pr-7 sm:pr-8">
             <DialogTitle className="text-base sm:text-lg font-bold flex items-center gap-2">
               <Bookmark className="w-5 h-5 text-primary shrink-0" />
@@ -1725,7 +1725,7 @@ export default function DietPage() {
 
             <div className="space-y-1">
               <Label>{t("diet.saveTemplate.category")}</Label>
-              <div className="grid grid-cols-2 gap-1.5 pt-1">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 pt-1">
                 {[
                   {
                     id: "breakfast",
@@ -1751,7 +1751,7 @@ export default function DietPage() {
                     onClick={() =>
                       setTemplateCategory(cat.id as SavedMealCategory)
                     }
-                    className={`p-2 rounded-xl text-xs font-bold text-left transition-all border ${
+                    className={`p-2 rounded-xl text-xs font-bold text-left transition-all border min-w-0 truncate ${
                       templateCategory === cat.id
                         ? "bg-primary/10 border-primary text-primary"
                         : "bg-muted/40 border-border/40 text-muted-foreground"
@@ -1763,13 +1763,13 @@ export default function DietPage() {
               </div>
             </div>
 
-            <div className="p-3 rounded-2xl bg-muted/40 border border-border/40 space-y-1">
+            <div className="p-3 rounded-2xl bg-muted/40 border border-border/40 space-y-1 min-w-0">
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                 {t("diet.saveTemplate.itemsHeading", {
                   count: itemsToSave.length,
                 })}
               </p>
-              <p className="text-xs font-medium text-foreground truncate">
+              <p className="text-xs font-medium text-foreground line-clamp-2 break-words">
                 {itemsToSave.map((i) => i.name).join(", ")}
               </p>
             </div>
