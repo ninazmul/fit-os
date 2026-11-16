@@ -79,6 +79,7 @@ import { format, addDays, subDays } from "date-fns";
 import PageHeader from "@/components/shared/PageHeader";
 import NutritionSummary from "@/components/shared/NutritionSummary";
 import { useI18n } from "@/components/shared/I18nProvider";
+import { cn } from "@/lib/utils";
 
 const AdUnit = dynamic(() => import("@/components/shared/AdUnit"), {
   ssr: false,
@@ -98,6 +99,32 @@ const mealTypes: { type: MealType; labelKey: string; icon: typeof Sun }[] = [
   { type: "dinner", labelKey: "diet.mealType.dinner", icon: Moon },
   { type: "snack", labelKey: "diet.mealType.snack", icon: Apple },
 ];
+
+/**
+ * Best-fit meal slot for a saved template, based on its category.
+ * Falls back to the meal the user is currently viewing when the category
+ * has no obvious slot (e.g. "custom").
+ */
+function suggestedMealTypeForCategory(
+  category: SavedMealCategory,
+  fallback: MealType,
+): MealType {
+  switch (category) {
+    case "breakfast":
+      return "breakfast";
+    case "lunch":
+    case "office_lunch":
+      return "lunch";
+    case "dinner":
+    case "iftar":
+      return "dinner";
+    case "gym_meal":
+    case "cheat_meal":
+      return "snack";
+    default:
+      return fallback;
+  }
+}
 
 const emptyAIForm = (): AIEstimateInput => ({
   description: "",
@@ -713,27 +740,38 @@ export default function DietPage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-1 pt-1">
-                  <Button
-                    size="sm"
-                    onClick={() =>
-                      template._id &&
-                      handleLogSavedTemplate(template._id, "breakfast")
-                    }
-                    className="h-7 text-[10px] rounded-xl font-bold bg-primary hover:bg-primary/90 text-white"
-                  >
-                    {t("diet.savedMeals.logBreakfast")}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() =>
-                      template._id &&
-                      handleLogSavedTemplate(template._id, "lunch")
-                    }
-                    className="h-7 text-[10px] rounded-xl font-semibold"
-                  >
-                    {t("diet.savedMeals.logLunch")}
-                  </Button>
+                  {mealTypes.map((mt) => {
+                    const isSuggested =
+                      mt.type ===
+                      suggestedMealTypeForCategory(
+                        template.category,
+                        activeMealType,
+                      );
+                    const Icon = mt.icon;
+                    return (
+                      <Button
+                        key={mt.type}
+                        size="sm"
+                        variant={isSuggested ? "default" : "outline"}
+                        onClick={() =>
+                          template._id &&
+                          handleLogSavedTemplate(template._id, mt.type)
+                        }
+                        title={t("diet.savedMeals.logTo", {
+                          meal: t(mt.labelKey),
+                        })}
+                        className={cn(
+                          "h-7 text-[10px] rounded-xl gap-1 px-2",
+                          isSuggested
+                            ? "font-bold bg-primary hover:bg-primary/90 text-white"
+                            : "font-semibold",
+                        )}
+                      >
+                        <Icon className="w-3 h-3 shrink-0" />
+                        <span className="truncate">{t(mt.labelKey)}</span>
+                      </Button>
+                    );
+                  })}
                 </div>
               </div>
             ))}

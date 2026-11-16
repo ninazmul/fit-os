@@ -19,8 +19,7 @@ export const dietEn: Record<string, string> = {
   "diet.savedMeals.heading": "Saved Meal Templates ({count})",
   "diet.savedMeals.tapToLog": "Tap to log to {date}",
   "diet.savedMeals.delete": "Delete template",
-  "diet.savedMeals.logBreakfast": "+ Breakfast",
-  "diet.savedMeals.logLunch": "+ Lunch",
+  "diet.savedMeals.logTo": "Log to {meal}",
 
   // Nutrition summary labels
   "diet.nutrition.calories": "Calories",
@@ -196,8 +195,7 @@ export const dietBn: Record<string, string> = {
   "diet.savedMeals.heading": "সেভ করা মিল টেমপ্লেট ({count})",
   "diet.savedMeals.tapToLog": "{date}-এ লগ করতে ট্যাপ করুন",
   "diet.savedMeals.delete": "টেমপ্লেট মুছুন",
-  "diet.savedMeals.logBreakfast": "+ সকালের নাশতা",
-  "diet.savedMeals.logLunch": "+ দুপুরের খাবার",
+  "diet.savedMeals.logTo": "{meal}-এ যোগ করুন",
 
   // Nutrition summary labels
   "diet.nutrition.calories": "ক্যালরি",
