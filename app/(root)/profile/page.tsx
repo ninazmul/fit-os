@@ -222,7 +222,10 @@ export default function ProfilePage() {
     if (
       category === "profile" ||
       category === "all" ||
-      category === "measurement"
+      category === "measurement" ||
+      category === "weight" ||
+      category === "workout" ||
+      category === "sleep"
     ) {
       fetchAll();
     }
@@ -288,7 +291,7 @@ export default function ProfilePage() {
     },
     {
       id: "progress" as ProfileTab,
-      label: isBn ? "প্রগতি ও শরীর" : "Progress & Body",
+      label: isBn ? "প্রগতি ও ঘুম" : "Progress & Sleep",
       shortLabel: isBn ? "প্রগতি" : "Progress",
       icon: TrendingUp,
     },
@@ -848,10 +851,14 @@ export default function ProfilePage() {
                 </div>
                 <div>
                   <p className="text-xs font-bold text-amber-900 dark:text-amber-200">
-                    {data.workoutStatus.scheduledDays} Workouts Planned This Week
+                    {isBn
+                      ? `এই সপ্তাহে ${profile?.workoutDaysPerWeek || 0}টি ওয়ার্কআউট পরিকল্পিত`
+                      : `${profile?.workoutDaysPerWeek || 0} Workouts Planned This Week`}
                   </p>
                   <p className="text-[11px] text-amber-700/80 dark:text-amber-300/80">
-                    You haven&apos;t logged any sessions yet this week. Remember to log your workouts to maintain your consistency streak!
+                    {isBn
+                      ? "এই সপ্তাহে এখনও কোনো সেশন লগ করা হয়নি। ধারাবাহিকতা ধরে রাখতে আপনার ওয়ার্কআউট লগ করুন!"
+                      : "You haven't logged any sessions yet this week. Remember to log your workouts to maintain your consistency streak!"}
                   </p>
                 </div>
               </div>
@@ -910,70 +917,49 @@ export default function ProfilePage() {
           )}
 
           {/* Fitness & Target Details */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            <div className="glass-card p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-border/50 space-y-2.5">
+          {/* Fitness Commitment (metabolic numbers live in the cards above; targets in the Targets tab) */}
+          <div className="glass-card p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-border/50 flex flex-col justify-between gap-3">
+            <div>
               <h3 className="text-xs sm:text-sm font-bold flex items-center gap-2">
-                <Activity className="w-4 h-4 text-primary" />
-                {isBn ? "মেটাবলিক ও লক্ষ্য সারসংক্ষেপ" : "Metabolic & Routine Summary"}
+                <Award className="w-4 h-4 text-amber-500" />
+                {isBn ? "ফিটনেস অঙ্গীকার" : "Fitness Commitment"}
               </h3>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between p-2 rounded-xl bg-muted/40 text-xs">
-                  <span className="text-muted-foreground">{t("profile.metric.bmrTitle")}</span>
-                  <span className="font-bold text-amber-600 dark:text-amber-400">{metrics?.bmr || "--"} kcal</span>
-                </div>
-                <div className="flex items-center justify-between p-2 rounded-xl bg-muted/40 text-xs">
-                  <span className="text-muted-foreground">{t("profile.metric.tdeeTitle")}</span>
-                  <span className="font-bold text-emerald-600 dark:text-emerald-400">{metrics?.tdee || "--"} kcal</span>
-                </div>
-                <div className="flex items-center justify-between p-2 rounded-xl bg-muted/40 text-xs">
-                  <span className="text-muted-foreground">{t("profile.targets.dailyTarget")}</span>
-                  <span className="font-bold text-orange-600 dark:text-orange-400">
-                    {macros?.dailyCaloriesGoal || profile?.dailyCaloriesGoal || "--"} kcal
-                  </span>
-                </div>
-                <div className="flex items-center justify-between p-2 rounded-xl bg-muted/40 text-xs">
-                  <span className="text-muted-foreground">{t("profile.quickFacts.workoutSchedule")}</span>
-                  <span className="font-bold">
-                    {profile?.workoutDaysPerWeek || 0} {t("profile.quickFacts.daysPerWeek")}
-                  </span>
-                </div>
-              </div>
+              <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
+                {isBn
+                  ? "আপনার লক্ষ্য পূরণ করতে নিয়মিত খাবার এবং ওয়ার্কআউট ট্র্যাক করুন।"
+                  : "Consistent tracking is the foundation of lasting transformation. Update measurements monthly to recalibrate your TDEE."}
+              </p>
             </div>
 
-            <div className="glass-card p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-border/50 flex flex-col justify-between space-y-3">
-              <div>
-                <h3 className="text-xs sm:text-sm font-bold flex items-center gap-2">
-                  <Award className="w-4 h-4 text-amber-500" />
-                  {isBn ? "প্রোফাইল স্ট্যাটাস" : "Fitness Commitment"}
-                </h3>
-                <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
-                  {isBn
-                    ? "আপনার লক্ষ্য পূরণ করতে নিয়মিত খাবার এবং ওয়ার্কআউট ট্র্যাক করুন।"
-                    : "Consistent tracking is the foundation of lasting transformation. Update measurements monthly to recalibrate your TDEE."}
-                </p>
-              </div>
+            <div className="flex items-center justify-between p-2 rounded-xl bg-muted/40 text-xs">
+              <span className="text-muted-foreground">
+                {t("profile.quickFacts.workoutSchedule")}
+              </span>
+              <span className="font-bold">
+                {profile?.workoutDaysPerWeek || 0} {t("profile.quickFacts.daysPerWeek")}
+              </span>
+            </div>
 
-              <div className="pt-2 border-t border-border/40 flex items-center justify-between text-xs">
-                <span className="text-muted-foreground text-[11px]">
-                  {t("profile.developedBy")}{" "}
-                  <a
-                    href="https://www.rizmec.com/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-semibold text-primary hover:underline inline-flex items-center gap-0.5"
-                  >
-                    RIZMEC <ExternalLink className="w-2.5 h-2.5" />
-                  </a>
-                </span>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setOnboardingOpen(true)}
-                  className="h-7 text-xs font-bold text-primary"
+            <div className="pt-2 border-t border-border/40 flex items-center justify-between text-xs">
+              <span className="text-muted-foreground text-[11px]">
+                {t("profile.developedBy")}{" "}
+                <a
+                  href="https://www.rizmec.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-primary hover:underline inline-flex items-center gap-0.5"
                 >
-                  {t("profile.actions.editProfile")} &rarr;
-                </Button>
-              </div>
+                  RIZMEC <ExternalLink className="w-2.5 h-2.5" />
+                </a>
+              </span>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setOnboardingOpen(true)}
+                className="h-7 text-xs font-bold text-primary"
+              >
+                {t("profile.actions.editProfile")} &rarr;
+              </Button>
             </div>
           </div>
         </div>

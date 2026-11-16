@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { generateInsights } from "@/lib/actions/insights.actions";
-import { getUserProfile } from "@/lib/actions/profile.actions";
 import {
   generateDeepAIAnalytics,
   type AIAnalyticsData,
@@ -135,8 +134,6 @@ export default function AnalyticsSection() {
   const { t } = useI18n();
 
   const [insights, setInsights] = useState<AIInsight[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [profile, setProfile] = useState<any>(null);
   const [aiData, setAiData] = useState<AIAnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [aiLoading, setAiLoading] = useState(false);
@@ -150,13 +147,11 @@ export default function AnalyticsSection() {
     const fetch = async () => {
       try {
         setLoading(true);
-        const [aiResults, userProf, deepAI] = await Promise.all([
+        const [aiResults, deepAI] = await Promise.all([
           generateInsights(),
-          getUserProfile(),
           generateDeepAIAnalytics(),
         ]);
         setInsights(aiResults);
-        setProfile(userProf);
         setAiData(deepAI);
       } catch (err) {
         console.error("Error loading analytics:", err);
@@ -564,40 +559,7 @@ export default function AnalyticsSection() {
         </div>
       )}
 
-      {/* Daily Targets Overview */}
-      <div className="glass-card p-6 rounded-3xl border border-border/50 space-y-4">
-        <h2 className="text-base font-bold">{t("analytics.dailyTargets")}</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-          <div className="p-3 rounded-2xl bg-muted/40 border border-border/30">
-            <p className="text-muted-foreground">{t("analytics.calorieGoal")}</p>
-            <p className="text-lg font-bold text-amber-600 dark:text-amber-400">
-              {profile?.dailyCaloriesGoal || 2000} kcal
-            </p>
-          </div>
-          <div className="p-3 rounded-2xl bg-muted/40 border border-border/30">
-            <p className="text-muted-foreground">{t("analytics.proteinGoal")}</p>
-            <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
-              {profile?.dailyProteinGoal || 150} g
-            </p>
-          </div>
-          <div className="p-3 rounded-2xl bg-muted/40 border border-border/30">
-            <p className="text-muted-foreground">{t("analytics.waterGoal")}</p>
-            <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
-              {profile?.waterGoalMl || 3000} ml
-            </p>
-          </div>
-          <div className="p-3 rounded-2xl bg-muted/40 border border-border/30">
-            <p className="text-muted-foreground">
-              {t("analytics.workoutFrequency")}
-            </p>
-            <p className="text-lg font-bold text-purple-600 dark:text-purple-400">
-              {t("analytics.daysPerWeek", {
-                days: profile?.workoutDaysPerWeek || 4,
-              })}
-            </p>
-          </div>
-        </div>
-      </div>
+      {/* Daily Targets Overview removed — targets already live in the Targets tab */}
     </div>
   );
 }

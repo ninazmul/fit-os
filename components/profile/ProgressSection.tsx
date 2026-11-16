@@ -6,7 +6,6 @@ import {
   getWeightStats,
   logWeight,
 } from "@/lib/actions/weight.actions";
-import { getBodyMeasurements } from "@/lib/actions/body-measurement.actions";
 import {
   getSleepHistory,
   addSleepSession,
@@ -18,7 +17,6 @@ import {
   type AIProgressAuditData,
 } from "@/lib/actions/ai-progress.actions";
 import StatCard from "@/components/shared/StatCard";
-import BodyMeasurementModal from "@/components/shared/BodyMeasurementModal";
 import { useI18n } from "@/components/shared/I18nProvider";
 import { useDynamicTranslation } from "@/lib/i18n/use-dynamic-translation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -33,18 +31,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   TrendingUp,
-  Scale,
   Plus,
   Trash2,
   Calendar,
-  Award,
   Moon,
   Star,
   Clock,
   RefreshCw,
   Target,
   Dumbbell,
-  ChevronRight,
   Sparkles,
 } from "lucide-react";
 import { formatTime12h, getLocalDateString } from "@/lib/utils";
@@ -89,8 +84,6 @@ export default function ProgressSection() {
   const [weightHistory, setWeightHistory] = useState<any[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [weightStats, setWeightStats] = useState<any>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [measurements, setMeasurements] = useState<any[]>([]);
   const [sleepLogs, setSleepLogs] = useState<SleepLogItem[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [profile, setProfile] = useState<any>(null);
@@ -106,9 +99,6 @@ export default function ProgressSection() {
   const [weightModalOpen, setWeightModalOpen] = useState(false);
   const [weightVal, setWeightVal] = useState("");
   const [weightNotes, setWeightNotes] = useState("");
-
-  // Body measurement dialog
-  const [bodyModalOpen, setBodyModalOpen] = useState(false);
 
   // Sleep session dialog
   const [sleepModalOpen, setSleepModalOpen] = useState(false);
@@ -136,18 +126,15 @@ export default function ProgressSection() {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const [wHist, wStats, mList, sLogs, userProf, aiAudit] =
-        await Promise.all([
-          getWeightHistory(60),
-          getWeightStats(),
-          getBodyMeasurements(10),
-          getSleepHistory(14),
-          getUserProfile(),
-          generateAIProgressAudit(),
-        ]);
+      const [wHist, wStats, sLogs, userProf, aiAudit] = await Promise.all([
+        getWeightHistory(60),
+        getWeightStats(),
+        getSleepHistory(14),
+        getUserProfile(),
+        generateAIProgressAudit(),
+      ]);
       setWeightHistory(wHist);
       setWeightStats(wStats);
-      setMeasurements(mList);
       setSleepLogs(sLogs);
       setProfile(userProf);
       setAiProgressData(aiAudit);
@@ -487,79 +474,8 @@ export default function ProgressSection() {
         </div>
       )}
 
-      {/* AI Milestones */}
-      {aiProgressData && aiProgressData.milestones.length > 0 && (
-        <div className="glass-card p-5 rounded-3xl border border-border/50 space-y-4">
-          <h2 className="font-bold text-sm flex items-center gap-2">
-            <Star className="w-4 h-4 text-amber-500" />{" "}
-            {t("progress.milestones.title")}
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {aiProgressData.milestones.map((m, i) => {
-              const loc =
-                (localizedAI?.milestones ?? aiProgressData.milestones)[i] ?? m;
-              return (
-                <div key={i} className="space-y-2">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-[11px] truncate">
-                      {loc.title}
-                    </span>
-                    <span className="font-black text-primary text-[11px] ml-2 flex-shrink-0">
-                      {m.progressPct}%
-                    </span>
-                  </div>
-                  <div className="w-full h-2 bg-muted/40 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-primary to-purple-500 rounded-full transition-all duration-700"
-                      style={{ width: `${m.progressPct}%` }}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                    <span>
-                      {t("progress.milestones.now", { value: m.current })}
-                    </span>
-                    <ChevronRight className="w-3 h-3" />
-                    <span>
-                      {t("progress.milestones.target", { value: m.target })}
-                    </span>
-                  </div>
-                  <p className="text-[10px] text-muted-foreground">
-                    {t("progress.milestones.est", { value: m.projectedDate })}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
       {/* Top Stats Row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        <StatCard
-          title={t("progress.stats.currentWeight")}
-          value={weightStats?.todayWeight || profile?.currentWeight || "--"}
-          unit="kg"
-          subtitle={t("progress.stats.goal", {
-            weight: profile?.targetWeight || "--",
-          })}
-          icon={Scale}
-          variant="purple"
-        />
-
-        <StatCard
-          title={t("progress.stats.bmi")}
-          value={weightStats?.bmi || "--"}
-          subtitle={
-            weightStats?.bmi < 18.5
-              ? t("progress.bmi.underweight")
-              : weightStats?.bmi < 25
-                ? t("progress.bmi.normal")
-                : t("progress.bmi.overweight")
-          }
-          icon={Award}
-          variant="green"
-        />
-
+      <div className="grid grid-cols-2 gap-3 sm:gap-4">
         <StatCard
           title={t("progress.stats.weeklyChange")}
           value={
@@ -599,12 +515,6 @@ export default function ProgressSection() {
             {t("progress.tabs.weight")}
           </TabsTrigger>
           <TabsTrigger
-            value="body"
-            className="rounded-xl text-xs font-semibold"
-          >
-            {t("progress.tabs.body")}
-          </TabsTrigger>
-          <TabsTrigger
             value="sleep"
             className="rounded-xl text-xs font-semibold"
           >
@@ -627,6 +537,24 @@ export default function ProgressSection() {
               {t("progress.actions.logWeight")}
             </Button>
           </div>
+
+          {/* Empty state */}
+          {weightHistory.length === 0 && (
+            <div className="rounded-3xl border-2 border-dashed border-border/50 bg-muted/20 py-12 text-center space-y-3">
+              <TrendingUp className="w-10 h-10 text-muted-foreground/40 mx-auto" />
+              <p className="text-sm font-bold">{t("progress.weight.empty")}</p>
+              <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                {t("progress.weight.emptyHint")}
+              </p>
+              <Button
+                onClick={() => setWeightModalOpen(true)}
+                className="rounded-xl gap-1.5 text-xs font-bold bg-primary hover:bg-primary/90"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                {t("progress.actions.logWeight")}
+              </Button>
+            </div>
+          )}
 
           {/* Journey Rail: Start → Now → Target */}
           {(() => {
@@ -980,79 +908,7 @@ export default function ProgressSection() {
           )}
         </TabsContent>
 
-        {/* Tab 2: Body Measurements */}
-        <TabsContent value="body" className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold">{t("progress.body.title")}</h2>
-            <Button
-              onClick={() => setBodyModalOpen(true)}
-              className="rounded-xl gap-2 text-xs bg-primary hover:bg-primary/90 font-bold"
-            >
-              <Plus className="w-4 h-4" />
-              {t("progress.actions.logMeasurements")}
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {measurements.map((m) => (
-              <div
-                key={m._id}
-                className="glass-card p-5 rounded-3xl border border-border/50 space-y-3"
-              >
-                <div className="flex items-center justify-between border-b border-border/40 pb-2">
-                  <span className="font-bold text-sm flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-primary" /> {m.date}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-3 gap-2 text-xs">
-                  {m.waist && (
-                    <div className="p-2 rounded-xl bg-muted/40">
-                      <p className="text-muted-foreground text-[10px]">
-                        {t("progress.measure.waist")}
-                      </p>
-                      <p className="font-bold text-sm">{m.waist} cm</p>
-                    </div>
-                  )}
-                  {m.chest && (
-                    <div className="p-2 rounded-xl bg-muted/40">
-                      <p className="text-muted-foreground text-[10px]">
-                        {t("progress.measure.chest")}
-                      </p>
-                      <p className="font-bold text-sm">{m.chest} cm</p>
-                    </div>
-                  )}
-                  {m.hip && (
-                    <div className="p-2 rounded-xl bg-muted/40">
-                      <p className="text-muted-foreground text-[10px]">
-                        {t("progress.measure.hip")}
-                      </p>
-                      <p className="font-bold text-sm">{m.hip} cm</p>
-                    </div>
-                  )}
-                  {m.arm && (
-                    <div className="p-2 rounded-xl bg-muted/40">
-                      <p className="text-muted-foreground text-[10px]">
-                        {t("progress.measure.arm")}
-                      </p>
-                      <p className="font-bold text-sm">{m.arm} cm</p>
-                    </div>
-                  )}
-                  {m.thigh && (
-                    <div className="p-2 rounded-xl bg-muted/40">
-                      <p className="text-muted-foreground text-[10px]">
-                        {t("progress.measure.thigh")}
-                      </p>
-                      <p className="font-bold text-sm">{m.thigh} cm</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </TabsContent>
-
-        {/* Tab 3: Sleep Log */}
+        {/* Tab 2: Sleep Log */}
         <TabsContent value="sleep" className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold">{t("progress.sleep.title")}</h2>
@@ -1278,14 +1134,6 @@ export default function ProgressSection() {
           </form>
         </DialogContent>
       </Dialog>
-
-      {/* Log Body Measurements Dialog */}
-      <BodyMeasurementModal
-        open={bodyModalOpen}
-        onOpenChange={setBodyModalOpen}
-        initialData={measurements[0]}
-        onSuccess={fetchData}
-      />
 
       {/* Log Sleep Dialog */}
       <Dialog open={sleepModalOpen} onOpenChange={setSleepModalOpen}>

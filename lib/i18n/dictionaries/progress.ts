@@ -63,6 +63,9 @@ export const progressEn: Record<string, string> = {
   "progress.weight.areaName": "Weight (kg)",
   "progress.weight.historyTitle": "Log History",
   "progress.weight.entries": "{count} entries",
+  "progress.weight.empty": "No weight entries yet",
+  "progress.weight.emptyHint":
+    "Log your first weight to start charting your progress toward the goal.",
 
   // Progress-to-goal card
   "progress.goal.progressTitle": "Progress to Goal",
@@ -203,6 +206,9 @@ export const progressBn: Record<string, string> = {
   "progress.weight.areaName": "ওজন (kg)",
   "progress.weight.historyTitle": "লগ ইতিহাস",
   "progress.weight.entries": "{count}টি এন্ট্রি",
+  "progress.weight.empty": "এখনও কোনো ওজনের এন্ট্রি নেই",
+  "progress.weight.emptyHint":
+    "লক্ষ্যের দিকে অগ্রগতি ট্র্যাক করতে আপনার প্রথম ওজন লগ করুন।",
 
   // Progress-to-goal card
   "progress.goal.progressTitle": "লক্ষ্যের অগ্রগতি",
