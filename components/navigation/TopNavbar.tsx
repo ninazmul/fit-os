@@ -12,7 +12,7 @@ import { Menu } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import NavigationSheet from "@/components/navigation/NavigationSheet";
-import { APP_NAME, APP_VERSION, APP_LOGO, APP_LOGO_ALT } from "@/lib/constants";
+import { APP_NAME, APP_LOGO, APP_LOGO_ALT } from "@/lib/constants";
 
 export default function TopNavbar() {
   const router = useRouter();
@@ -23,62 +23,55 @@ export default function TopNavbar() {
     <>
       <NavigationSheet open={navigationOpen} onOpenChange={setNavigationOpen} />
 
-      <header className="sticky top-0 z-40 w-full bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70 border-b border-border/50 shadow-xs">
-        <div className="grid h-14 grid-cols-[1fr_auto_1fr] items-center px-4 md:flex md:justify-between md:px-6">
-          {/* Mobile navigation */}
-          <div className="flex items-center justify-start md:hidden">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-10 w-10 rounded-full"
-              onClick={() => setNavigationOpen(true)}
-              aria-label={t("a11y.openNavigation")}
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
-          </div>
-
-          {/* Mobile logo */}
-          <button
-            type="button"
-            onClick={() => router.push("/")}
-            className="flex items-center gap-2 justify-self-center rounded-xl px-2 py-1 transition-colors hover:bg-accent md:hidden"
-            aria-label={t("a11y.goToDashboard")}
-          >
-            <div className="relative h-8 w-8 overflow-hidden rounded-lg border border-border/60 bg-white shadow-sm">
-              <Image
-                src={APP_LOGO}
-                alt={APP_LOGO_ALT}
-                fill
-                className="bg-white object-contain p-0.5"
-                priority
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <span
-                className="truncate text-lg font-bold tracking-tight"
-                style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+      <header className="sticky top-0 z-40 w-full bg-background/85 backdrop-blur-xl supports-[backdrop-filter]:bg-background/75 border-b border-border/50 shadow-xs">
+        <div className="flex h-14 items-center justify-between px-3 sm:px-6">
+          {/* Left: Mobile Menu + Logo */}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center md:hidden">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 rounded-xl"
+                onClick={() => setNavigationOpen(true)}
+                aria-label={t("a11y.openNavigation")}
               >
+                <Menu className="h-5 w-5" />
+              </Button>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => router.push("/")}
+              className="flex items-center gap-2 rounded-xl px-1.5 py-1 transition-colors hover:bg-accent md:hidden"
+              aria-label={t("a11y.goToDashboard")}
+            >
+              <div className="relative h-7 w-7 overflow-hidden rounded-lg border border-border/60 bg-white shadow-xs">
+                <Image
+                  src={APP_LOGO}
+                  alt={APP_LOGO_ALT}
+                  fill
+                  className="bg-white object-contain p-0.5"
+                  priority
+                />
+              </div>
+              <span className="truncate text-base font-black tracking-tight font-heading">
                 {APP_NAME}
               </span>
-              <span className="rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
-                {APP_VERSION}
-              </span>
-            </div>
-          </button>
+            </button>
 
-          {/* Desktop greeting */}
-          <div className="hidden md:block">
-            <p className="text-sm text-muted-foreground">
-              {format(new Date(), "EEEE, MMMM d, yyyy", {
-                locale: locale === "bn" ? bnLocale : undefined,
-              })}
-            </p>
+            {/* Desktop greeting */}
+            <div className="hidden md:block">
+              <p className="text-xs sm:text-sm font-medium text-muted-foreground">
+                {format(new Date(), "EEEE, MMMM d, yyyy", {
+                  locale: locale === "bn" ? bnLocale : undefined,
+                })}
+              </p>
+            </div>
           </div>
 
           {/* Right side actions */}
-          <div className="flex items-center justify-end gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <LanguageToggle />
             <ThemeToggle />
             <Show when="signed-in">
@@ -86,7 +79,7 @@ export default function TopNavbar() {
                 afterSwitchSessionUrl="/"
                 appearance={{
                   elements: {
-                    avatarBox: "w-9 h-9",
+                    avatarBox: "w-8 h-8 sm:w-9 sm:h-9",
                   },
                 }}
               />
