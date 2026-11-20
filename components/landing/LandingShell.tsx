@@ -14,11 +14,14 @@ import {
   TrendingUp,
   Moon,
   Lock,
+  CheckCircle2,
+  Users,
 } from "lucide-react";
 import AdUnit from "@/components/shared/AdUnit";
 import FitnessCalculator from "@/components/shared/FitnessCalculator";
 import { LanguageToggle } from "@/components/shared/LanguageToggle";
 import { useI18n } from "@/components/shared/I18nProvider";
+import Health3DVisuals from "./Health3DVisuals";
 import {
   APP_NAME,
   APP_VERSION,
@@ -29,96 +32,20 @@ import {
   APP_AUTHOR_URL,
 } from "@/lib/constants";
 
-// Simple, plain-language summary of what the app offers.
+// High-converting value pillars
 const serveItems = [
-  { icon: Flame, key: "landing.serve.diet" },
-  { icon: Dumbbell, key: "landing.serve.workout" },
-  { icon: TrendingUp, key: "landing.serve.body" },
-  { icon: Moon, key: "landing.serve.sleep" },
-  { icon: Brain, key: "landing.serve.ai" },
+  { icon: Flame, key: "landing.serve.diet", badge: "100+ BD Foods" },
+  { icon: Dumbbell, key: "landing.serve.workout", badge: "Smart Sets" },
+  { icon: TrendingUp, key: "landing.serve.body", badge: "Body Comp" },
+  { icon: Moon, key: "landing.serve.sleep", badge: "Recovery" },
+  { icon: Brain, key: "landing.serve.ai", badge: "Gemini AI" },
 ];
 
 const trustBadges = [
-  { textKey: "landing.trust.noCreditCard", icon: Lock },
-  { textKey: "landing.trust.encrypted", icon: ShieldCheck },
-  { textKey: "landing.trust.pwa", icon: Smartphone },
+  { textKey: "landing.trust.noCreditCard", icon: Lock, sub: "100% Free Forever" },
+  { textKey: "landing.trust.encrypted", icon: ShieldCheck, sub: "Private & Secure" },
+  { textKey: "landing.trust.pwa", icon: Smartphone, sub: "Installable App" },
 ];
-
-// Animated Macro Ring indicator
-const MacroRing = () => (
-  <svg
-    viewBox="0 0 120 120"
-    role="img"
-    aria-label="Illustrative health score ring showing 92 out of 100"
-    className="h-16 w-16 shrink-0 drop-shadow-sm sm:h-20 sm:w-20"
-  >
-    <defs>
-      <linearGradient
-        id="landingRingPrimary"
-        x1="0%"
-        y1="0%"
-        x2="100%"
-        y2="100%"
-      >
-        <stop offset="0%" stopColor="hsl(var(--primary))" />
-        <stop offset="100%" stopColor="#34D399" />
-      </linearGradient>
-    </defs>
-    <circle
-      cx="60"
-      cy="60"
-      r="50"
-      fill="none"
-      strokeWidth="10"
-      className="stroke-muted"
-    />
-    <circle
-      cx="60"
-      cy="60"
-      r="50"
-      fill="none"
-      stroke="url(#landingRingPrimary)"
-      strokeWidth="10"
-      strokeLinecap="round"
-      strokeDasharray="314.15"
-      strokeDashoffset="78.5"
-      transform="rotate(-90 60 60)"
-    />
-    <circle
-      cx="60"
-      cy="60"
-      r="50"
-      fill="none"
-      strokeWidth="10"
-      strokeLinecap="round"
-      strokeDasharray="314.15"
-      strokeDashoffset="235.6"
-      transform="rotate(60 60 60)"
-      className="stroke-blue-500"
-    />
-    <text
-      x="60"
-      y="57"
-      textAnchor="middle"
-      fontSize="18"
-      fontWeight="800"
-      className="fill-foreground"
-    >
-      92
-    </text>
-    <text
-      x="60"
-      y="71"
-      textAnchor="middle"
-      fontSize="7.5"
-      fontWeight="700"
-      letterSpacing="0.05em"
-      className="fill-emerald-500"
-    >
-      HEALTH AI
-    </text>
-  </svg>
-);
 
 interface LandingShellProps {
   children: React.ReactNode;
@@ -129,14 +56,15 @@ export default function LandingShell({
   children,
   calculatorLinks,
 }: LandingShellProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const isBn = locale === "bn";
 
   return (
-    <div className="relative z-10 mx-auto max-w-7xl px-4 pb-12 pt-4 sm:px-6 lg:px-8">
+    <div className="relative z-10 mx-auto max-w-7xl px-4 pb-12 pt-3 sm:px-6 lg:px-8">
       {/* Top Navbar */}
-      <header className="sticky top-3 z-30 mb-6 flex items-center justify-between gap-3 rounded-3xl border border-border/60 bg-background/80 px-4 py-3 shadow-lg shadow-black/5 backdrop-blur-xl sm:mb-10 sm:px-6">
+      <header className="sticky top-3 z-30 mb-6 flex items-center justify-between gap-3 rounded-3xl border border-border/60 bg-background/80 px-4 py-3 shadow-lg shadow-black/5 backdrop-blur-xl sm:mb-8 sm:px-6">
         <Link href="/sign-in" className="group flex min-w-0 items-center gap-3">
-          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border/50 bg-card p-1 shadow-sm transition-transform duration-300 group-hover:scale-105">
+          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border/50 bg-card p-1 shadow-xs transition-transform duration-300 group-hover:scale-105">
             <Image
               src={APP_LOGO}
               alt={APP_LOGO_ALT}
@@ -155,7 +83,11 @@ export default function LandingShell({
           </div>
         </Link>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 text-[11px] font-bold text-primary">
+            <Users className="w-3.5 h-3.5" />
+            <span>{isBn ? "১০,০০০+ খাবার ট্র্যাকড" : "10k+ Meals Tracked"}</span>
+          </div>
           <LanguageToggle />
           <Link
             href="#auth"
@@ -166,52 +98,80 @@ export default function LandingShell({
         </div>
       </header>
 
-      {/* Hero + Auth */}
-      <main className="mb-12 grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_440px] lg:items-start lg:gap-8">
-        <section className="min-w-0 space-y-6 rounded-[2.5rem] border border-border/60 bg-card/70 p-6 shadow-xl shadow-black/5 backdrop-blur-xl sm:p-8 lg:p-10">
-          {/* Top Pill */}
-          <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1.5 text-xs font-bold text-primary shadow-sm">
-            <Sparkles className="h-4 w-4 shrink-0 text-primary" />
-            <span>{t("landing.pill")}</span>
+      {/* Hero + 3D Showcase + Seamless Auth */}
+      <main className="mb-12 grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1.15fr)_460px] lg:items-start lg:gap-8">
+        {/* Left Section: Value Proposition & 3D Interactive Showcase */}
+        <section className="min-w-0 space-y-6 rounded-[2.5rem] border border-border/60 bg-card/70 p-6 shadow-xl shadow-black/5 backdrop-blur-xl sm:p-8 lg:p-10 relative overflow-hidden">
+          {/* Subtle Ambient Light Cone inside hero */}
+          <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full bg-primary/15 blur-3xl pointer-events-none" />
+
+          {/* Top Pill with live active status */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1.5 text-xs font-bold text-primary shadow-xs">
+              <Sparkles className="h-4 w-4 shrink-0 text-primary" />
+              <span>{t("landing.pill")}</span>
+            </div>
+            <span className="hidden sm:inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              {isBn ? "লাইভ এআই ফিটনেস ও নিউট্রিশন ইঞ্জিন" : "Live AI Health Engine"}
+            </span>
           </div>
 
           {/* Main Headline */}
-          <div className="space-y-4">
-            <h1 className="max-w-2xl text-3xl font-black leading-[1.1] tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+          <div className="space-y-3 relative z-10">
+            <h1 className="text-3xl font-black leading-[1.12] tracking-tight text-foreground sm:text-4xl lg:text-5xl">
               {t("landing.heroTitlePre")}{" "}
-              <span className="bg-linear-to-r from-primary via-emerald-500 to-teal-500 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-primary via-emerald-500 to-teal-500 bg-clip-text text-transparent">
                 {t("landing.heroTitleHighlight")}
               </span>
             </h1>
-            <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base sm:leading-7">
+            <p className="max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base sm:leading-7">
               {t("landing.heroDesc")}
             </p>
           </div>
 
-          {/* What you get */}
-          <div className="space-y-3">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-              {t("landing.serve.title")}
-            </p>
+          {/* BESPOKE 3D INTERACTIVE VISUAL DISPLAY */}
+          <div className="py-2">
+            <Health3DVisuals />
+          </div>
+
+          {/* What you get - High-clarity bento items */}
+          <div className="space-y-3 pt-2">
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] font-black uppercase tracking-wider text-muted-foreground">
+                {t("landing.serve.title")}
+              </p>
+              <span className="text-[10px] font-bold text-primary flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3" />
+                {isBn ? "কোনো লুকানো ফি নেই" : "No hidden charges"}
+              </span>
+            </div>
             <ul className="grid gap-2.5 sm:grid-cols-2">
-              {serveItems.map(({ icon: Icon, key }) => (
+              {serveItems.map(({ icon: Icon, key, badge }) => (
                 <li
                   key={key}
-                  className="flex items-start gap-2.5 rounded-2xl border border-border/50 bg-card/60 p-3 transition-colors hover:border-primary/40 hover:bg-card/90"
+                  className="flex items-start gap-3 rounded-2xl border border-border/50 bg-card/60 p-3.5 transition-all hover:border-primary/40 hover:bg-card/90 hover:shadow-sm group"
                 >
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-transform duration-300 group-hover:scale-110">
                     <Icon className="h-4 w-4" />
                   </span>
-                  <span className="text-xs leading-relaxed text-foreground">
-                    {t(key)}
-                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-xs font-bold text-foreground">
+                        {t(key)}
+                      </span>
+                    </div>
+                    <span className="inline-block text-[9px] font-bold text-primary/80 mt-0.5">
+                      {badge}
+                    </span>
+                  </div>
                 </li>
               ))}
             </ul>
           </div>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col gap-3 pt-1 sm:flex-row">
+          <div className="flex flex-col gap-3 pt-2 sm:flex-row">
             <Link
               href="#auth"
               className="flex items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-3.5 text-sm font-black text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:scale-[1.02] hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.99]"
@@ -227,8 +187,8 @@ export default function LandingShell({
           </div>
 
           {/* Quick Calculator Badges */}
-          <div className="space-y-2">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+          <div className="space-y-2 pt-2 border-t border-border/40">
+            <p className="text-[11px] font-black uppercase tracking-wider text-muted-foreground">
               {t("landing.calculatorsLabel")}
             </p>
             <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
@@ -249,12 +209,17 @@ export default function LandingShell({
           </div>
         </section>
 
-        {/* Auth Card Aside */}
+        {/* Auth Card Aside: Seamless, High-Converting & Distraction-Free */}
         <aside id="auth" className="min-w-0 lg:sticky lg:top-24">
-          <div className="overflow-hidden rounded-[2rem] border border-border/60 bg-card/80 p-4 shadow-xl shadow-black/5 backdrop-blur-xl sm:p-5">
+          <div className="overflow-hidden rounded-[2.5rem] border border-border/70 bg-card/85 p-5 shadow-2xl shadow-black/10 backdrop-blur-2xl sm:p-7 relative">
+            {/* Top decorative glass shine */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-70" />
+
             {/* Header Box */}
-            <div className="mb-4 flex items-center gap-3 rounded-2xl border border-primary/20 bg-linear-to-r from-primary/10 via-emerald-500/5 to-transparent p-3.5">
-              <MacroRing />
+            <div className="mb-5 flex items-center gap-3.5 rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/10 via-emerald-500/5 to-transparent p-4">
+              <div className="w-10 h-10 rounded-xl bg-primary/20 text-primary flex items-center justify-center shrink-0 shadow-inner">
+                <Sparkles className="w-5 h-5 text-primary" />
+              </div>
               <div className="min-w-0">
                 <p className="text-[10px] font-black uppercase tracking-wider text-primary">
                   {t("landing.aside.badge")}
@@ -268,19 +233,24 @@ export default function LandingShell({
               </div>
             </div>
 
-            {/* Clerk Sign-in component slot */}
-            <div className="flex items-center justify-center">{children}</div>
+            {/* Clerk Sign-in / Sign-up component slot */}
+            <div className="flex items-center justify-center w-full min-w-0">{children}</div>
           </div>
 
-          {/* Trust Badges */}
-          <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[10px] font-bold uppercase leading-tight tracking-wide text-muted-foreground">
-            {trustBadges.map(({ textKey, icon: Icon }) => (
+          {/* Trust Badges with Micro-reassurance */}
+          <div className="mt-3.5 grid grid-cols-3 gap-2 text-center text-[10px] font-bold uppercase leading-tight tracking-wide text-muted-foreground">
+            {trustBadges.map(({ textKey, icon: Icon, sub }) => (
               <div
                 key={textKey}
-                className="flex flex-col items-center justify-center gap-1 rounded-xl border border-border/50 bg-card/50 px-2 py-2.5 transition-colors hover:border-primary/30 hover:bg-primary/5"
+                className="flex flex-col items-center justify-center gap-1 rounded-2xl border border-border/50 bg-card/60 px-2 py-3 transition-colors hover:border-primary/30 hover:bg-primary/5"
               >
-                <Icon className="h-3.5 w-3.5 text-primary" />
-                <span>{t(textKey)}</span>
+                <Icon className="h-4 w-4 text-primary" />
+                <span className="text-foreground font-black text-[10px] mt-0.5">
+                  {t(textKey)}
+                </span>
+                <span className="text-[8px] text-muted-foreground font-medium normal-case">
+                  {sub}
+                </span>
               </div>
             ))}
           </div>
