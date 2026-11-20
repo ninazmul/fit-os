@@ -149,19 +149,44 @@
   }
 }
 
-* {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  scroll-behavior: smooth;
+@layer base {
+  * {
+    list-style: none;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: "Inter", sans-serif;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 }
 
-body {
-  font-family: "Inter", sans-serif;
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* ── Clerk component overrides ──
+   Clerk injects inline styles (background-color, box-shadow) on its card
+   elements that cannot be overridden via the appearance.elements API.
+   These selectors target Clerk's generated .cl-* class names directly. */
+.cl-rootBox {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.cl-rootBox,
+.cl-cardBox,
+.cl-card,
+.cl-footer {
+  background-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+.cl-cardBox,
+.cl-card {
+  width: 100% !important;
+  max-width: 100% !important;
 }
 
 /* Glass morphism card */

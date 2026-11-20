@@ -108,18 +108,18 @@ export default function LandingShell({
       </div>
 
       {/* Main Grid: Responsive 2-column on desktop, smooth natural flow on mobile */}
-      <main className="mb-10 sm:mb-12 grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1.2fr)_420px] lg:items-start lg:gap-8">
+      <main className="mb-10 sm:mb-12 grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(380px,480px)] lg:items-start lg:gap-8">
         {/* Auth Aside Card */}
         <aside
           id="auth"
-          className="min-w-0 order-1 lg:order-2 lg:sticky lg:top-24 w-full scroll-mt-24"
+          className="min-w-0 order-1 lg:order-2 lg:sticky lg:top-24 w-full max-w-md mx-auto lg:max-w-none scroll-mt-24"
         >
-          <div className="overflow-hidden rounded-3xl sm:rounded-[2.5rem] border border-border/70 bg-card/95 p-4 sm:p-6 shadow-xl shadow-black/5 backdrop-blur-2xl relative">
+          <div className="overflow-hidden rounded-3xl sm:rounded-[2.5rem] border border-border/70 bg-card/95 p-5 sm:p-8 shadow-xl shadow-black/5 backdrop-blur-2xl relative">
             {/* Top decorative glass shine */}
             <div className="absolute top-0 left-0 right-0 h-1 bg-linear-to-r from-transparent via-primary/50 to-transparent opacity-70" />
 
             {/* Clerk Component Slot - Clean & Seamless */}
-            <div className="flex items-center justify-center w-full min-w-0 py-1">
+            <div className="flex w-full min-w-0 justify-center py-1">
               {children}
             </div>
           </div>
