@@ -116,14 +116,14 @@ export default function AddToHomeScreenPrompt() {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 120, opacity: 0 }}
           transition={{ type: "spring", stiffness: 260, damping: 24 }}
-          className="fixed z-[90] bottom-[84px] left-3 right-3 md:hidden"
+          className="fixed z-90 bottom-[84px] left-3 right-3 md:hidden"
         >
-          <div className="relative rounded-3xl border border-border/70 bg-gradient-to-br from-primary/15 via-card to-blue-500/10 shadow-[0_18px_50px_-20px_rgba(0,0,0,0.45)] backdrop-blur-2xl p-4 overflow-hidden">
+          <div className="relative rounded-3xl border border-border/70 bg-linear-to-br from-primary/15 via-card to-blue-500/10 shadow-[0_18px_50px_-20px_rgba(0,0,0,0.45)] backdrop-blur-2xl p-4 overflow-hidden">
             <div className="orb-primary pointer-events-none absolute -top-16 -right-16 h-40 w-40 rounded-full blur-3xl" />
             <div className="orb-blue-soft pointer-events-none absolute -bottom-20 -left-10 h-40 w-40 rounded-full blur-3xl" />
 
             <div className="relative flex items-start gap-3 pr-8">
-              <div className="relative flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/90 to-emerald-500 shadow-lg border border-primary/20">
+              <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-linear-to-br from-primary/90 to-emerald-500 shadow-lg border border-primary/20">
                 <Smartphone className="w-6 h-6 text-primary-foreground" />
               </div>
 
@@ -161,7 +161,7 @@ export default function AddToHomeScreenPrompt() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-black/50 backdrop-blur-sm p-4 md:p-8"
+          className="fixed inset-0 z-100 flex items-end md:items-center justify-center bg-black/50 backdrop-blur-sm p-4 md:p-8"
           onClick={() => setIosHintOpen(false)}
         >
           <motion.div
@@ -173,7 +173,7 @@ export default function AddToHomeScreenPrompt() {
           >
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
-                <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/90 to-emerald-500 shadow-lg border border-primary/20">
+                <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-linear-to-br from-primary/90 to-emerald-500 shadow-lg border border-primary/20">
                   <Share2 className="w-5 h-5 text-primary-foreground" />
                 </div>
                 <div>
@@ -216,11 +216,11 @@ export default function AddToHomeScreenPrompt() {
                     key={item.step}
                     className="flex items-center gap-3 p-3 rounded-2xl bg-muted/50 border border-border/40"
                   >
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15 text-primary flex-shrink-0 font-bold">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15 text-primary shrink-0 font-bold">
                       {item.step}
                     </div>
                     <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <Icon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                      <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
                       <p className="text-xs font-medium text-foreground">
                         {item.label}
                       </p>

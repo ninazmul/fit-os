@@ -179,7 +179,7 @@ export default function LandingShell({
           <div className="space-y-4">
             <h1 className="max-w-2xl text-3xl font-black leading-[1.1] tracking-tight text-foreground sm:text-4xl lg:text-5xl">
               {t("landing.heroTitlePre")}{" "}
-              <span className="bg-gradient-to-r from-primary via-emerald-500 to-teal-500 bg-clip-text text-transparent">
+              <span className="bg-linear-to-r from-primary via-emerald-500 to-teal-500 bg-clip-text text-transparent">
                 {t("landing.heroTitleHighlight")}
               </span>
             </h1>
@@ -253,7 +253,7 @@ export default function LandingShell({
         <aside id="auth" className="min-w-0 lg:sticky lg:top-24">
           <div className="overflow-hidden rounded-[2rem] border border-border/60 bg-card/80 p-4 shadow-xl shadow-black/5 backdrop-blur-xl sm:p-5">
             {/* Header Box */}
-            <div className="mb-4 flex items-center gap-3 rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/10 via-emerald-500/5 to-transparent p-3.5">
+            <div className="mb-4 flex items-center gap-3 rounded-2xl border border-primary/20 bg-linear-to-r from-primary/10 via-emerald-500/5 to-transparent p-3.5">
               <MacroRing />
               <div className="min-w-0">
                 <p className="text-[10px] font-black uppercase tracking-wider text-primary">

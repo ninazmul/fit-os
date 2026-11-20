@@ -367,10 +367,10 @@ export default function ProfilePage() {
 
       {/* Goal Achieved Banner */}
       {celebrationStats?.isGoalAchieved && (
-        <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-amber-500/40 bg-gradient-to-r from-amber-500/15 via-yellow-500/10 to-emerald-500/15 p-4 sm:p-5 shadow-sm">
+        <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-amber-500/40 bg-linear-to-r from-amber-500/15 via-yellow-500/10 to-emerald-500/15 p-4 sm:p-5 shadow-sm">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="flex-shrink-0 p-2.5 rounded-2xl bg-gradient-to-br from-amber-500/25 to-yellow-500/25 text-amber-500 shadow-xs">
+              <div className="shrink-0 p-2.5 rounded-2xl bg-linear-to-br from-amber-500/25 to-yellow-500/25 text-amber-500 shadow-xs">
                 <Trophy className="w-6 h-6" />
               </div>
               <div className="min-w-0">
@@ -384,7 +384,7 @@ export default function ProfilePage() {
             </div>
             <Button
               onClick={() => setCelebrationModalOpen(true)}
-              className="rounded-xl gap-1.5 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-bold shadow-md self-start sm:self-auto shrink-0 text-xs sm:text-sm"
+              className="rounded-xl gap-1.5 bg-linear-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-bold shadow-md self-start sm:self-auto shrink-0 text-xs sm:text-sm"
             >
               <Sparkles className="w-4 h-4" />
               {t("profile.celebration.viewCelebration")}
@@ -413,7 +413,7 @@ export default function ProfilePage() {
                   className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover shadow-md shadow-primary/20 ring-2 ring-primary/20"
                 />
               ) : (
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-primary via-primary/80 to-emerald-600 flex items-center justify-center text-primary-foreground text-xl sm:text-2xl font-black shadow-md shadow-primary/20 ring-2 ring-primary/20">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-linear-to-br from-primary via-primary/80 to-emerald-600 flex items-center justify-center text-primary-foreground text-xl sm:text-2xl font-black shadow-md shadow-primary/20 ring-2 ring-primary/20">
                   {profile?.name ? profile.name[0].toUpperCase() : "U"}
                 </div>
               )}
@@ -520,7 +520,7 @@ export default function ProfilePage() {
 
         {/* Weight Journey Progress Bar (Requirement 4) */}
         {profile?.targetWeight && (
-          <div className="p-3 sm:p-3.5 rounded-2xl bg-gradient-to-r from-primary/10 via-emerald-500/5 to-transparent border border-primary/20 space-y-2">
+          <div className="p-3 sm:p-3.5 rounded-2xl bg-linear-to-r from-primary/10 via-emerald-500/5 to-transparent border border-primary/20 space-y-2">
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
               <span className="flex items-center gap-1.5 font-bold text-foreground">
                 <Scale className="w-3.5 h-3.5 text-primary" />
@@ -537,7 +537,7 @@ export default function ProfilePage() {
             </div>
             <div className="w-full bg-muted/60 h-2.5 rounded-full overflow-hidden">
               <div
-                className="bg-gradient-to-r from-primary to-emerald-500 h-full rounded-full transition-all duration-700"
+                className="bg-linear-to-r from-primary to-emerald-500 h-full rounded-full transition-all duration-700"
                 style={{ width: `${progressPct}%` }}
               />
             </div>
@@ -1005,7 +1005,7 @@ export default function ProfilePage() {
 
             {/* Macro Cards Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3">
-              <div className="p-3 rounded-2xl bg-gradient-to-br from-orange-500/10 to-transparent border border-orange-500/20">
+              <div className="p-3 rounded-2xl bg-linear-to-br from-orange-500/10 to-transparent border border-orange-500/20">
                 <p className="text-[11px] font-bold text-orange-700 dark:text-orange-400">
                   {t("profile.targets.calories")}
                 </p>
@@ -1018,7 +1018,7 @@ export default function ProfilePage() {
                 </p>
               </div>
 
-              <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500/10 to-transparent border border-emerald-500/20">
+              <div className="p-3 rounded-2xl bg-linear-to-br from-emerald-500/10 to-transparent border border-emerald-500/20">
                 <p className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
                   {t("profile.targets.protein")}
                 </p>
@@ -1031,7 +1031,7 @@ export default function ProfilePage() {
                 </p>
               </div>
 
-              <div className="p-3 rounded-2xl bg-gradient-to-br from-blue-500/10 to-transparent border border-blue-500/20">
+              <div className="p-3 rounded-2xl bg-linear-to-br from-blue-500/10 to-transparent border border-blue-500/20">
                 <p className="text-[11px] font-bold text-blue-700 dark:text-blue-400">
                   {t("profile.targets.carbs")}
                 </p>
@@ -1044,7 +1044,7 @@ export default function ProfilePage() {
                 </p>
               </div>
 
-              <div className="p-3 rounded-2xl bg-gradient-to-br from-purple-500/10 to-transparent border border-purple-500/20">
+              <div className="p-3 rounded-2xl bg-linear-to-br from-purple-500/10 to-transparent border border-purple-500/20">
                 <p className="text-[11px] font-bold text-purple-700 dark:text-purple-400">
                   {t("profile.targets.fat")}
                 </p>
@@ -1057,7 +1057,7 @@ export default function ProfilePage() {
                 </p>
               </div>
 
-              <div className="p-3 rounded-2xl bg-gradient-to-br from-amber-500/10 to-transparent border border-amber-500/20">
+              <div className="p-3 rounded-2xl bg-linear-to-br from-amber-500/10 to-transparent border border-amber-500/20">
                 <p className="text-[11px] font-bold text-amber-700 dark:text-amber-400">
                   {t("profile.targets.fiber")}
                 </p>
@@ -1070,7 +1070,7 @@ export default function ProfilePage() {
                 </p>
               </div>
 
-              <div className="p-3 rounded-2xl bg-gradient-to-br from-cyan-500/10 to-transparent border border-cyan-500/20">
+              <div className="p-3 rounded-2xl bg-linear-to-br from-cyan-500/10 to-transparent border border-cyan-500/20">
                 <p className="text-[11px] font-bold text-cyan-700 dark:text-cyan-400">
                   {t("profile.targets.water")}
                 </p>
@@ -1277,7 +1277,7 @@ export default function ProfilePage() {
       {activeTab === "ai" && (
         <div className="space-y-4 sm:space-y-6">
           <div className="glass-card rounded-2xl sm:rounded-3xl border border-primary/20 overflow-hidden">
-            <div className="bg-gradient-to-r from-primary/10 via-transparent to-purple-500/10 px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-3 border-b border-border/40">
+            <div className="bg-linear-to-r from-primary/10 via-transparent to-purple-500/10 px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-3 border-b border-border/40">
               <div className="flex flex-wrap items-center gap-2">
                 <Brain className="w-5 h-5 text-primary" />
                 <div>
@@ -1384,7 +1384,7 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Metabolic Summary */}
-                <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-br from-primary/5 to-purple-500/5 border border-primary/15 space-y-1.5">
+                <div className="p-3.5 sm:p-4 rounded-2xl bg-linear-to-br from-primary/5 to-purple-500/5 border border-primary/15 space-y-1.5">
                   <p className="text-xs leading-relaxed text-foreground">
                     {aiAssessment.metabolicProfile.metabolicSummary}
                   </p>
@@ -1497,7 +1497,7 @@ export default function ProfilePage() {
                             key={i}
                             className="flex items-start gap-2 text-[11px]"
                           >
-                            <ChevronRight className="w-3 h-3 text-purple-500 flex-shrink-0 mt-0.5" />
+                            <ChevronRight className="w-3 h-3 text-purple-500 shrink-0 mt-0.5" />
                             <span className="text-muted-foreground">{day}</span>
                           </div>
                         ),
@@ -1514,7 +1514,7 @@ export default function ProfilePage() {
                             key={i}
                             className="flex items-start gap-1.5 text-[11px]"
                           >
-                            <span className="text-primary font-black flex-shrink-0">
+                            <span className="text-primary font-black shrink-0">
                               {i + 1}.
                             </span>
                             <span className="text-muted-foreground">{m}</span>
@@ -1574,7 +1574,7 @@ export default function ProfilePage() {
                             key={i}
                             className="flex items-start gap-1.5 text-[11px]"
                           >
-                            <span className="text-emerald-500 flex-shrink-0 mt-0.5">
+                            <span className="text-emerald-500 shrink-0 mt-0.5">
                               ✓
                             </span>
                             <span className="text-muted-foreground">{h}</span>

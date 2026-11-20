@@ -68,7 +68,7 @@ export async function addWater(amountMl: number, date?: string, time?: string) {
   await WaterLog.findOneAndUpdate(
     { clerkId: user.id, date: useDate },
     { entries, ...totals },
-    { new: true, upsert: true, setDefaultsOnInsert: true },
+    { returnDocument: "after", upsert: true, setDefaultsOnInsert: true },
   );
 
   revalidatePath("/");
@@ -196,7 +196,7 @@ export async function addSleepSession(
   await SleepLog.findOneAndUpdate(
     { clerkId: user.id, date: useDate },
     { sessions, ...totals },
-    { new: true, upsert: true, setDefaultsOnInsert: true },
+    { returnDocument: "after", upsert: true, setDefaultsOnInsert: true },
   );
 
   revalidatePath("/");

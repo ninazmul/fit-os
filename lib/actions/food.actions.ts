@@ -119,7 +119,7 @@ export async function updateCustomFood(
   const updatedFood = await Food.findByIdAndUpdate(
     foodId,
     { ...validated },
-    { new: true }
+    { returnDocument: "after" }
   );
 
   revalidatePath("/diet");

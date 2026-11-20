@@ -1119,7 +1119,7 @@ export default function WorkoutPage() {
       />
 
       {/* Today's Workout — inline checklist */}
-      <section className="glass-card space-y-4 rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/5 via-background to-emerald-500/5 p-4 sm:p-5">
+      <section className="glass-card space-y-4 rounded-3xl border border-primary/20 bg-linear-to-br from-primary/5 via-background to-emerald-500/5 p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 space-y-1.5">
             <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-primary">
@@ -1275,7 +1275,7 @@ export default function WorkoutPage() {
         />
       </div>
 
-      <div className="glass-card space-y-4 rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/5 via-background to-amber-500/5 p-4 sm:p-5">
+      <div className="glass-card space-y-4 rounded-3xl border border-primary/20 bg-linear-to-br from-primary/5 via-background to-amber-500/5 p-4 sm:p-5">
         <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-start">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-primary">

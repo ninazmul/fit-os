@@ -1353,7 +1353,7 @@ export default function DietPage() {
                   <Sparkles className="w-3 h-3 text-primary shrink-0" />
                   Quick Start:
                 </p>
-                <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar text-[10px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden w-full">
+                <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar text-[10px] scrollbar-none [&::-webkit-scrollbar]:hidden w-full">
                   {AI_PRESETS.map((preset, idx) => (
                     <button
                       key={idx}
@@ -1496,7 +1496,7 @@ export default function DietPage() {
                 type="button"
                 disabled={aiLoading || !aiForm.description.trim()}
                 onClick={handleRunAIEstimate}
-                className="w-full rounded-2xl py-3.5 sm:py-4 bg-gradient-to-r from-primary to-emerald-600 hover:from-primary/90 hover:to-emerald-700 text-white font-bold text-xs sm:text-sm gap-2 shadow-md hover:shadow-lg transition-all"
+                className="w-full rounded-2xl py-3.5 sm:py-4 bg-linear-to-r from-primary to-emerald-600 hover:from-primary/90 hover:to-emerald-700 text-white font-bold text-xs sm:text-sm gap-2 shadow-md hover:shadow-lg transition-all"
               >
                 {aiLoading ? (
                   <>
@@ -1525,7 +1525,7 @@ export default function DietPage() {
                     </span>
                   </div>
 
-                  <p className="text-[11px] text-muted-foreground leading-relaxed break-words">
+                  <p className="text-[11px] text-muted-foreground leading-relaxed wrap-break-word">
                     {aiResult.explanation}
                   </p>
 
@@ -1807,7 +1807,7 @@ export default function DietPage() {
                   count: itemsToSave.length,
                 })}
               </p>
-              <p className="text-xs font-medium text-foreground line-clamp-2 break-words">
+              <p className="text-xs font-medium text-foreground line-clamp-2 wrap-break-word">
                 {itemsToSave.map((i) => i.name).join(", ")}
               </p>
             </div>

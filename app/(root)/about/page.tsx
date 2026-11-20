@@ -81,7 +81,7 @@ export default function AboutPage() {
   return (
     <div className="space-y-8 max-w-4xl mx-auto pb-8">
       {/* Hero Header */}
-      <div className="glass-card p-6 sm:p-8 rounded-3xl border border-border/60 bg-gradient-to-br from-primary/10 via-card to-emerald-500/5 relative overflow-hidden space-y-4">
+      <div className="glass-card p-6 sm:p-8 rounded-3xl border border-border/60 bg-linear-to-br from-primary/10 via-card to-emerald-500/5 relative overflow-hidden space-y-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
             <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border/60 bg-white shadow-md">
@@ -120,7 +120,7 @@ export default function AboutPage() {
       </div>
 
       {/* 💖 Donation & Support Section (bKash) */}
-      <div className="glass-card p-6 sm:p-8 rounded-3xl border-2 border-pink-500/30 bg-gradient-to-br from-pink-500/10 via-card to-primary/10 space-y-6 shadow-lg shadow-pink-500/5">
+      <div className="glass-card p-6 sm:p-8 rounded-3xl border-2 border-pink-500/30 bg-linear-to-br from-pink-500/10 via-card to-primary/10 space-y-6 shadow-lg shadow-pink-500/5">
         <div className="flex items-start gap-4">
           <div className="p-3 rounded-2xl bg-pink-500/15 text-pink-600 dark:text-pink-400 shrink-0">
             <Heart className="w-7 h-7 fill-current animate-pulse" />
@@ -227,7 +227,7 @@ export default function AboutPage() {
                 className="p-5 rounded-3xl border border-border/50 bg-card/60 space-y-2.5 transition-all hover:border-primary/40 hover:shadow-sm"
               >
                 <div
-                  className={`flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br ${pillar.color}`}
+                  className={`flex h-10 w-10 items-center justify-center rounded-2xl bg-linear-to-br ${pillar.color}`}
                 >
                   <Icon className={`h-5 w-5 ${pillar.iconColor}`} />
                 </div>

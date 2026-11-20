@@ -216,7 +216,7 @@ export default function AnalyticsSection() {
         <div className="glass-card rounded-3xl border border-border/50 p-6 animate-pulse h-48" />
       ) : aiData ? (
         <div className="glass-card rounded-3xl border border-primary/20 overflow-hidden">
-          <div className="bg-gradient-to-br from-primary/15 via-transparent to-purple-500/10 p-6">
+          <div className="bg-linear-to-br from-primary/15 via-transparent to-purple-500/10 p-6">
             <div className="flex flex-wrap items-center gap-6">
               {/* Big Score Ring */}
               <div className="relative">
@@ -322,7 +322,7 @@ export default function AnalyticsSection() {
                       key={i}
                       className="flex items-start gap-2 text-xs leading-relaxed"
                     >
-                      <Star className="w-3 h-3 text-emerald-500 flex-shrink-0 mt-0.5" />
+                      <Star className="w-3 h-3 text-emerald-500 shrink-0 mt-0.5" />
                       {s}
                     </li>
                   ),
@@ -340,7 +340,7 @@ export default function AnalyticsSection() {
                       key={i}
                       className="flex items-start gap-2 text-xs leading-relaxed"
                     >
-                      <ChevronRight className="w-3 h-3 text-amber-500 flex-shrink-0 mt-0.5" />
+                      <ChevronRight className="w-3 h-3 text-amber-500 shrink-0 mt-0.5" />
                       {g}
                     </li>
                   ),
@@ -451,14 +451,14 @@ export default function AnalyticsSection() {
                   className={`p-5 rounded-3xl border ${style} space-y-2 relative overflow-hidden`}
                 >
                   <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-xl bg-background/60 backdrop-blur-sm flex-shrink-0">
+                    <div className="p-2 rounded-xl bg-background/60 backdrop-blur-sm shrink-0">
                       <Icon className="w-5 h-5" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
                         <h3 className="font-bold text-sm">{localized.title}</h3>
                         {item.metric && (
-                          <span className="text-[10px] font-black bg-background/60 px-2 py-0.5 rounded-full flex-shrink-0">
+                          <span className="text-[10px] font-black bg-background/60 px-2 py-0.5 rounded-full shrink-0">
                             {localized.metric}
                           </span>
                         )}
@@ -489,7 +489,7 @@ export default function AnalyticsSection() {
                   className={`p-5 rounded-3xl border ${style} space-y-2 relative overflow-hidden`}
                 >
                   <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-xl bg-background/60 backdrop-blur-sm flex-shrink-0">
+                    <div className="p-2 rounded-xl bg-background/60 backdrop-blur-sm shrink-0">
                       <Icon className="w-5 h-5" />
                     </div>
                     <div>

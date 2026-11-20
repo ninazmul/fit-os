@@ -129,7 +129,7 @@ export default function DesktopSidebar() {
                         )}
                         <Icon
                           className={cn(
-                            "w-[18px] h-[18px] flex-shrink-0",
+                            "w-[18px] h-[18px] shrink-0",
                             isActive && "text-primary",
                           )}
                         />

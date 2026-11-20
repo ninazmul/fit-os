@@ -587,7 +587,7 @@ export async function updateNutritionTargets(targets: TargetUpdateValues) {
   const profile = await UserProfile.findOneAndUpdate(
     { clerkId: user.id },
     { $set: updateFields },
-    { new: true, upsert: true },
+    { returnDocument: "after", upsert: true },
   ).lean();
 
   revalidatePath("/");
@@ -631,7 +631,7 @@ export async function createOrUpdateProfile(formData: ProfileFormValues) {
       clerkId: user.id,
       onboardingCompleted: true,
     },
-    { new: true, upsert: true },
+    { returnDocument: "after", upsert: true },
   );
 
   revalidatePath("/");

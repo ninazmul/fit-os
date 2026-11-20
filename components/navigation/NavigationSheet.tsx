@@ -138,7 +138,7 @@ export default function NavigationSheet({
                           )}
                           <Icon
                             className={cn(
-                              "h-[18px] w-[18px] flex-shrink-0",
+                              "h-[18px] w-[18px] shrink-0",
                               isActive && "text-primary",
                             )}
                           />

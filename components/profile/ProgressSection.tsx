@@ -388,7 +388,7 @@ export default function ProgressSection() {
               </div>
               <div className="w-full h-1.5 bg-muted/40 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-purple-500 to-primary rounded-full transition-all duration-700"
+                  className="h-full bg-linear-to-r from-purple-500 to-primary rounded-full transition-all duration-700"
                   style={{
                     width: `${aiProgressData.recomposition.muscleRetentionScore}%`,
                   }}
@@ -640,7 +640,7 @@ export default function ProgressSection() {
                   </div>
                   <div className="relative h-3 bg-muted/40 rounded-full overflow-hidden">
                     <div
-                      className="h-full rounded-full transition-all duration-700 bg-gradient-to-r from-primary via-emerald-400 to-emerald-500"
+                      className="h-full rounded-full transition-all duration-700 bg-linear-to-r from-primary via-emerald-400 to-emerald-500"
                       style={{ width: `${pct}%` }}
                     />
                     {/* Current marker */}
@@ -1078,7 +1078,7 @@ export default function ProgressSection() {
                                 disabled={
                                   sleepRemoving === `${log.date}-${sIdx}`
                                 }
-                                className="h-7 w-7 text-muted-foreground hover:text-red-500 rounded-lg flex-shrink-0"
+                                className="h-7 w-7 text-muted-foreground hover:text-red-500 rounded-lg shrink-0"
                                 title={t("progress.sleep.removeTitle")}
                               >
                                 <Trash2 className="w-3.5 h-3.5" />

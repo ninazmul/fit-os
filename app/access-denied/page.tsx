@@ -9,7 +9,7 @@ export default function AccessDeniedPage() {
   const { user } = useUser();
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-indigo-100/70 via-sky-50/50 to-gray-100 dark:from-gray-950 dark:via-[#111827] dark:to-gray-950 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-linear-to-b from-indigo-100/70 via-sky-50/50 to-gray-100 dark:from-gray-950 dark:via-[#111827] dark:to-gray-950 px-4">
       <div className="w-full max-w-md text-center">
         <Lock className="mx-auto h-16 w-16 text-red-500 mb-6" />
         <h1 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">

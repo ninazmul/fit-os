@@ -73,7 +73,7 @@ export default function BottomNav() {
               className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all fab-pulse"
               aria-label={t("a11y.quickAdd")}
             >
-              <Plus className="w-6 h-6 stroke-[3]" />
+              <Plus className="w-6 h-6 stroke-3" />
             </button>
           </div>
 

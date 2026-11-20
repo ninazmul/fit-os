@@ -48,7 +48,7 @@ export async function logMeal(formData: MealLogFormValues) {
       ...totals,
     },
     {
-      new: true,
+      returnDocument: "after",
       upsert: true,
       setDefaultsOnInsert: true,
     },
@@ -91,7 +91,7 @@ export async function appendMealItem(
       ...totals,
     },
     {
-      new: true,
+      returnDocument: "after",
       upsert: true,
       setDefaultsOnInsert: true,
     },

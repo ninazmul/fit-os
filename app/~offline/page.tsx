@@ -47,14 +47,14 @@ export default function Offline() {
             </p>
           </div>
 
-          <div className="rounded-2xl border border-border/50 bg-gradient-to-br from-primary/10 via-transparent to-blue-500/10 p-4 text-left space-y-3">
+          <div className="rounded-2xl border border-border/50 bg-linear-to-br from-primary/10 via-transparent to-blue-500/10 p-4 text-left space-y-3">
             {[
               `Close and re-open the ${APP_NAME} app`,
               "Turn off Airplane Mode or reconnect to Wi‑Fi",
               "Swipe down and tap the refresh button below",
             ].map((tip, i) => (
               <div key={i} className="flex items-start gap-3 text-xs">
-                <div className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary font-bold mt-0.5">
+                <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary font-bold mt-0.5">
                   {i + 1}
                 </div>
                 <p className="text-muted-foreground">{tip}</p>

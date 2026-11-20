@@ -24,7 +24,7 @@ export async function logWeight(formData: WeightLogFormValues) {
     WeightLog.findOneAndUpdate(
       { clerkId: user.id, date: validated.date },
       { ...validated, clerkId: user.id },
-      { new: true, upsert: true },
+      { returnDocument: "after", upsert: true },
     ),
     UserProfile.findOne({ clerkId: user.id }).lean() as Promise<IUserProfile | null>,
   ]);

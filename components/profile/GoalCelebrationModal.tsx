@@ -497,12 +497,12 @@ export default function GoalCelebrationModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
       <ConfettiCanvas active={step === "celebrate"} />
 
       <div
         ref={modalRef}
-        className="relative z-[101] w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl border border-border/50 bg-background shadow-2xl"
+        className="relative z-101 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl border border-border/50 bg-background shadow-2xl"
       >
         {/* Close button */}
         <button
@@ -517,7 +517,7 @@ export default function GoalCelebrationModal({
           <div className="p-6 space-y-5">
             {/* Header */}
             <div className="text-center space-y-3 pt-2">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-amber-500/20 to-yellow-500/20 text-amber-600 dark:text-amber-400 font-bold text-sm">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-linear-to-r from-amber-500/20 to-yellow-500/20 text-amber-600 dark:text-amber-400 font-bold text-sm">
                 <Trophy className="w-5 h-5" />
                 {stats.achievementBadge}
               </div>
@@ -643,7 +643,7 @@ export default function GoalCelebrationModal({
               <Button
                 onClick={handleDownloadPNG}
                 disabled={downloading}
-                className="w-full rounded-xl gap-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-bold h-12 text-sm shadow-lg"
+                className="w-full rounded-xl gap-2 bg-linear-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-bold h-12 text-sm shadow-lg"
               >
                 {downloading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -707,7 +707,7 @@ export default function GoalCelebrationModal({
                   >
                     <Icon
                       className={cn(
-                        "w-5 h-5 mt-0.5 flex-shrink-0",
+                        "w-5 h-5 mt-0.5 shrink-0",
                         selected ? "text-primary" : opt.color,
                       )}
                     />
@@ -751,7 +751,7 @@ export default function GoalCelebrationModal({
             <Button
               onClick={handleCompleteGoal}
               disabled={submitting}
-              className="w-full rounded-xl gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold h-12 text-sm shadow-lg"
+              className="w-full rounded-xl gap-2 bg-linear-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold h-12 text-sm shadow-lg"
             >
               {submitting ? (
                 <Loader2 className="w-4 h-4 animate-spin" />

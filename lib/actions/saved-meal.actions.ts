@@ -60,7 +60,7 @@ export async function logSavedMeal(savedMealId: string, date: string, mealType: 
   const savedMeal = (await SavedMeal.findOneAndUpdate(
     { _id: savedMealId, clerkId: user.id },
     { $inc: { usageCount: 1 } },
-    { new: true },
+    { returnDocument: "after" },
   ).lean()) as { items: IMealItem[] } | null;
   if (!savedMeal) throw new Error("Saved meal template not found");
 
@@ -92,7 +92,7 @@ export async function logSavedMeal(savedMealId: string, date: string, mealType: 
       totalFat: Math.round(totalFat * 10) / 10,
       totalFiber: Math.round(totalFiber * 10) / 10,
     },
-    { new: true, upsert: true }
+    { returnDocument: "after", upsert: true }
   );
 
   revalidatePath("/");

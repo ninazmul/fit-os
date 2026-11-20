@@ -597,7 +597,7 @@ export default function DietUserGuideModal({
 
         {/* Tab Navigation Pill Bar */}
         <div className="px-3 sm:px-5 py-2.5 bg-muted/20 border-b border-border/30 shrink-0">
-          <div className="flex gap-1.5 overflow-x-auto pb-0.5 no-scrollbar text-xs font-semibold [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex gap-1.5 overflow-x-auto pb-0.5 no-scrollbar text-xs font-semibold scrollbar-none [&::-webkit-scrollbar]:hidden">
             {GUIDE_TABS.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;

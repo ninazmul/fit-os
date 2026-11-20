@@ -23,15 +23,15 @@ const structuredData = [
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="relative min-h-[100dvh] overflow-x-hidden bg-background text-foreground selection:bg-primary/20 selection:text-primary">
+    <div className="relative min-h-dvh overflow-x-hidden bg-background text-foreground selection:bg-primary/20 selection:text-primary">
       {/* Background Decorative Mesh & Glow */}
       <div
         aria-hidden="true"
         className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
       >
-        <div className="absolute -top-40 left-1/2 h-[500px] w-[700px] -translate-x-1/2 rounded-full bg-gradient-to-br from-primary/15 via-emerald-500/10 to-transparent blur-3xl" />
-        <div className="absolute right-[-10%] top-[40%] h-[400px] w-[500px] rounded-full bg-gradient-to-bl from-blue-500/10 via-purple-500/10 to-transparent blur-3xl" />
-        <div className="absolute bottom-[-10%] left-[-5%] h-[360px] w-[420px] rounded-full bg-gradient-to-tr from-emerald-500/10 via-primary/10 to-transparent blur-3xl" />
+        <div className="absolute -top-40 left-1/2 h-[500px] w-[700px] -translate-x-1/2 rounded-full bg-linear-to-br from-primary/15 via-emerald-500/10 to-transparent blur-3xl" />
+        <div className="absolute right-[-10%] top-[40%] h-[400px] w-[500px] rounded-full bg-linear-to-bl from-blue-500/10 via-purple-500/10 to-transparent blur-3xl" />
+        <div className="absolute bottom-[-10%] left-[-5%] h-[360px] w-[420px] rounded-full bg-linear-to-tr from-emerald-500/10 via-primary/10 to-transparent blur-3xl" />
       </div>
 
       {/* JSON-LD Structured Data */}

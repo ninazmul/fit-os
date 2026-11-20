@@ -20,7 +20,7 @@ AI fitness & nutrition platform localized for Bangladesh. Tracks meals, workouts
 
 ## Stack
 
-Next.js **16** (App Router, Turbopack) · React **19** · TypeScript 5 (strict, alias `@/*`) · Tailwind 3.4 (glassmorphism) · MongoDB + Mongoose 8 · Clerk v6 · Google Gemini (`gemini-2.5-flash`, fallback `gemini-flash-latest`) · `recharts`, `react-hot-toast`, `next-themes`, `lucide-react`, `date-fns`, `framer-motion`, `zod` · PWA via `@ducanh2912/next-pwa`.
+Next.js **16** (App Router, Turbopack) · React **19** · TypeScript 6 (strict, alias `@/*`) · Tailwind 4 (glassmorphism) · MongoDB + Mongoose 9 · Clerk v7 · Google Gemini (`gemini-2.5-flash`, fallback `gemini-flash-latest`) · `recharts`, `react-hot-toast`, `next-themes`, `lucide-react`, `date-fns`, `framer-motion`, `zod` · PWA via `@ducanh2912/next-pwa`.
 
 Removed on purpose (do not re-add): `react-hook-form`, `@hookform/resolvers`, most `@radix-ui/*` tooltip/separator, and unused shadcn primitives (`card/form/table/textarea/separator/toaster/tooltip`).
 
@@ -50,7 +50,7 @@ npx tsc --noEmit # fast type check
 - **Brand color** = CSS var `--primary` (use `text-primary`/`bg-primary`). Never hardcode hex.
 - **Version single source** = `lib/constants.ts` (`VERSION_RAW`, `VERSION`, `APP_CONFIG`). Never hardcode a version string.
 - **Root layout must keep** `BodyInteractionGuard` (fixes Radix `react-remove-scroll` body-lock freezes). Never remove it.
-- Auth layouts use `min-h-[100dvh]`; PWA = `standalone` + `portrait-primary`.
+- Auth layouts use `min-h-dvh`; PWA = `standalone` + `portrait-primary`.
 - Mobile nav (`BottomNav`) needs `touch-manipulation select-none`.
 - Shared UI rhythm: use `PageHeader` for page titles and `NutritionSummary` for macro rings.
 - Dashboard layout = A–E segments (Header / Nutrition / Quick Actions / Today's Meals / Habits).

@@ -603,7 +603,7 @@ export default function GoalTargetsEditorModal({
           </div>
 
           {/* 4. "Suggest for My Goal" action */}
-          <div className="flex items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-primary/10 via-emerald-500/5 to-transparent border border-primary/20">
+          <div className="flex items-center justify-between p-3 rounded-2xl bg-linear-to-r from-primary/10 via-emerald-500/5 to-transparent border border-primary/20">
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-primary shrink-0" />
               <div>

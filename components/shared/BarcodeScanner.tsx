@@ -831,7 +831,7 @@ export default function BarcodeScanner({
             {/* Camera View */}
             {cameraOpen && (
               <div className="space-y-3">
-                <div className="relative overflow-hidden rounded-3xl bg-black aspect-[4/3]">
+                <div className="relative overflow-hidden rounded-3xl bg-black aspect-4/3">
                   <video
                     ref={videoRef}
                     autoPlay

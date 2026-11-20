@@ -303,7 +303,7 @@ export async function saveWorkoutPlan(formData: WorkoutPlanFormValues) {
   const plan = await WorkoutPlan.findOneAndUpdate(
     { clerkId: user.id },
     { clerkId: user.id, days },
-    { upsert: true, new: true, setDefaultsOnInsert: true },
+    { upsert: true, returnDocument: "after", setDefaultsOnInsert: true },
   ).lean();
 
   revalidatePath("/");

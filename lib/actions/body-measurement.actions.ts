@@ -25,7 +25,7 @@ export async function logBodyMeasurement(data: BodyMeasurementFormValues) {
   const measurement = await BodyMeasurement.findOneAndUpdate(
     { clerkId: user.id, date: validated.date },
     { ...cleaned, clerkId: user.id },
-    { new: true, upsert: true }
+    { returnDocument: "after", upsert: true }
   );
 
   revalidatePath("/profile");
