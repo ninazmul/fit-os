@@ -28,10 +28,10 @@ export default async function NutriBDLayout({
     <div className="min-h-screen flex bg-background text-foreground">
       <DesktopSidebar />
 
-      <div className="flex-1 flex flex-col min-w-0 min-h-screen pb-20 md:pb-6">
+      <div className="flex-1 flex flex-col min-w-0 min-h-screen pb-24 md:pb-8">
         <TopNavbar />
         <Toaster position="top-center" />
-        <main className="flex-1 p-4 md:p-6 max-w-7xl w-full mx-auto space-y-6">
+        <main className="flex-1 px-3.5 py-4 sm:px-6 sm:py-6 max-w-7xl w-full mx-auto space-y-6">
           {children}
         </main>
       </div>

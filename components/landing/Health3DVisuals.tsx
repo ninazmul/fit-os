@@ -4,259 +4,227 @@ import { motion } from "framer-motion";
 import {
   Flame,
   Sparkles,
-  Droplet,
   Zap,
   CheckCircle2,
 } from "lucide-react";
 
 export default function Health3DVisuals() {
   return (
-    <div className="relative w-full max-w-lg mx-auto py-2 sm:py-4 select-none overflow-hidden sm:overflow-visible [perspective:1000px]">
-      {/* Ambient background glow & radial gradient */}
-      <div className="absolute -inset-4 bg-gradient-to-tr from-primary/20 via-emerald-500/10 to-teal-500/5 rounded-full blur-2xl opacity-60 pointer-events-none" />
+    <div className="w-full max-w-full my-2 sm:my-4 select-none">
+      {/* Sleek Bento Vitality Showcase Container */}
+      <div className="relative rounded-3xl border border-primary/20 bg-linear-to-b from-primary/5 via-card/70 to-card/90 p-3.5 sm:p-5 backdrop-blur-xl shadow-lg shadow-black/5 overflow-hidden">
+        {/* Subtle Ambient Radial Glow */}
+        <div className="absolute top-0 right-0 -mr-16 -mt-16 w-56 h-56 rounded-full bg-primary/15 blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-56 h-56 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
 
-      {/* Main 3D Container with natural depth layering */}
-      <div className="relative min-h-[320px] sm:min-h-[390px] flex items-center justify-center [transform-style:preserve-3d]">
-        {/* CENTERPIECE: 3D Multi-Layered Vitality Hologram Ring */}
-        <motion.div
-          animate={{
-            y: [-4, 4, -4],
-            rotateZ: [0, 1, -1, 0],
-          }}
-          transition={{
-            duration: 6,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-          className="relative z-20 flex flex-col items-center justify-center p-4 sm:p-7 rounded-full border border-primary/30 bg-card/80 backdrop-blur-2xl shadow-xl shadow-primary/15 sm:[transform:translateZ(30px)] group cursor-default"
-        >
-          {/* Outer Glowing Ring */}
-          <div className="absolute -inset-2.5 rounded-full border border-dashed border-primary/25 animate-[spin_24s_linear_infinite]" />
-          <div className="absolute -inset-5 rounded-full border border-emerald-500/15 animate-[spin_36s_linear_infinite_reverse] hidden sm:block" />
+        <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-5">
 
-          {/* SVG Triple Macro Concentric Rings */}
-          <div className="relative w-32 h-32 sm:w-40 sm:h-40 flex items-center justify-center">
-            <svg
-              className="w-full h-full -rotate-90 drop-shadow-sm"
-              viewBox="0 0 160 160"
-            >
-              <defs>
-                <linearGradient
-                  id="ringProtein"
-                  x1="0%"
-                  y1="0%"
-                  x2="100%"
-                  y2="100%"
-                >
-                  <stop offset="0%" stopColor="hsl(var(--primary))" />
-                  <stop offset="100%" stopColor="#10B981" />
-                </linearGradient>
-                <linearGradient
-                  id="ringCarbs"
-                  x1="0%"
-                  y1="0%"
-                  x2="100%"
-                  y2="100%"
-                >
-                  <stop offset="0%" stopColor="#3B82F6" />
-                  <stop offset="100%" stopColor="#06B6D4" />
-                </linearGradient>
-                <linearGradient id="ringFat" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#8B5CF6" />
-                  <stop offset="100%" stopColor="#EC4899" />
-                </linearGradient>
-              </defs>
+          {/* Concentric Macro Rings */}
+          <motion.div
+            animate={{
+              y: [-3, 3, -3],
+            }}
+            transition={{
+              duration: 5,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="flex flex-col items-center justify-center shrink-0"
+          >
+            <div className="relative w-32 h-32 sm:w-36 sm:h-36 flex items-center justify-center">
+              <svg
+                className="w-full h-full -rotate-90 drop-shadow-sm"
+                viewBox="0 0 160 160"
+              >
+                <defs>
+                  <linearGradient
+                    id="ringProtein"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="100%"
+                  >
+                    <stop offset="0%" stopColor="hsl(var(--primary))" />
+                    <stop offset="100%" stopColor="#10B981" />
+                  </linearGradient>
+                  <linearGradient
+                    id="ringCarbs"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="100%"
+                  >
+                    <stop offset="0%" stopColor="#3B82F6" />
+                    <stop offset="100%" stopColor="#06B6D4" />
+                  </linearGradient>
+                  <linearGradient
+                    id="ringFat"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="100%"
+                  >
+                    <stop offset="0%" stopColor="#8B5CF6" />
+                    <stop offset="100%" stopColor="#EC4899" />
+                  </linearGradient>
+                </defs>
 
-              {/* Protein Outer Ring (Radius: 68) */}
-              <circle
-                cx="80"
-                cy="80"
-                r="68"
-                className="stroke-muted/40"
-                strokeWidth="7"
-                fill="none"
-              />
-              <circle
-                cx="80"
-                cy="80"
-                r="68"
-                stroke="url(#ringProtein)"
-                strokeWidth="7"
-                strokeLinecap="round"
-                fill="none"
-                strokeDasharray="427"
-                strokeDashoffset="100"
-                className="transition-all duration-1000"
-              />
+                {/* Protein Ring (Radius: 68) */}
+                <circle
+                  cx="80"
+                  cy="80"
+                  r="68"
+                  className="stroke-muted/40"
+                  strokeWidth="7"
+                  fill="none"
+                />
+                <circle
+                  cx="80"
+                  cy="80"
+                  r="68"
+                  stroke="url(#ringProtein)"
+                  strokeWidth="7"
+                  strokeLinecap="round"
+                  fill="none"
+                  strokeDasharray="427"
+                  strokeDashoffset="100"
+                />
 
-              {/* Carbs Middle Ring (Radius: 54) */}
-              <circle
-                cx="80"
-                cy="80"
-                r="54"
-                className="stroke-muted/40"
-                strokeWidth="7"
-                fill="none"
-              />
-              <circle
-                cx="80"
-                cy="80"
-                r="54"
-                stroke="url(#ringCarbs)"
-                strokeWidth="7"
-                strokeLinecap="round"
-                fill="none"
-                strokeDasharray="339"
-                strokeDashoffset="95"
-                className="transition-all duration-1000"
-              />
+                {/* Carbs Ring (Radius: 54) */}
+                <circle
+                  cx="80"
+                  cy="80"
+                  r="54"
+                  className="stroke-muted/40"
+                  strokeWidth="7"
+                  fill="none"
+                />
+                <circle
+                  cx="80"
+                  cy="80"
+                  r="54"
+                  stroke="url(#ringCarbs)"
+                  strokeWidth="7"
+                  strokeLinecap="round"
+                  fill="none"
+                  strokeDasharray="339"
+                  strokeDashoffset="95"
+                />
 
-              {/* Fat Inner Ring (Radius: 40) */}
-              <circle
-                cx="80"
-                cy="80"
-                r="40"
-                className="stroke-muted/40"
-                strokeWidth="7"
-                fill="none"
-              />
-              <circle
-                cx="80"
-                cy="80"
-                r="40"
-                stroke="url(#ringFat)"
-                strokeWidth="7"
-                strokeLinecap="round"
-                fill="none"
-                strokeDasharray="251"
-                strokeDashoffset="80"
-                className="transition-all duration-1000"
-              />
-            </svg>
+                {/* Fat Ring (Radius: 40) */}
+                <circle
+                  cx="80"
+                  cy="80"
+                  r="40"
+                  className="stroke-muted/40"
+                  strokeWidth="7"
+                  fill="none"
+                />
+                <circle
+                  cx="80"
+                  cy="80"
+                  r="40"
+                  stroke="url(#ringFat)"
+                  strokeWidth="7"
+                  strokeLinecap="round"
+                  fill="none"
+                  strokeDasharray="251"
+                  strokeDashoffset="80"
+                />
+              </svg>
 
-            {/* Core Score Display in Center */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-              <span className="text-[9px] sm:text-[10px] font-black tracking-widest uppercase text-primary flex items-center gap-0.5">
-                <Sparkles className="w-2.5 h-2.5" /> Vitality
+              {/* Core Vitality Score */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                <span className="text-[9px] font-black tracking-widest uppercase text-primary flex items-center gap-0.5">
+                  <Sparkles className="w-2.5 h-2.5" /> Vitality
+                </span>
+                <span className="text-xl sm:text-2xl font-black tracking-tight text-foreground">
+                  94%
+                </span>
+                <span className="text-[8px] font-bold text-muted-foreground">
+                  Daily Balance
+                </span>
+              </div>
+            </div>
+
+            {/* Macro Labels */}
+            <div className="flex items-center gap-1.5 mt-2">
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[9px] font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                135g Protein
               </span>
-              <span className="text-xl sm:text-2xl font-black tracking-tighter text-foreground">
-                94%
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[9px] font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                190g Carbs
               </span>
-              <span className="text-[8px] sm:text-[9px] font-bold text-muted-foreground">
-                Optimal Zone
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[9px] font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+                52g Fat
               </span>
             </div>
-          </div>
+          </motion.div>
 
-          {/* Quick Macro Pill Badges below Ring */}
-          <div className="flex items-center gap-1 sm:gap-1.5 mt-2">
-            <span className="inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[9px] sm:text-[10px] font-bold border border-emerald-500/20">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              135g Protein
-            </span>
-            <span className="inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[9px] sm:text-[10px] font-bold border border-blue-500/20">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-              190g Carbs
-            </span>
-            <span className="inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[9px] sm:text-[10px] font-bold border border-purple-500/20">
-              <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
-              52g Fat
-            </span>
-          </div>
-        </motion.div>
-
-        {/* FLOATING CARD 1: Localized Bengali AI Food Intelligence (Top Right) */}
-        <motion.div
-          animate={{
-            y: [4, -4, 4],
-          }}
-          transition={{
-            duration: 5,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 0.3,
-          }}
-          className="absolute top-1 right-1 sm:-top-2 sm:-right-2 z-30 max-w-[190px] sm:max-w-[220px] w-full p-2.5 sm:p-3 rounded-2xl border border-primary/25 bg-card/90 backdrop-blur-xl shadow-lg sm:[transform:translateZ(40px)]"
-        >
-          <div className="flex items-center justify-between gap-1 mb-1">
-            <div className="flex items-center gap-1.5 min-w-0">
-              <span className="p-1 rounded-lg bg-primary/10 text-primary shrink-0">
-                <Flame className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-              </span>
-              <span className="text-[10px] sm:text-[11px] font-black text-foreground truncate">
-                Rui Fish & Rice
-              </span>
+          {/* Right Bento Cards: Localized AI + Habit Streak */}
+          <div className="flex-1 w-full space-y-2.5 min-w-0">
+            {/* Bento Card 1: Bangladeshi Food Recognition */}
+            <div className="p-3 rounded-2xl border border-primary/25 bg-card/90 shadow-xs">
+              <div className="flex items-center justify-between gap-1 mb-1">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="p-1 rounded-lg bg-primary/10 text-primary shrink-0">
+                    <Flame className="w-3.5 h-3.5" />
+                  </span>
+                  <span className="text-xs font-black text-foreground truncate">
+                    Rui Fish Bhuna & Brown Rice
+                  </span>
+                </div>
+                <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-primary/15 text-primary shrink-0">
+                  AI Logged
+                </span>
+              </div>
+              <div className="flex items-baseline justify-between text-xs mt-1">
+                <span className="text-[10px] text-muted-foreground font-medium">
+                  1 bati + 1 cup rice
+                </span>
+                <span className="font-black text-foreground text-xs">
+                  465 <span className="text-[9px] font-normal text-muted-foreground">kcal</span>
+                </span>
+              </div>
+              <div className="w-full bg-muted/60 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                <div className="bg-linear-to-r from-primary to-emerald-400 h-full w-[78%] rounded-full" />
+              </div>
+              <div className="flex justify-between items-center text-[9px] text-muted-foreground font-bold mt-1.5 pt-1 border-t border-border/30">
+                <span className="text-emerald-600 dark:text-emerald-400">34g Protein</span>
+                <span>54g Carbs</span>
+                <span>12g Fat</span>
+              </div>
             </div>
-            <span className="text-[8px] font-black px-1.5 py-0.2 rounded-full bg-primary/15 text-primary shrink-0">
-              AI
-            </span>
-          </div>
-          <div className="flex items-baseline justify-between text-xs mt-0.5">
-            <span className="text-[9px] sm:text-[10px] text-muted-foreground font-medium truncate">
-              1 bati + 1 cup
-            </span>
-            <span className="font-black text-foreground text-[11px] sm:text-xs shrink-0">
-              465 <span className="text-[8px] font-normal text-muted-foreground">kcal</span>
-            </span>
-          </div>
-          <div className="w-full bg-muted/60 h-1.5 rounded-full mt-1.5 overflow-hidden">
-            <div className="bg-gradient-to-r from-primary to-emerald-400 h-full w-[78%] rounded-full" />
-          </div>
-        </motion.div>
 
-        {/* FLOATING CARD 2: Daily Habit Streak & Consistency (Bottom Left) */}
-        <motion.div
-          animate={{
-            y: [-4, 4, -4],
-          }}
-          transition={{
-            duration: 5.5,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 0.8,
-          }}
-          className="absolute bottom-1 left-1 sm:-bottom-2 sm:-left-2 z-30 max-w-[180px] sm:max-w-[210px] w-full p-2.5 sm:p-3 rounded-2xl border border-border/60 bg-card/90 backdrop-blur-xl shadow-lg sm:[transform:translateZ(35px)]"
-        >
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30 flex items-center justify-center text-amber-500 shrink-0">
-              <Zap className="w-3.5 h-3.5 fill-amber-500" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wide truncate">
-                Habit Streak
-              </p>
-              <p className="text-[11px] sm:text-xs font-black text-foreground flex items-center gap-1 truncate">
-                12 Days <CheckCircle2 className="w-3 h-3 text-primary shrink-0" />
-              </p>
+            {/* Bento Card 2: Streak & Consistency */}
+            <div className="flex items-center justify-between p-2.5 rounded-2xl border border-border/60 bg-card/80 shadow-xs">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-8 h-8 rounded-xl bg-linear-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30 flex items-center justify-center text-amber-500 shrink-0">
+                  <Zap className="w-4 h-4 fill-amber-500" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">
+                    Consistency Streak
+                  </p>
+                  <p className="text-xs font-black text-foreground flex items-center gap-1 truncate">
+                    12 Days Strong <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-1 shrink-0">
+                {[1, 2, 3, 4, 5].map((d) => (
+                  <div
+                    key={d}
+                    className="w-2 h-4 rounded-full bg-primary/90"
+                  />
+                ))}
+              </div>
             </div>
           </div>
-        </motion.div>
-
-        {/* FLOATING CARD 3: Hydration Pill (Desktop only) */}
-        <motion.div
-          animate={{
-            y: [3, -3, 3],
-          }}
-          transition={{
-            duration: 4.5,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 1.2,
-          }}
-          className="hidden sm:flex absolute bottom-5 -right-1 z-20 items-center gap-2 px-2.5 py-1.5 rounded-xl border border-cyan-500/30 bg-card/85 backdrop-blur-xl shadow-md [transform:translateZ(25px)]"
-        >
-          <div className="p-1 rounded-md bg-cyan-500/15 text-cyan-600 dark:text-cyan-400">
-            <Droplet className="w-3 h-3" />
-          </div>
-          <div className="text-left">
-            <p className="text-[8px] font-bold text-muted-foreground uppercase">
-              Hydration
-            </p>
-            <p className="text-[10px] font-black text-foreground">
-              2.4 / 3.0 L
-            </p>
-          </div>
-        </motion.div>
+        </div>
       </div>
     </div>
   );
