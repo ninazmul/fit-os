@@ -1,6 +1,6 @@
 "use client";
 
-import { SignedIn, UserButton } from "@clerk/nextjs";
+import { Show, UserButton } from "@clerk/nextjs";
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import { LanguageToggle } from "@/components/shared/LanguageToggle";
 import { useI18n } from "@/components/shared/I18nProvider";
@@ -81,7 +81,7 @@ export default function TopNavbar() {
           <div className="flex items-center justify-end gap-2">
             <LanguageToggle />
             <ThemeToggle />
-            <SignedIn>
+            <Show when="signed-in">
               <UserButton
                 afterSwitchSessionUrl="/"
                 appearance={{
@@ -90,7 +90,7 @@ export default function TopNavbar() {
                   },
                 }}
               />
-            </SignedIn>
+            </Show>
           </div>
         </div>
       </header>
